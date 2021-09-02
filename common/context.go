@@ -1,0 +1,44 @@
+package common
+
+import "context"
+
+// ContextKey is key to be used to store values to context
+type ContextKey string
+
+// Extras are extra information to be added into context
+type Extras map[string]interface{}
+
+// We have to put all the keys here for easier to manage
+const (
+	CtxClientCode     ContextKey = "clientCode"
+	CtxTransactionRef ContextKey = "transactionRef"
+	CtxPaymentRef     ContextKey = "paymentRef"
+	CtxDeploymentRef  ContextKey = "deploymentRef"
+
+	// keep it private to avoid conflicts
+	ctxExtras ContextKey = "extras"
+)
+
+// GetString gets string from a context by ContextKey
+func GetString(ctx context.Context, key ContextKey) (value string) {
+	if ctx != nil {
+		value, _ = ctx.Value(key).(string)
+	}
+	return
+}
+
+// GetExtras gets extras from the context if any
+func GetExtras(ctx context.Context) (value Extras) {
+	if ctx != nil {
+		value, _ = ctx.Value(ctxExtras).(Extras)
+	}
+	return
+}
+
+// SetExtras returns a copy of parent context with extras added into it
+func SetExtras(parent context.Context, extras Extras) context.Context {
+	if parent == nil {
+		parent = context.Background()
+	}
+	return context.WithValue(parent, ctxExtras, extras)
+}
