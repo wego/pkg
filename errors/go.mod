@@ -5,6 +5,6 @@ go 1.16
 require (
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-playground/validator/v10 v10.9.0
-	github.com/wego/pkg/common v0.0.0-20210903063424-3484392e4020
+	github.com/wego/pkg/common v0.1.0
 	gorm.io/gorm v1.21.14
 )

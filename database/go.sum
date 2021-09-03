@@ -41,6 +41,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DataDog/datadog-go v4.4.0+incompatible h1:R7WqXWP4fIOAqWJtUKmSfuc7eDsBT58k9AY5WSHVosk=
 github.com/DataDog/datadog-go v4.4.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
+github.com/DataDog/datadog-go v4.8.1+incompatible h1:KgnZAqwHyxgl6Fdhu2GtdZT7xFizdUBhDI05Wly0zg0=
+github.com/DataDog/datadog-go v4.8.1+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/gostackparse v0.5.0/go.mod h1:lTfqcJKqS9KnXQGnyQMCugq3u1FP6UZMfWR0aitKFMM=
 github.com/DataDog/sketches-go v1.0.0 h1:chm5KSXO7kO+ywGWJ0Zs6tdmWU8PBXSbywFVciL6BG4=
 github.com/DataDog/sketches-go v1.0.0/go.mod h1:O+XkJHWk9w4hDwY2ZUDU31ZC9sNYlYo8DiFsxjYeo1k=
@@ -485,6 +487,8 @@ github.com/wego/pkg/common v0.0.0-20210902072900-8c6b63487479 h1:3drL/fIO+NX7J7o
 github.com/wego/pkg/common v0.0.0-20210902072900-8c6b63487479/go.mod h1:gd4YGuSKm5L3Q5MI9/dtAy+ctzFksZqva1razZEQQwc=
 github.com/wego/pkg/common v0.0.0-20210903063424-3484392e4020 h1:QWMa9Bqr4/2bImDg+2Jx1WwI+GPubtoA3sYvbmEzMEs=
 github.com/wego/pkg/common v0.0.0-20210903063424-3484392e4020/go.mod h1:Y6ckzrz9rXtuta8HpGaKeCksKIquTsbBr74yZkuuH0k=
+github.com/wego/pkg/common v0.1.0 h1:YxAa9ZiUe/Ra9HgQvzTC3COrEp7nippvKqOveHYQ6VU=
+github.com/wego/pkg/common v0.1.0/go.mod h1:xThc4+WuSeK58ZhcN1ppLOTcLNdH+5rYkza9X1kmAqo=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
