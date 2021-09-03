@@ -201,6 +201,7 @@ github.com/google/pprof v0.0.0-20210226084205-cbba55b83ad5/go.mod h1:kpwsk12EmLe
 github.com/google/pprof v0.0.0-20210423192551-a2663126120b/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.1.2 h1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
@@ -480,8 +481,10 @@ github.com/tinylib/msgp v1.1.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDW
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
-github.com/wego/pkg/common v0.0.0-20210902055548-3b2557d1b88a h1:CkcLeFPUg8NJi/LPEsz5mQToW6t9FZ61vAbeEwzp6YY=
-github.com/wego/pkg/common v0.0.0-20210902055548-3b2557d1b88a/go.mod h1:gd4YGuSKm5L3Q5MI9/dtAy+ctzFksZqva1razZEQQwc=
+github.com/wego/pkg/common v0.0.0-20210902072900-8c6b63487479 h1:3drL/fIO+NX7J7ormnIvp30M3z1EJcoenJik5VEVqYs=
+github.com/wego/pkg/common v0.0.0-20210902072900-8c6b63487479/go.mod h1:gd4YGuSKm5L3Q5MI9/dtAy+ctzFksZqva1razZEQQwc=
+github.com/wego/pkg/common v0.0.0-20210903063424-3484392e4020 h1:QWMa9Bqr4/2bImDg+2Jx1WwI+GPubtoA3sYvbmEzMEs=
+github.com/wego/pkg/common v0.0.0-20210903063424-3484392e4020/go.mod h1:Y6ckzrz9rXtuta8HpGaKeCksKIquTsbBr74yZkuuH0k=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
