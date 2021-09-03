@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/stretchr/testify/assert"
 	"github.com/wego/pkg/common"
 )
@@ -87,4 +88,38 @@ func Test_GetExtras_ReturnCorrectExtras(t *testing.T) {
 	assert.True(ok)
 	assert.Equal("yo2", data.Field1)
 	assert.Equal(2, data.Field2)
+}
+
+func Test_GetStatsD_ReturnNil_WithNilContext(t *testing.T) {
+	assert := assert.New(t)
+
+	statsD := common.GetStatsD(nil)
+	assert.Nil(statsD)
+}
+
+func Test_GetStatsD_ReturnNil_WhenExtrasNotFound(t *testing.T) {
+	assert := assert.New(t)
+
+	statsD := common.GetStatsD(context.Background())
+	assert.Nil(statsD)
+}
+
+func Test_GetStatsD_ReturnCorrect(t *testing.T) {
+	assert := assert.New(t)
+
+	src := &statsd.Client{
+		Namespace: "Wego",
+	}
+
+	// test SetStatsD with normal parent
+	ctx := common.SetStatsD(context.Background(), src)
+	statsD := common.GetStatsD(ctx)
+	assert.NotNil(statsD)
+	assert.Equal(src.Namespace, statsD.Namespace)
+
+	// test SetStatsD with nil parent
+	ctx = common.SetStatsD(nil, src)
+	statsD = common.GetStatsD(ctx)
+	assert.NotNil(statsD)
+	assert.Equal(src.Namespace, statsD.Namespace)
 }
