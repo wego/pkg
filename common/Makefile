@@ -18,7 +18,6 @@ ifeq ($(shell test $(num_of_pros) -gt 4; echo $$?),0)
 endif
 
 skip_gen=0
-PACKAGES=$(shell ls -d */)
 
 all: help
 
@@ -30,12 +29,6 @@ help: ## Show this help.
 	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  ${YELLOW}%-16s${GREEN}%s${RESET}\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-.PHONY: gen_packages $(PACKAGES)
-gen_packages: $(PACKAGES)
-
-$(PACKAGES):
-	cd ./$@/ && go generate ./... && cd -
-
 clean: ## Clean mocks, test & log.
 	find . -type d -name mocks -a -prune -exec rm -rf {} \;
 	rm -rf ./log
@@ -43,7 +36,7 @@ clean: ## Clean mocks, test & log.
 
 gen: ## Clean mocks, tests, logs, then generate mocks for test.
 	make clean
-	make -j$(num_of_pros) gen_packages
+	go generate ./... -p $(num_of_pros)
 
 test: ## Clean mocks, tests, logs, generate mocks for test, then run unit test. Add `skip_gen=1` to skip `make gen`
 ifeq (0, $(skip_gen))
@@ -56,6 +49,3 @@ ifeq (0, $(skip_gen))
 	make gen
 endif
 	go test ./... -p $(num_of_pros) -race -coverprofile ./cover.out && go tool cover -html=./cover.out
-
-ptest: ## Run test & show result for a package. Param `pkg=<your package>`
-	go test ./$(pkg) -p $(num_of_pros) -coverprofile ./cover.out && go tool cover -html=./cover.out

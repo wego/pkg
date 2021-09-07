@@ -1,0 +1,18 @@
+[
+    {
+        "id": "mailer.footer_copyright",
+        "translation": "©{{.CurrentYear}} Wego Pte Ltd. All rights reserved."
+    },
+    {
+        "id": "mailer.refund_initiated.salutation",
+        "translation": "Hi {{.CustomerFullName}}"
+    },
+    {
+        "id": "mailer.support_phone_worldwide",
+        "translation": "Worldwide "
+    },
+    {
+        "id": "mailer.terms_conditions",
+        "translation": "Terms & Conditions"
+    }
+]

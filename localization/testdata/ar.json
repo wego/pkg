@@ -1,0 +1,18 @@
+[
+  {
+    "id": "mailer.footer_copyright",
+    "translation": "Wego Pte Ltd . جميع الحقوق محفوظة ©‪{{.CurrentYear}}‬\n\n"
+  },
+  {
+    "id": "mailer.refund_initiated.salutation",
+    "translation": "مرحبا ‪{{.CustomerFullName}}‬"
+  },
+  {
+    "id": "mailer.support_phone_worldwide",
+    "translation": "حول العالم "
+  },
+  {
+    "id": "mailer.terms_conditions",
+    "translation": "الشروط والأحكام"
+  }
+]
