@@ -22,7 +22,7 @@ func NewRequestIDService() RequestIDService {
 	return &requestIDService{}
 }
 
-func (r *requestIDService) GenerateRequestIDWithCtx(ctx context.Context) string {
+func (r *requestIDService) GenerateRequestIDWithCtx(context.Context) string {
 	return uuid.New().String()
 }
 
