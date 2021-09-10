@@ -94,7 +94,7 @@ func Decompose(id uint64) ID {
 
 // SequenceResolver the snowflake sequence Resolver.
 // When use the snowflake algorithm to generate unique ID, make sure:
-//   The sequence-number generated in the same millisecond of the same node is unique.
+//   The sequence-number generated in the same 10 milliseconds of the same node is unique.
 // Based on this, we create this interface provides following Resolver:
 //   AtomicResolver : base sync/atomic (by default).
 type SequenceResolver func(current int64) (uint16, error)
@@ -211,7 +211,7 @@ func (g *Generator) currentTimestamp() (current int64, err error) {
 	const op errors.Op = "snowflake_id.currentTimestamp"
 	current = g.currentTimeSlot()
 	if current < 0 || current > maxTimestamp {
-		err = errors.New(op, "timestamp exceeds max time(2^39-1), please check Epoch")
+		err = errors.New(op, "timestamp exceeds max time(2^39-1 * 10ms), please check the epoch settings")
 		return
 	}
 	return
