@@ -1,12 +1,15 @@
 package snowflake
 
 import (
+	"fmt"
+	"runtime"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/wego/pkg/common"
 	"github.com/wego/pkg/host"
-	"runtime"
-	"testing"
-	"time"
 )
 
 var (
@@ -169,27 +172,46 @@ func Test_NewIDInParallel(t *testing.T) {
 	runtime.GOMAXPROCS(numCPU)
 
 	const numID = 10000
-	consumer := make(chan uint64, numID)
+	numGenerator := 1
+	if numCPU/2 > numGenerator {
+		numGenerator = numCPU / 2
+	}
 
-	generate := func() {
+	generate := func(wg *sync.WaitGroup, partition []uint64) {
+		wg.Add(1)
+		defer wg.Done()
+		start := time.Now()
 		for i := 0; i < numID; i++ {
-			consumer <- newID(t)
-		}
-	}
+			partition[i] = NewID()
 
-	const numGenerator = 10
+		}
+		elapsed := time.Since(start)
+		fmt.Printf("%v IDs generaged, tooks %v s\n", numID, elapsed)
+	}
+	wg := sync.WaitGroup{}
+	start := time.Now()
+	ids := make(map[int][]uint64, numGenerator)
 	for i := 0; i < numGenerator; i++ {
-		go generate()
+		ids[i] = make([]uint64, numID)
+		go generate(&wg, ids[i])
 	}
+	wg.Wait()
+	elapsed := time.Since(start)
+	fmt.Printf("%v IDs generaged, tooks %v, speed: %v IDs/sec\n", numID*numGenerator,
+		elapsed, float64(numID*numGenerator)/elapsed.Seconds())
 
-	set := make(map[uint64]bool)
-	for i := 0; i < numID*numGenerator; i++ {
-		id := <-consumer
-		if set[id] {
-			decomposed := Decompose(id)
-			t.Fatalf("duplicated ID: %v = %v", decomposed.Timestamp, decomposed.Sequence)
+	set := make(map[uint64]int)
+	for idx, partition := range ids {
+		for i := 0; i < numID; i++ {
+			id := partition[i]
+			if idx, ok := set[id]; ok {
+				decomposed := Decompose(id)
+				t.Fatalf("duplicated ID: ids[%v][%v]=%v(%v = %v), idx = %v", idx, i, id,
+					decomposed.Timestamp, decomposed.Sequence, idx)
+			}
+			set[id] = idx*numID + i
 		}
-		set[id] = true
+
 	}
 }
 
