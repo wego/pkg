@@ -1,6 +1,7 @@
 package snowflake
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"sync"
@@ -77,6 +78,22 @@ func Test_SetNodeIDProvider_Nil(t *testing.T) {
 	assert.Error(err)
 }
 
+func Test_SetNodeIDProvider_Error(t *testing.T) {
+	assert := assert.New(t)
+	errorMsg := "some error"
+	g := &Generator{
+		Settings: Settings{
+			Epoch:            time.Now(),
+			SequenceResolver: AtomicResolver,
+		},
+	}
+	err := g.setNodeIDProvider(func() (uint16, error) {
+		return nodeID, errors.New(errorMsg)
+	})
+	assert.Error(err)
+	assert.Contains(err.Error(), errorMsg)
+}
+
 func Test_SetNodeIDProvider_Ok(t *testing.T) {
 	g := &Generator{
 		Settings: Settings{
@@ -102,6 +119,84 @@ func Test_SetNodeIDProvider_Ok(t *testing.T) {
 	assert.Equal(nodeID, decomposed.NodeID)
 }
 
+func Test_CurrentTimestamp_Ok(t *testing.T) {
+	assert := assert.New(t)
+	g := &Generator{
+		Settings: Settings{
+			Epoch:            time.Now().Add(-24 * time.Hour),
+			SequenceResolver: AtomicResolver,
+		},
+	}
+	v, e := g.currentTimestamp()
+	assert.GreaterOrEqual(v, int64(0))
+	assert.NoError(e)
+}
+
+func Test_CurrentTimestamp_EpochInTheFuture(t *testing.T) {
+	assert := assert.New(t)
+	g := &Generator{
+		Settings: Settings{
+			Epoch:            time.Date(1751, 1, 1, 1, 0, 0, 0, time.UTC),
+			SequenceResolver: AtomicResolver,
+		},
+	}
+	v, e := g.currentTimestamp()
+	assert.GreaterOrEqual(v, int64(0))
+	assert.Error(e)
+	assert.Contains(e.Error(), "timestamp exceeds max time(2^39-1 * 10ms), please check the epoch settings")
+}
+
+func Test_CurrentTimestamp_ExceedsMaxTime(t *testing.T) {
+	assert := assert.New(t)
+	g := &Generator{
+		Settings: Settings{
+			Epoch:            time.Now().Add(24 * time.Hour),
+			SequenceResolver: AtomicResolver,
+		},
+	}
+	v, e := g.currentTimestamp()
+	assert.Less(v, int64(0))
+	assert.Error(e)
+	assert.Contains(e.Error(), "current time can not be negative, please make sure the epoch is not in the future")
+}
+
+func Test_Init_EpochError(t *testing.T) {
+	assert := assert.New(t)
+	s := Settings{
+		Epoch:            time.Now().Add(24 * time.Hour),
+		SequenceResolver: AtomicResolver,
+	}
+	g := &Generator{}
+	err := g.init(s)
+	assert.Error(err)
+	assert.Contains(err.Error(), "Epoch cannot be in the future")
+}
+
+func Test_Init_SequenceResolverError(t *testing.T) {
+	assert := assert.New(t)
+	s := Settings{
+		Epoch:            time.Now().Add(-24 * time.Hour),
+		SequenceResolver: nil,
+	}
+	g := &Generator{}
+	err := g.init(s)
+	assert.Error(err)
+	assert.Contains(err.Error(), "SequenceResolver cannot be nil")
+}
+
+func Test_Init_NodeIDProviderError(t *testing.T) {
+	assert := assert.New(t)
+	s := Settings{
+		Epoch:            time.Now().Add(-24 * time.Hour),
+		SequenceResolver: AtomicResolver,
+		NodeIDProvider:   nil,
+	}
+	g := &Generator{}
+	err := g.init(s)
+	assert.Error(err)
+	assert.Contains(err.Error(), "NodeIDProvider cannot be nil")
+}
+
 func newID(t *testing.T) uint64 {
 	assert := assert.New(t)
 
@@ -119,7 +214,6 @@ func currentTime() time.Time {
 
 func Test_NextIDFor10Sec(t *testing.T) {
 	assert := assert.New(t)
-	sequenceBits := 8
 	var numID uint32
 	var lastID uint64
 	var maxSequence uint16
@@ -139,11 +233,6 @@ func Test_NextIDFor10Sec(t *testing.T) {
 		lastID = id
 
 		current = currentTime()
-
-		actualMSB := parts.MSB
-		if actualMSB != 0 {
-			t.Errorf("unexpected msb: %d", actualMSB)
-		}
 
 		actualTime := parts.Timestamp
 		overtime := actualTime.Sub(current)
@@ -178,7 +267,6 @@ func Test_NewIDInParallel(t *testing.T) {
 	}
 
 	generate := func(wg *sync.WaitGroup, partition []uint64) {
-		wg.Add(1)
 		defer wg.Done()
 		start := time.Now()
 		for i := 0; i < numID; i++ {
@@ -193,6 +281,7 @@ func Test_NewIDInParallel(t *testing.T) {
 	ids := make(map[int][]uint64, numGenerator)
 	for i := 0; i < numGenerator; i++ {
 		ids[i] = make([]uint64, numID)
+		wg.Add(1)
 		go generate(&wg, ids[i])
 	}
 	wg.Wait()
@@ -201,15 +290,15 @@ func Test_NewIDInParallel(t *testing.T) {
 		elapsed, float64(numID*numGenerator)/elapsed.Seconds())
 
 	set := make(map[uint64]int)
-	for idx, partition := range ids {
-		for i := 0; i < numID; i++ {
-			id := partition[i]
-			if idx, ok := set[id]; ok {
+	for i, partition := range ids {
+		for j := 0; j < numID; j++ {
+			id := partition[j]
+			if actualIdx, ok := set[id]; ok {
 				decomposed := Decompose(id)
-				t.Fatalf("duplicated ID: ids[%v][%v]=%v(%v = %v), idx = %v", idx, i, id,
-					decomposed.Timestamp, decomposed.Sequence, idx)
+				t.Fatalf("duplicated ID: ids[%v][%v]=%v(%v = %v), i = %v", i, j, id,
+					decomposed.Timestamp, decomposed.Sequence, actualIdx)
 			}
-			set[id] = idx*numID + i
+			set[id] = i*numID + j
 		}
 
 	}

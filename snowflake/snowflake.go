@@ -7,20 +7,20 @@ import (
 )
 
 // A Snowflake ID is composed of
-//     39 bits for time in units of 10 msec (179 years)
+//     39 bits for time in units of 10 msec (about 174 years)
 //     16 bits for a node ID
-//      8 bits for a sequence number
+//      9 bits for a sequence number
 const (
 	timestampBits = 39 // nodeBits holds the number of bits to use for timestamp (in units of 10 msec)
 	nodeBits      = 16 // nodeBits holds the number of bits to use for Node
-	seqBits       = 8  // seqBits holds the number of bits to use for sequence
+	sequenceBits  = 9  // sequenceBits holds the number of bits to use for sequence
 	maxTimestamp  = 1<<timestampBits - 1
-	maxSequence   = 1<<seqBits - 1
-	timeShift     = nodeBits + seqBits
-	nodeShift     = seqBits
+	maxSequence   = 1<<sequenceBits - 1
+	timeShift     = nodeBits + sequenceBits
+	nodeShift     = sequenceBits
 	timeUnit      = 10 // milliseconds, 10 msec
 
-	maskSequence = uint64(1<<seqBits - 1)
+	maskSequence = uint64(1<<sequenceBits - 1)
 	maskNodeID   = uint64((1<<nodeBits - 1) << nodeShift)
 )
 
@@ -168,9 +168,8 @@ func (g *Generator) setNodeIDProvider(nodeIDProvider NodeIDProvider) (err error)
 
 // Decompose returns a map of snowflake id parts.
 func (g *Generator) Decompose(sid uint64) (id ID) {
-	id.MSB = int8(sid >> 63)
 	timestamp := sid >> timeShift
-	id.Timestamp = time.Unix(0, (g.Epoch.UnixNano())+int64(timestamp*timeUnit))
+	id.Timestamp = time.Unix(0, (g.Epoch.UnixMilli())+int64(timestamp*timeUnit))
 	id.Sequence = uint16(sid & maskSequence)
 	id.NodeID = uint16(sid & maskNodeID >> nodeShift)
 	return
@@ -181,13 +180,11 @@ func (g *Generator) NextID() (sid uint64, err error) {
 	var current int64
 	var seq uint16
 	current, err = g.currentTimestamp()
-
 	if err != nil {
 		return
 	}
 
 	seq, err = g.SequenceResolver(current)
-
 	if err != nil {
 		return
 	}
@@ -210,7 +207,9 @@ func (g *Generator) NextID() (sid uint64, err error) {
 func (g *Generator) currentTimestamp() (current int64, err error) {
 	const op errors.Op = "snowflakeGenerator.currentTimestamp"
 	current = g.currentTimeSlot()
-	if current < 0 || current > maxTimestamp {
+	if current < 0 {
+		err = errors.New(op, "current time can not be negative, please make sure the epoch is not in the future")
+	} else if current > maxTimestamp {
 		err = errors.New(op, "timestamp exceeds max time(2^39-1 * 10ms), please check the epoch settings")
 	}
 	return

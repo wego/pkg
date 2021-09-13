@@ -42,7 +42,7 @@ test: ## Clean mocks, tests, logs, generate mocks for test, then run unit test. 
 ifeq (0, $(skip_gen))
 	make gen
 endif
-	go test ./... -cover -p $(num_of_pros)
+	go test ./... -race -cover -p $(num_of_pros)
 
 cover: ## Run 'make gen' then run unit test with data racing check & show coverage result. Add `skip_gen=1` to skip `make gen`
 ifeq (0, $(skip_gen))
