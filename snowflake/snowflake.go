@@ -18,7 +18,7 @@ const (
 	maxSequence   = 1<<seqBits - 1
 	timeShift     = nodeBits + seqBits
 	nodeShift     = seqBits
-	timeUnit      = 10 * 1000 * 1000 // nano seconds, 10 msec
+	timeUnit      = 10 // milliseconds, 10 msec
 
 	maskSequence = uint64(1<<seqBits - 1)
 	maskNodeID   = uint64((1<<nodeBits - 1) << nodeShift)
@@ -208,21 +208,20 @@ func (g *Generator) NextID() (sid uint64, err error) {
 }
 
 func (g *Generator) currentTimestamp() (current int64, err error) {
-	const op errors.Op = "snowflake_id.currentTimestamp"
+	const op errors.Op = "snowflakeGenerator.currentTimestamp"
 	current = g.currentTimeSlot()
 	if current < 0 || current > maxTimestamp {
 		err = errors.New(op, "timestamp exceeds max time(2^39-1 * 10ms), please check the epoch settings")
-		return
 	}
 	return
 }
 
 func (g *Generator) currentTimeSlot() int64 {
-	return time.Since(g.Epoch).Nanoseconds() / timeUnit
+	return since(g.Epoch)
 }
 
 func since(t time.Time) int64 {
-	return time.Since(t).Nanoseconds() / timeUnit
+	return time.Since(t).Milliseconds() / timeUnit
 }
 
 func (g *Generator) waitForNext10Millis(last int64) (int64, error) {
