@@ -168,7 +168,7 @@ func (g *Generator) setNodeIDProvider(nodeIDProvider NodeIDProvider) (err error)
 // Decompose returns a map of snowflake id parts.
 func (g *Generator) Decompose(sid uint64) (id ID) {
 	timestamp := sid >> timeShift
-	id.Timestamp = time.Unix(0, (g.Epoch.UnixMilli())+int64(timestamp*timeUnit))
+	id.Timestamp = time.UnixMilli(g.Epoch.UnixMilli() + int64(timestamp*timeUnit))
 	id.Sequence = uint16(sid & maskSequence)
 	id.NodeID = uint16(sid & maskNodeID >> nodeShift)
 	return

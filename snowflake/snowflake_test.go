@@ -132,7 +132,7 @@ func Test_CurrentTimestamp_Ok(t *testing.T) {
 	assert.NoError(e)
 }
 
-func Test_CurrentTimestamp_EpochInTheFuture(t *testing.T) {
+func Test_CurrentTimestamp_ExceedsMaxTime(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{
 		Settings: Settings{
@@ -146,7 +146,7 @@ func Test_CurrentTimestamp_EpochInTheFuture(t *testing.T) {
 	assert.Contains(e.Error(), "timestamp exceeds max time(2^39-1 * 10ms), please check the epoch settings")
 }
 
-func Test_CurrentTimestamp_ExceedsMaxTime(t *testing.T) {
+func Test_CurrentTimestamp_EpochInTheFuture(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{
 		Settings: Settings{
