@@ -65,8 +65,7 @@ func stockGenerator() *Generator {
 // NewGenerator create a generator with custom settings
 func NewGenerator(settings Settings) (*Generator, error) {
 	var g Generator
-	var err error
-	err = g.init(settings)
+	err := g.init(settings)
 	if err != nil {
 		return nil, err
 	}
