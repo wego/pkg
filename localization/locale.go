@@ -9,7 +9,7 @@ import (
 // I couldn't find any office source. But I try to cover at least common RTL languages.
 // One website to verify it: https://www.localeplanet.com/icu/ar/index.html
 var (
-	rtlLocales map[string]bool = map[string]bool{
+	rtlLocales = map[string]bool{
 		LocaleArabic:       true,
 		LocaleFarsiPersian: true,
 		LocaleHebrew:       true,
@@ -20,7 +20,7 @@ var (
 		LocaleYiddish:      true,
 	}
 
-	locations map[string]string = map[string]string{
+	locations = map[string]string{
 		SiteCodeAlgeria:               LocationAlgiers,
 		SiteCodeAngola:                LocationLuanda,
 		SiteCodeArgentina:             LocationBuenosAires,

@@ -12,13 +12,8 @@ type ContextKey string
 // Extras are extra information to be added into context
 type Extras map[string]interface{}
 
-// We have to put all the keys here for easier to manage
 const (
-	CtxClientCode     ContextKey = "clientCode"
-	CtxTransactionRef ContextKey = "transactionRef"
-	CtxPaymentRef     ContextKey = "paymentRef"
-	CtxDeploymentRef  ContextKey = "deploymentRef"
-
+	CtxClientCode ContextKey = "clientCode"
 	// keep it private to avoid conflicts
 	ctxExtras ContextKey = "extras"
 	ctxStatsD ContextKey = "statsD"

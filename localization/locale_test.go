@@ -11,7 +11,7 @@ import (
 func Test_NewContextWithLocale(t *testing.T) {
 	assert := assert.New(t)
 
-	// should return a backgroud context with default locale when don't pass anything
+	// should return a background context with default locale when don't pass anything
 	ctx := localization.NewContextWithLocale(nil, "")
 	assert.NotNil(ctx)
 	assert.Equal("en", localization.LocaleFromContext(ctx))

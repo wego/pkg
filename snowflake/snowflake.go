@@ -168,7 +168,10 @@ func (g *Generator) setNodeIDProvider(nodeIDProvider NodeIDProvider) (err error)
 // Decompose returns a map of snowflake id parts.
 func (g *Generator) Decompose(sid uint64) (id ID) {
 	timestamp := sid >> timeShift
-	id.Timestamp = time.UnixMilli(g.Epoch.UnixMilli() + int64(timestamp*timeUnit))
+	// FIXME:
+	// after updating to go 1.17 can be replaced with
+	// id.Timestamp = time.UnixMilli(g.Epoch.UnixMilli() + int64(timestamp*timeUnit))
+	id.Timestamp = unixMilli(g.epoch() + int64(timestamp*timeUnit))
 	id.Sequence = uint16(sid & maskSequence)
 	id.NodeID = uint16(sid & maskNodeID >> nodeShift)
 	return
@@ -214,6 +217,16 @@ func (g *Generator) currentTimestamp() (current int64, err error) {
 	return
 }
 
+// epoch returns Epoch as a Unix time, the number of milliseconds elapsed since
+// January 1, 1970, UTC. The result is undefined if the Unix time in
+// milliseconds cannot be represented by an int64 (a date more than 292 million
+// years before or after 1970). The result does not depend on the
+// location associated with t.
+// Copied from time.Time.UnixMilli
+func (g *Generator) epoch() int64 {
+	return g.Epoch.Unix()*1e3 + int64(g.Epoch.Nanosecond())/1e6
+}
+
 func (g *Generator) currentTimeSlot() int64 {
 	return since(g.Epoch)
 }
@@ -250,4 +263,11 @@ func (g *Generator) init(settings Settings) (err error) {
 		return
 	}
 	return
+}
+
+// unixMilli returns the local Time corresponding to the given Unix time,
+// msec milliseconds since January 1, 1970, UTC.
+// Copied from Go1.17 time.UnixMilli
+func unixMilli(ms int64) time.Time {
+	return time.Unix(ms/1e3, (ms%1e3)*1e6)
 }

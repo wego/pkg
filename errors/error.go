@@ -3,7 +3,7 @@ package errors
 import (
 	"net/http"
 
-	goerrors "errors"
+	goErrors "errors"
 
 	"gorm.io/gorm"
 )
@@ -14,7 +14,7 @@ type Op string
 // Kind error kind
 type Kind int
 
-// Error : wego custom error
+// Error custom error
 type Error struct {
 	Op   Op
 	Kind Kind
@@ -85,7 +85,7 @@ func (e *Error) Error() string {
 
 // ops return the stack of operation
 func ops(e *Error) []Op {
-	res := []Op{}
+	var res []Op
 	if e.Op != "" {
 		res = append(res, e.Op)
 	}
@@ -101,7 +101,7 @@ func ops(e *Error) []Op {
 
 // WrapGORMError wraps an GORM error into our error such as adding errors.Kind
 func WrapGORMError(op Op, err error) error {
-	if goerrors.Is(err, gorm.ErrRecordNotFound) {
+	if goErrors.Is(err, gorm.ErrRecordNotFound) {
 		return New(op, NotFound, err)
 	}
 	return New(op, err)

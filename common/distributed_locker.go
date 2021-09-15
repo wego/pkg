@@ -10,7 +10,7 @@ type UnLocker func()
 
 // DistributedLocker a distributed lock type
 type DistributedLocker interface {
-	// Lock lock the specific key
+	// Lock the specific key
 	Lock(key string) (UnLocker, error)
 }
 
@@ -21,7 +21,7 @@ type DMutex struct {
 	mutexes sync.Map
 }
 
-// Lock lock the specific key
+// Lock the specific key
 func (dm *DMutex) Lock(key string) (UnLocker, error) {
 	value, _ := dm.mutexes.LoadOrStore(dm.hash(key), &sync.Mutex{})
 	mtx := value.(*sync.Mutex)

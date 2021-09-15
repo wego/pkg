@@ -53,7 +53,7 @@ func RequestFromContext(ctx context.Context) (req *Request) {
 func LogUltronEx(msg *UltronExMsg) {
 	logger := loggers[logTypeUltronex]
 	if logger != nil && msg != nil {
-		// ultronex require the key as `msg`
+		// UltronEx require the key as `msg`
 		logger.Info("", zap.Object("msg", msg))
 	}
 }
@@ -72,15 +72,6 @@ func LogRequest(log *Request) {
 	if logger != nil && log != nil {
 		logger.Info("", log.fields()...)
 	}
-}
-
-// SetUltronExLog custom UltronEx logger
-// FIXME: create a logger service for mock
-func SetUltronExLog(uLog *zap.Logger) {
-	if len(loggers) == 0 {
-		loggers = make(map[logType]*zap.Logger, 2)
-	}
-	loggers[logTypeUltronex] = uLog
 }
 
 // Init initializes loggers
