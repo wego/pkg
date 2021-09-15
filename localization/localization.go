@@ -37,6 +37,7 @@ func RegisterLocales(locales []string, localeDir string) {
 	}
 }
 
+// Localize localizes a message & bind he data into message template
 func Localize(lang string, msgID string, data interface{}) (string, error) {
 	lang = strings.ToLower(lang)
 	localizer, ok := localizers.Load(lang)
@@ -51,6 +52,8 @@ func Localize(lang string, msgID string, data interface{}) (string, error) {
 	})
 }
 
+// LocalizeMulti localizes multiple messages & return a map from message ID to the localized message.
+// It returns an error when any of the message ID cannot be localized.
 func LocalizeMulti(lang string, msgIDs []string, data interface{}) (localizedMessages map[string]string, err error) {
 	localizedMessages = make(map[string]string, len(msgIDs))
 	for _, id := range msgIDs {
