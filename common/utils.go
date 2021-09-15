@@ -13,19 +13,15 @@ import (
 	"time"
 )
 
-// Int2String converts a number to a string using characters from chars.
+// Uint2String converts a number to a string using characters from chars.
 //
 // Validation:
-//  - `number` must >= 0
 //  - `length` must > 0
 //  - length of `chars` must >= 10
 //  - `paddingChars` must not be empty
 //  - `chars` & `paddingChars` must not overlap
 // If length of the result < required length, the result will be left padded with random characters from `paddingChars`.
-func Int2String(number int64, chars, paddingChars string, length int) (s string, err error) {
-	if number < 0 {
-		return s, fmt.Errorf("invalid input: number < 0")
-	}
+func Uint2String(number uint64, chars, paddingChars string, length int) (s string, err error) {
 	if length < 1 {
 		return s, fmt.Errorf("invalid input: length <= 0")
 	}
@@ -34,7 +30,7 @@ func Int2String(number int64, chars, paddingChars string, length int) (s string,
 		return
 	}
 
-	base := int64(len(chars))
+	base := uint64(len(chars))
 	for number > 0 {
 		i := number % base
 		s = string(chars[i]) + s
@@ -54,11 +50,11 @@ func Int2String(number int64, chars, paddingChars string, length int) (s string,
 	return s, nil
 }
 
-// String2Int is the revert of Int2String
+// String2Uint is the revert of Uint2String
 //  It returns negative result in 2 cases:
 //  - s contains character not exist in chars
 //  - the result is bigger than max int64 (integer overflow happen)
-func String2Int(s string, chars, paddingChars string) (n int64, err error) {
+func String2Uint(s string, chars, paddingChars string) (n uint64, err error) {
 	err = verifyInputChars(chars, paddingChars)
 	if err != nil {
 		return
@@ -77,9 +73,9 @@ func String2Int(s string, chars, paddingChars string) (n int64, err error) {
 	// n = 3*16^4 + 10*16^3 + 0*16^2 + 13*16^1 + 14*16^0 = 237790
 	base := len(chars)
 	for i := range s {
-		indexValue := int64(strings.IndexByte(chars, s[i]))
+		indexValue := uint64(strings.IndexByte(chars, s[i]))
 		exponent := len(s) - 1 - i
-		n += indexValue * int64(math.Pow(float64(base), float64(exponent)))
+		n += indexValue * uint64(math.Pow(float64(base), float64(exponent)))
 	}
 	return
 }
@@ -195,8 +191,8 @@ func TimeRef(v time.Time) *time.Time {
 
 // IDToRef convert defined ID to reference
 func IDToRef(id uint, prefix string, length int, refChars, refPaddingChars string) (string, error) {
-	ref, err := Int2String(
-		int64(id), refChars, refPaddingChars, length-len(prefix))
+	ref, err := Uint2String(
+		uint64(id), refChars, refPaddingChars, length-len(prefix))
 	if err != nil {
 		return "", fmt.Errorf("can not generate ref for ID %d with prefix %s and length %d", id, prefix, length)
 	}
@@ -204,12 +200,12 @@ func IDToRef(id uint, prefix string, length int, refChars, refPaddingChars strin
 }
 
 // RefToID convert defined reference to id
-func RefToID(ref, prefix string, refChars, refPaddingChars string) (int64, error) {
+func RefToID(ref, prefix string, refChars, refPaddingChars string) (uint64, error) {
 	ref = ref[len(prefix):]
 
-	n, err := String2Int(ref, refChars, refPaddingChars)
+	n, err := String2Uint(ref, refChars, refPaddingChars)
 	if err != nil {
-		return int64(0), fmt.Errorf("can not convert ref %s with prefix %s back to ID", ref, prefix)
+		return uint64(0), fmt.Errorf("can not convert ref %s with prefix %s back to ID", ref, prefix)
 	}
 	return n, nil
 }
