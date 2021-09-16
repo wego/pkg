@@ -14,17 +14,21 @@ type TestStruct struct {
 	Field2 int
 }
 
+var (
+	key common.ContextKey = "key"
+)
+
 func Test_GetString_ReturnEmpty_WithNilContext(t *testing.T) {
 	assert := assert.New(t)
 
-	str := common.GetString(nil, common.CtxClientCode)
+	str := common.GetString(nil, key)
 	assert.Empty(str)
 }
 
 func Test_GetString_ReturnEmpty_WhenKeyNotFound(t *testing.T) {
 	assert := assert.New(t)
 
-	str := common.GetString(context.Background(), common.CtxClientCode)
+	str := common.GetString(context.Background(), key)
 	assert.Empty(str)
 }
 
@@ -32,8 +36,8 @@ func Test_GetString_ReturnEmpty_WhenValueIsNotString(t *testing.T) {
 	assert := assert.New(t)
 
 	value := 123
-	ctx := context.WithValue(context.Background(), common.CtxClientCode, value)
-	str := common.GetString(ctx, common.CtxClientCode)
+	ctx := context.WithValue(context.Background(), key, value)
+	str := common.GetString(ctx, key)
 	assert.Empty(str)
 }
 
@@ -41,9 +45,78 @@ func Test_GetString_ReturnCorrectString_WhenKeyFound(t *testing.T) {
 	assert := assert.New(t)
 
 	value := "value"
-	ctx := context.WithValue(context.Background(), common.CtxClientCode, value)
-	str := common.GetString(ctx, common.CtxClientCode)
+	ctx := context.WithValue(context.Background(), key, value)
+	str := common.GetString(ctx, key)
 	assert.Equal(value, str)
+}
+
+func Test_GetBasics_ReturnNil_WithNilContext(t *testing.T) {
+	assert := assert.New(t)
+
+	basics := common.GetBasics(nil)
+	assert.Nil(basics)
+}
+
+func Test_GetBasics_ReturnNil_WhenBasicsNotFound(t *testing.T) {
+	assert := assert.New(t)
+
+	basics := common.GetBasics(context.Background())
+	assert.Nil(basics)
+}
+
+func Test_GetBasics_ReturnCorrectBasics(t *testing.T) {
+	assert := assert.New(t)
+
+	// test SetBasics with normal parent
+	src := map[string]interface{}{"test": TestStruct{"yo", 1}}
+	ctx := common.SetBasics(context.Background(), src)
+
+	basics := common.GetBasics(ctx)
+	assert.Len(basics, 1)
+	value, ok := basics["test"]
+	assert.True(ok)
+	data, ok := value.(TestStruct)
+	assert.True(ok)
+	assert.Equal("yo", data.Field1)
+	assert.Equal(1, data.Field2)
+	// test SetBasics with nil parent
+	src = map[string]interface{}{"test2": TestStruct{"yo2", 2}}
+	ctx = common.SetBasics(nil, src)
+
+	basics = common.GetBasics(ctx)
+	assert.Len(basics, 1)
+	value, ok = basics["test2"]
+	assert.True(ok)
+	data, ok = value.(TestStruct)
+	assert.True(ok)
+	assert.Equal("yo2", data.Field1)
+	assert.Equal(2, data.Field2)
+}
+
+func Test_GetBasic_ReturnCorrectBasics(t *testing.T) {
+	assert := assert.New(t)
+	key1 := "test1"
+	key2 := "test2"
+
+	// test SetBasics with normal parent
+	src := map[string]interface{}{key1: TestStruct{"yo", 1}}
+	ctx := common.SetBasics(context.Background(), src)
+
+	basic := common.GetBasic(ctx, key1)
+	data, ok := basic.(TestStruct)
+	assert.True(ok)
+	assert.Equal("yo", data.Field1)
+	assert.Equal(1, data.Field2)
+
+	// test SetBasics with nil parent
+	src = map[string]interface{}{key2: TestStruct{"yo2", 2}}
+	ctx = common.SetBasics(nil, src)
+
+	basic = common.GetBasic(ctx, key2)
+	data, ok = basic.(TestStruct)
+	assert.True(ok)
+	assert.Equal("yo2", data.Field1)
+	assert.Equal(2, data.Field2)
 }
 
 func Test_GetExtras_ReturnNil_WithNilContext(t *testing.T) {
