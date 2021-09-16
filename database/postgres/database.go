@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/spf13/viper"
 	"github.com/wego/pkg/common"
-	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
-	gormtrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gorm.io/gorm.v1"
+	sqlTrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
+	gormTrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gorm.io/gorm.v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -34,8 +34,8 @@ func NewConnection(dbConfigFilePath string) (*gorm.DB, error) {
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		config.Username, config.Password, config.Host, config.Port, config.Database)
-	sqltrace.Register("pgx", &stdlib.Driver{}, sqltrace.WithServiceName(viper.GetString("service_name")))
-	sqlDB, err := sqltrace.Open("pgx", connStr)
+	sqlTrace.Register("pgx", &stdlib.Driver{}, sqlTrace.WithServiceName(viper.GetString("service_name")))
+	sqlDB, err := sqlTrace.Open("pgx", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func NewConnection(dbConfigFilePath string) (*gorm.DB, error) {
 	sqlDB.SetMaxOpenConns(config.MaxOpenConns)
 	sqlDB.SetConnMaxLifetime(time.Duration(config.ConnMaxLifeTimeMinutes) * time.Minute)
 
-	db, err := gormtrace.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
+	db, err := gormTrace.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
 		Logger:  logger.Default.LogMode(logger.Silent),
 		NowFunc: func() time.Time { return common.CurrentUTCTime() },
 	})
