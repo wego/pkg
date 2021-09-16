@@ -30,7 +30,7 @@ func GetString(ctx context.Context, key ContextKey) (value string) {
 	return
 }
 
-// GetBasic gets basics from the context if any
+// GetBasic gets basic from the context with key
 func GetBasic(ctx context.Context, key string) (value interface{}) {
 	if ctx != nil {
 		if basics, ok := ctx.Value(ctxBasics).(Basics); ok {
@@ -48,7 +48,7 @@ func GetBasics(ctx context.Context) (value Basics) {
 	return
 }
 
-// SetBasics returns a copy of parent context with extras added into it
+// SetBasics returns a copy of parent context with basics added into it
 func SetBasics(parent context.Context, basics Basics) context.Context {
 	if parent == nil {
 		parent = context.Background()
