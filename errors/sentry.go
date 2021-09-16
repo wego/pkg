@@ -2,6 +2,7 @@ package errors
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/getsentry/sentry-go"
@@ -35,25 +36,12 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 
 	e, ok := err.(*Error)
 	if ok {
-		clientCode := common.GetString(ctx, common.CtxClientCode)
-		if len(clientCode) > 0 {
-			scope.SetTag("client_code", clientCode)
-			fingerprint = append(fingerprint, clientCode)
-		}
-		transRef := common.GetString(ctx, common.CtxTransactionRef)
-		if len(transRef) > 0 {
-			scope.SetTag("transaction_ref", transRef)
-			fingerprint = append(fingerprint, transRef)
-		}
-		paymentRef := common.GetString(ctx, common.CtxPaymentRef)
-		if len(paymentRef) > 0 {
-			scope.SetTag("payment_ref", paymentRef)
-			fingerprint = append(fingerprint, paymentRef)
-		}
-		deploymentRef := common.GetString(ctx, common.CtxDeploymentRef)
-		if len(deploymentRef) > 0 {
-			scope.SetTag("deployment_ref", deploymentRef)
-			fingerprint = append(fingerprint, deploymentRef)
+		basics := common.GetBasics(ctx)
+		for key, value := range basics {
+			if tag, err := json.Marshal(value); err == nil {
+				scope.SetTag(key, string(tag))
+				fingerprint = append(fingerprint, key)
+			}
 		}
 
 		// extra is not searchable in sentry
