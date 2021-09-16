@@ -12,9 +12,12 @@ type ContextKey string
 // Extras are extra information to be added into context
 type Extras map[string]interface{}
 
+// Basics are basics information to be added into context
+type Basics map[string]interface{}
+
 const (
-	CtxClientCode ContextKey = "clientCode"
 	// keep it private to avoid conflicts
+	ctxBasics ContextKey = "basics"
 	ctxExtras ContextKey = "extras"
 	ctxStatsD ContextKey = "statsD"
 )
@@ -25,6 +28,32 @@ func GetString(ctx context.Context, key ContextKey) (value string) {
 		value, _ = ctx.Value(key).(string)
 	}
 	return
+}
+
+// GetBasic gets basic from the context with key
+func GetBasic(ctx context.Context, key string) (value interface{}) {
+	if ctx != nil {
+		if basics, ok := ctx.Value(ctxBasics).(Basics); ok {
+			value, _ = basics[key]
+		}
+	}
+	return
+}
+
+// GetBasics gets basics from the context if any
+func GetBasics(ctx context.Context) (value Basics) {
+	if ctx != nil {
+		value, _ = ctx.Value(ctxBasics).(Basics)
+	}
+	return
+}
+
+// SetBasics returns a copy of parent context with basics added into it
+func SetBasics(parent context.Context, basics Basics) context.Context {
+	if parent == nil {
+		parent = context.Background()
+	}
+	return context.WithValue(parent, ctxBasics, basics)
 }
 
 // GetExtras gets extras from the context if any
