@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-
 	"github.com/DataDog/datadog-go/statsd"
 )
 
@@ -46,6 +45,21 @@ func GetBasics(ctx context.Context) (value Basics) {
 		value, _ = ctx.Value(ctxBasics).(Basics)
 	}
 	return
+}
+
+// SetBasic returns a copy of parent context with basic key value added into it
+func SetBasic(parent context.Context, key string, value interface{}) context.Context {
+	if parent == nil {
+		parent = context.Background()
+	}
+
+	basics, ok := parent.Value(ctxBasics).(Basics)
+	if !ok {
+		basics = make(map[string]interface{})
+	}
+	basics[key] = value
+
+	return context.WithValue(parent, ctxBasics, basics)
 }
 
 // SetBasics returns a copy of parent context with basics added into it

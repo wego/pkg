@@ -50,6 +50,33 @@ func Test_GetString_ReturnCorrectString_WhenKeyFound(t *testing.T) {
 	assert.Equal(value, str)
 }
 
+func Test_SetBasic_ReturnNil_WithNilContext(t *testing.T) {
+	assert := assert.New(t)
+	key := "key"
+	val := TestStruct{
+		Field1: "f1",
+		Field2: 1,
+	}
+	ctx := common.SetBasic(nil, key, val)
+	assert.NotNil(ctx)
+
+	assert.EqualValues(common.GetBasic(ctx, key), val)
+}
+
+func Test_SetBasic_ReturnNil_WithContext(t *testing.T) {
+	assert := assert.New(t)
+	key := "key"
+	val := TestStruct{
+		Field1: "f1",
+		Field2: 1,
+	}
+	ctx := common.SetBasic(context.Background(), key, val)
+	assert.NotNil(ctx)
+
+	assert.EqualValues(common.GetBasic(ctx, key), val)
+	assert.Nil(common.GetBasic(ctx, "1"))
+}
+
 func Test_GetBasics_ReturnNil_WithNilContext(t *testing.T) {
 	assert := assert.New(t)
 
