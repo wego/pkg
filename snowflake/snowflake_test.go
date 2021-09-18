@@ -53,16 +53,16 @@ func Test_SetEpoch_MaxTimeExceeded(t *testing.T) {
 func Test_SetResolver_Nil(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{}
-	err := g.setResolver(nil)
+	err := g.setSequenceGenerator(nil)
 	assert.Error(err)
 }
 
 func Test_SetResolver_Ok(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{}
-	err := g.setResolver(AtomicResolver)
+	err := g.setSequenceGenerator(AtomicGenerator)
 	assert.NoError(err)
-	err = g.setResolver(AtomicResolver)
+	err = g.setSequenceGenerator(AtomicGenerator)
 	assert.NoError(err)
 }
 
@@ -70,8 +70,8 @@ func Test_SetNodeIDProvider_Nil(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{
 		Settings: Settings{
-			Epoch:            time.Now(),
-			SequenceResolver: AtomicResolver,
+			Epoch:             time.Now(),
+			SequenceGenerator: AtomicGenerator,
 		},
 	}
 	err := g.setNodeIDProvider(nil)
@@ -83,8 +83,8 @@ func Test_SetNodeIDProvider_Error(t *testing.T) {
 	errorMsg := "some error"
 	g := &Generator{
 		Settings: Settings{
-			Epoch:            time.Now(),
-			SequenceResolver: AtomicResolver,
+			Epoch:             time.Now(),
+			SequenceGenerator: AtomicGenerator,
 		},
 	}
 	err := g.setNodeIDProvider(func() (uint16, error) {
@@ -97,8 +97,8 @@ func Test_SetNodeIDProvider_Error(t *testing.T) {
 func Test_SetNodeIDProvider_Ok(t *testing.T) {
 	g := &Generator{
 		Settings: Settings{
-			Epoch:            time.Now(),
-			SequenceResolver: AtomicResolver,
+			Epoch:             time.Now(),
+			SequenceGenerator: AtomicGenerator,
 		},
 	}
 
@@ -123,8 +123,8 @@ func Test_CurrentTimestamp_Ok(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{
 		Settings: Settings{
-			Epoch:            time.Now().Add(-24 * time.Hour),
-			SequenceResolver: AtomicResolver,
+			Epoch:             time.Now().Add(-24 * time.Hour),
+			SequenceGenerator: AtomicGenerator,
 		},
 	}
 	v, e := g.currentTimestamp()
@@ -136,8 +136,8 @@ func Test_CurrentTimestamp_ExceedsMaxTime(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{
 		Settings: Settings{
-			Epoch:            time.Date(1751, 1, 1, 1, 0, 0, 0, time.UTC),
-			SequenceResolver: AtomicResolver,
+			Epoch:             time.Date(1751, 1, 1, 1, 0, 0, 0, time.UTC),
+			SequenceGenerator: AtomicGenerator,
 		},
 	}
 	v, e := g.currentTimestamp()
@@ -150,8 +150,8 @@ func Test_CurrentTimestamp_EpochInTheFuture(t *testing.T) {
 	assert := assert.New(t)
 	g := &Generator{
 		Settings: Settings{
-			Epoch:            time.Now().Add(24 * time.Hour),
-			SequenceResolver: AtomicResolver,
+			Epoch:             time.Now().Add(24 * time.Hour),
+			SequenceGenerator: AtomicGenerator,
 		},
 	}
 	v, e := g.currentTimestamp()
@@ -163,8 +163,8 @@ func Test_CurrentTimestamp_EpochInTheFuture(t *testing.T) {
 func Test_Init_EpochError(t *testing.T) {
 	assert := assert.New(t)
 	s := Settings{
-		Epoch:            time.Now().Add(24 * time.Hour),
-		SequenceResolver: AtomicResolver,
+		Epoch:             time.Now().Add(24 * time.Hour),
+		SequenceGenerator: AtomicGenerator,
 	}
 	g := &Generator{}
 	err := g.init(s)
@@ -172,24 +172,24 @@ func Test_Init_EpochError(t *testing.T) {
 	assert.Contains(err.Error(), "Epoch cannot be in the future")
 }
 
-func Test_Init_SequenceResolverError(t *testing.T) {
+func Test_Init_SequenceGeneratorError(t *testing.T) {
 	assert := assert.New(t)
 	s := Settings{
-		Epoch:            time.Now().Add(-24 * time.Hour),
-		SequenceResolver: nil,
+		Epoch:             time.Now().Add(-24 * time.Hour),
+		SequenceGenerator: nil,
 	}
 	g := &Generator{}
 	err := g.init(s)
 	assert.Error(err)
-	assert.Contains(err.Error(), "SequenceResolver cannot be nil")
+	assert.Contains(err.Error(), "SequenceGenerator cannot be nil")
 }
 
 func Test_Init_NodeIDProviderError(t *testing.T) {
 	assert := assert.New(t)
 	s := Settings{
-		Epoch:            time.Now().Add(-24 * time.Hour),
-		SequenceResolver: AtomicResolver,
-		NodeIDProvider:   nil,
+		Epoch:             time.Now().Add(-24 * time.Hour),
+		SequenceGenerator: AtomicGenerator,
+		NodeIDProvider:    nil,
 	}
 	g := &Generator{}
 	err := g.init(s)

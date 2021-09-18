@@ -4,13 +4,13 @@ go 1.17
 
 require (
 	github.com/stretchr/testify v1.7.0
-	github.com/wego/pkg/common v0.1.1
-	github.com/wego/pkg/errors v0.1.1
+	github.com/wego/pkg/common v0.1.4
+	github.com/wego/pkg/errors v0.1.3
 	github.com/wego/pkg/host v0.1.0
 )
 
 require (
-	github.com/DataDog/datadog-go v4.8.1+incompatible // indirect
+	github.com/DataDog/datadog-go v4.8.2+incompatible // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/getsentry/sentry-go v0.11.0 // indirect
@@ -26,5 +26,5 @@ require (
 	golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	gorm.io/gorm v1.21.14 // indirect
+	gorm.io/gorm v1.21.15 // indirect
 )

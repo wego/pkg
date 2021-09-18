@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"encoding/json"
+	"github.com/wego/pkg/common"
 	"strings"
 	"time"
 
@@ -18,18 +20,13 @@ type header struct {
 
 // PartnerRequest contains information of requests we sent to our partners
 type PartnerRequest struct {
-	PartnerCode string
-	PartnerRef  string
 	Request
 }
 
 // Request contains general information of a request
 type Request struct {
 	Type            RequestType
-	PaymentRef      string
-	DeploymentRef   string
-	ClientCode      string
-	TransactionRef  string
+	Basics          common.Basics
 	Method          string
 	URL             string
 	RequestHeaders  Headers
@@ -44,22 +41,18 @@ type Request struct {
 }
 
 func (r *PartnerRequest) fields() []zapcore.Field {
-	fields := []zapcore.Field{
-		zap.String("partner_code", r.PartnerCode),
-		zap.String("partner_ref", r.PartnerRef),
-	}
-	fields = append(fields, r.Request.fields()...)
-
-	return fields
+	return r.Request.fields()
 }
 
 func (r *Request) fields() []zapcore.Field {
-	fields := []zapcore.Field{
+	var fields []zapcore.Field
+	for key, value := range r.Basics {
+		if v, err := json.Marshal(value); err == nil {
+			fields = append(fields, zap.String(key, string(v)))
+		}
+	}
+	fields = append(fields, []zapcore.Field{
 		zap.String("type", string(r.Type)),
-		zap.String("payment_ref", r.PaymentRef),
-		zap.String("virtual_card_deployment_ref", r.DeploymentRef),
-		zap.String("client_code", r.ClientCode),
-		zap.String("transaction_ref", r.TransactionRef),
 		zap.String("method", r.Method),
 		zap.String("url", r.URL),
 		zap.Array("request_headers", r.RequestHeaders),
@@ -70,7 +63,8 @@ func (r *Request) fields() []zapcore.Field {
 		zap.String("response_body", r.ResponseBody),
 		zap.String("requested_at", r.RequestedAt.Format(time.RFC3339)),
 		zap.Int64("duration_in_ms", r.Duration.Milliseconds()),
-	}
+	}...)
+
 	if r.Error != nil {
 		fields = append(fields, zap.String("error", r.Error.Error()))
 	}
@@ -85,10 +79,13 @@ func (h Headers) MarshalLogArray(enc zapcore.ArrayEncoder) error {
 		if sensitive := sensitiveHeaders[strings.ToLower(k)]; sensitive {
 			v = defaultReplacement
 		}
-		enc.AppendObject(header{
+		err := enc.AppendObject(header{
 			name:  k,
 			value: v,
 		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

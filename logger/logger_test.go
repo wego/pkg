@@ -8,6 +8,10 @@ import (
 	"github.com/wego/pkg/logger"
 )
 
+var (
+	requestType logger.RequestType = "RequestType"
+)
+
 func Test_ContextWithRequestType(t *testing.T) {
 	assert := assert.New(t)
 
@@ -17,7 +21,7 @@ func Test_ContextWithRequestType(t *testing.T) {
 	ctx = logger.ContextWithRequestType(context.Background(), "")
 	assert.NotNil(ctx)
 
-	ctx = logger.ContextWithRequestType(context.Background(), logger.RequestTypeAuthorizePayment)
+	ctx = logger.ContextWithRequestType(context.Background(), requestType)
 	assert.NotNil(ctx)
 }
 
@@ -30,7 +34,7 @@ func Test_RequestTypeFromContext(t *testing.T) {
 	reqType = logger.RequestTypeFromContext(context.Background())
 	assert.Zero(reqType)
 
-	ctx := logger.ContextWithRequestType(nil, logger.RequestTypeAuthorizePayment)
+	ctx := logger.ContextWithRequestType(nil, requestType)
 	reqType = logger.RequestTypeFromContext(ctx)
-	assert.Equal(logger.RequestTypeAuthorizePayment, reqType)
+	assert.Equal(requestType, reqType)
 }
