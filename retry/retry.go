@@ -29,9 +29,7 @@ func (r *retryClassifier) Classify(err error) retrier.Action {
 			http.StatusInternalServerError,
 			http.StatusBadGateway,
 			http.StatusGatewayTimeout,
-			http.StatusTooManyRequests,
-			http.StatusUnauthorized,
-			http.StatusForbidden:
+			http.StatusTooManyRequests:
 			return retrier.Retry
 		}
 	default:
