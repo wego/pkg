@@ -31,12 +31,7 @@ const (
 	Unauthorized  Kind = http.StatusUnauthorized
 	Unprocessable Kind = http.StatusUnprocessableEntity
 	Unexpected    Kind = http.StatusInternalServerError
-	Retry         Kind = -1
-)
-
-var (
-	// RetryError an error need to retry
-	RetryError = New(Retry)
+	Retry         Kind = -1 // Retry indicate an error we need to retry the action
 )
 
 // New construct a new error, default having kind Unexpected
