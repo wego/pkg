@@ -15,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/valyala/fastjson v1.6.3
 	github.com/wego/pkg/common v0.1.4
-	github.com/wego/pkg/errors v0.1.3
+	github.com/wego/pkg/errors v0.1.4
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1
