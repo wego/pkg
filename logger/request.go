@@ -18,11 +18,6 @@ type header struct {
 	value string
 }
 
-// PartnerRequest contains information of requests we sent to our partners
-type PartnerRequest struct {
-	Request
-}
-
 // Request contains general information of a request
 type Request struct {
 	Type            RequestType
@@ -40,8 +35,36 @@ type Request struct {
 	Error           error
 }
 
-func (r *PartnerRequest) fields() []zapcore.Field {
-	return r.Request.fields()
+// SetBasics set the basics value
+func (r *Request) SetBasics(basics map[string]interface{}) {
+	r.Basics = basics
+}
+
+// AddBasics add the basics value
+func (r *Request) AddBasics(basics map[string]interface{}) {
+	if r.Basics == nil {
+		r.Basics = basics
+		return
+	}
+	for key, val := range basics {
+		r.Basics[key] = val
+	}
+}
+
+// SetBasic set the basic value for key
+func (r *Request) SetBasic(key string, val interface{}) {
+	if r.Basics == nil {
+		r.Basics = make(common.Basics)
+	}
+	r.Basics[key] = val
+}
+
+// GetBasic set the basic value for key
+func (r *Request) GetBasic(key string) interface{} {
+	if r.Basics == nil {
+		return nil
+	}
+	return r.Basics[key]
 }
 
 func (r *Request) fields() []zapcore.Field {
