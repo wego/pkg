@@ -27,25 +27,25 @@ const (
 // Settings snowflake generate settings
 type Settings struct {
 	// Epoch base time for the timestamp Ref: https://en.wikipedia.org/wiki/Epoch_(computing)
-	Epoch            time.Time
-	SequenceResolver SequenceResolver
-	NodeIDProvider   NodeIDProvider
+	Epoch             time.Time
+	SequenceGenerator SequenceGenerator
+	NodeIDProvider    NodeIDProvider
 }
 
 // Generator a snowflakeID generator
 type Generator struct {
 	Settings
 	epochGuard          sync.Once
-	resolverGuard       sync.Once
+	generatorGuard      sync.Once
 	nodeIDProviderGuard sync.Once
 	nodeID              uint16
 }
 
 var (
 	defaultSettings = Settings{
-		Epoch:            time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC),
-		SequenceResolver: AtomicResolver,
-		NodeIDProvider:   privateIP,
+		Epoch:             time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC),
+		SequenceGenerator: AtomicGenerator,
+		NodeIDProvider:    privateIP,
 	}
 	defaultGenerator *Generator
 	defaultGuard     sync.Once
@@ -91,12 +91,12 @@ func Decompose(id uint64) ID {
 	return stockGenerator().Decompose(id)
 }
 
-// SequenceResolver the snowflake sequence Resolver.
+// SequenceGenerator the snowflake sequence generator.
 // When use the snowflake algorithm to generate unique ID, make sure:
 //   The sequence-number generated in the same 10 milliseconds of the same node is unique.
-// Based on this, we create this interface provides following Resolver:
-//   AtomicResolver : base sync/atomic (by default).
-type SequenceResolver func(current int64) (uint16, error)
+// Based on this, we create this interface provides following Generator:
+//   AtomicGenerator : base sync/atomic (by default).
+type SequenceGenerator func(current int64) (uint16, error)
 
 // NodeIDProvider the snowflake Node Generator provider.
 type NodeIDProvider func() (uint16, error)
@@ -132,15 +132,15 @@ func (g *Generator) setEpoch(epoch time.Time) (err error) {
 	return
 }
 
-// setResolver set the sequence custom Resolver
-func (g *Generator) setResolver(sequenceResolver SequenceResolver) (err error) {
-	const op errors.Op = "snowflakeGenerator.setResolver"
-	if sequenceResolver == nil {
-		err = errors.New(op, "SequenceResolver cannot be nil")
+// setSequenceGenerator set the custom sequence generator
+func (g *Generator) setSequenceGenerator(sequenceGenerator SequenceGenerator) (err error) {
+	const op errors.Op = "snowflakeGenerator.setSequenceGenerator"
+	if sequenceGenerator == nil {
+		err = errors.New(op, "SequenceGenerator cannot be nil")
 		return
 	}
-	g.resolverGuard.Do(func() {
-		g.SequenceResolver = sequenceResolver
+	g.generatorGuard.Do(func() {
+		g.SequenceGenerator = sequenceGenerator
 	})
 	return
 }
@@ -186,7 +186,7 @@ func (g *Generator) NextID() (sid uint64, err error) {
 		return
 	}
 
-	seq, err = g.SequenceResolver(current)
+	seq, err = g.SequenceGenerator(current)
 	if err != nil {
 		return
 	}
@@ -197,7 +197,7 @@ func (g *Generator) NextID() (sid uint64, err error) {
 			return
 		}
 
-		seq, err = g.SequenceResolver(current)
+		seq, err = g.SequenceGenerator(current)
 		if err != nil {
 			return
 		}
@@ -254,7 +254,7 @@ func (g *Generator) init(settings Settings) (err error) {
 	if err != nil {
 		return
 	}
-	err = g.setResolver(settings.SequenceResolver)
+	err = g.setSequenceGenerator(settings.SequenceGenerator)
 	if err != nil {
 		return
 	}

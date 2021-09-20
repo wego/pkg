@@ -2,30 +2,32 @@ package snowflake
 
 import "sync/atomic"
 
-var lastTime int64
-var lastSequence uint32
+var (
+	lastTimeSlot int64
+	lastSequence uint32
+)
 
-// AtomicResolver define as atomic sequence Resolver, base on standard sync/atomic.
-func AtomicResolver(current int64) (uint16, error) {
-	var last int64
+// AtomicGenerator define as atomic sequence Resolver, base on standard sync/atomic.
+func AtomicGenerator(currentTime int64) (uint16, error) {
+	var lastTime int64
 	var currentSeq, lastSeq uint32
 
 	for {
-		last = atomic.LoadInt64(&lastTime)
+		lastTime = atomic.LoadInt64(&lastTimeSlot)
 		lastSeq = atomic.LoadUint32(&lastSequence)
 
-		if last > current {
+		if lastTime > currentTime {
 			return maxSequence, nil
 		}
 
-		if last == current {
+		if lastTime == currentTime {
 			currentSeq = maxSequence & (lastSeq + 1)
 			if currentSeq == 0 {
 				return maxSequence, nil
 			}
 		}
 
-		if atomic.CompareAndSwapInt64(&lastTime, last, current) &&
+		if atomic.CompareAndSwapInt64(&lastTimeSlot, lastTime, currentTime) &&
 			atomic.CompareAndSwapUint32(&lastSequence, lastSeq, currentSeq) {
 			return uint16(currentSeq), nil
 		}

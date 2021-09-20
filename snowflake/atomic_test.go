@@ -5,7 +5,7 @@ import (
 )
 
 func TestAtomicResolver(t *testing.T) {
-	id, _ := AtomicResolver(1)
+	id, _ := AtomicGenerator(1)
 
 	if id != 0 {
 		t.Error("Sequence should be equal 0")
@@ -15,13 +15,13 @@ func TestAtomicResolver(t *testing.T) {
 func BenchmarkCombinationParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _ = AtomicResolver(1)
+			_, _ = AtomicGenerator(1)
 		}
 	})
 }
 
 func BenchmarkAtomicResolver(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = AtomicResolver(1)
+		_, _ = AtomicGenerator(1)
 	}
 }
