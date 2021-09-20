@@ -23,7 +23,6 @@ func (r *retryClassifier) Classify(err error) retrier.Action {
 			return retrier.Retry
 		}
 		switch errors.Code(err) {
-		// retry only on 500,502/504/429/401/403
 		case
 			int(errors.Retry),
 			http.StatusInternalServerError,
