@@ -89,8 +89,8 @@ func SetExtras(parent context.Context, extras Extras) context.Context {
 // GetExtra gets Extra from the context with key
 func GetExtra(ctx context.Context, key string) (value interface{}) {
 	if ctx != nil {
-		if Extras, ok := ctx.Value(ctxExtras).(Extras); ok {
-			value, _ = Extras[key]
+		if extras, ok := ctx.Value(ctxExtras).(Extras); ok {
+			value, _ = extras[key]
 		}
 	}
 	return
@@ -102,13 +102,13 @@ func SetExtra(parent context.Context, key string, value interface{}) context.Con
 		parent = context.Background()
 	}
 
-	Extras, ok := parent.Value(ctxExtras).(Extras)
+	extras, ok := parent.Value(ctxExtras).(Extras)
 	if !ok {
-		Extras = make(map[string]interface{})
+		extras = make(map[string]interface{})
 	}
-	Extras[key] = value
+	extras[key] = value
 
-	return context.WithValue(parent, ctxExtras, Extras)
+	return context.WithValue(parent, ctxExtras, extras)
 }
 
 // GetStatsD gets statsD client from the context if any
