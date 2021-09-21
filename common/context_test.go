@@ -52,28 +52,49 @@ func Test_GetString_ReturnCorrectString_WhenKeyFound(t *testing.T) {
 
 func Test_SetBasic_ReturnNil_WithNilContext(t *testing.T) {
 	assert := assert.New(t)
-	key := "key"
-	val := TestStruct{
+	key1 := "key1"
+	val1 := TestStruct{
 		Field1: "f1",
 		Field2: 1,
 	}
-	ctx := common.SetBasic(nil, key, val)
-	assert.NotNil(ctx)
 
-	assert.EqualValues(common.GetBasic(ctx, key), val)
+	key2 := "key2"
+	val2 := TestStruct{
+		Field1: "f2",
+		Field2: 2,
+	}
+	ctx := common.SetBasic(nil, key1, val1)
+	assert.NotNil(ctx)
+	assert.EqualValues(common.GetBasic(ctx, key1), val1)
+
+	ctx = common.SetBasic(ctx, key2, val2)
+	assert.NotNil(ctx)
+	assert.EqualValues(common.GetBasic(ctx, key1), val1)
+	assert.EqualValues(common.GetBasic(ctx, key2), val2)
 }
 
 func Test_SetBasic_ReturnNil_WithContext(t *testing.T) {
 	assert := assert.New(t)
-	key := "key"
-	val := TestStruct{
+	key1 := "key1"
+	val1 := TestStruct{
 		Field1: "f1",
 		Field2: 1,
 	}
-	ctx := common.SetBasic(context.Background(), key, val)
-	assert.NotNil(ctx)
 
-	assert.EqualValues(common.GetBasic(ctx, key), val)
+	key2 := "key2"
+	val2 := TestStruct{
+		Field1: "f2",
+		Field2: 2,
+	}
+	ctx := common.SetBasic(context.Background(), key1, val1)
+	assert.NotNil(ctx)
+	assert.EqualValues(common.GetBasic(ctx, key1), val1)
+
+	ctx = common.SetBasic(ctx, key2, val2)
+	assert.NotNil(ctx)
+	assert.EqualValues(common.GetBasic(ctx, key1), val1)
+	assert.EqualValues(common.GetBasic(ctx, key2), val2)
+
 	assert.Nil(common.GetBasic(ctx, "1"))
 }
 
@@ -185,6 +206,55 @@ func Test_GetExtras_ReturnCorrectExtras(t *testing.T) {
 	value, ok = extras["test2"]
 	assert.True(ok)
 	data, ok = value.(TestStruct)
+	assert.True(ok)
+	assert.Equal("yo2", data.Field1)
+	assert.Equal(2, data.Field2)
+}
+
+func Test_SetExtra_ReturnNil_WithNilContext(t *testing.T) {
+	assert := assert.New(t)
+	key1 := "key1"
+	val1 := TestStruct{
+		Field1: "f1",
+		Field2: 1,
+	}
+
+	key2 := "key2"
+	val2 := TestStruct{
+		Field1: "f2",
+		Field2: 2,
+	}
+	ctx := common.SetExtra(nil, key1, val1)
+	assert.NotNil(ctx)
+	assert.EqualValues(common.GetExtra(ctx, key1), val1)
+
+	ctx = common.SetExtra(ctx, key2, val2)
+	assert.NotNil(ctx)
+	assert.EqualValues(common.GetExtra(ctx, key1), val1)
+	assert.EqualValues(common.GetExtra(ctx, key2), val2)
+}
+
+func Test_GetExtra_ReturnCorrectExtras(t *testing.T) {
+	assert := assert.New(t)
+	key1 := "test1"
+	key2 := "test2"
+
+	// test SetExtras with normal parent
+	src := map[string]interface{}{key1: TestStruct{"yo", 1}}
+	ctx := common.SetExtras(context.Background(), src)
+
+	extra := common.GetExtra(ctx, key1)
+	data, ok := extra.(TestStruct)
+	assert.True(ok)
+	assert.Equal("yo", data.Field1)
+	assert.Equal(1, data.Field2)
+
+	// test SetExtras with nil parent
+	src = map[string]interface{}{key2: TestStruct{"yo2", 2}}
+	ctx = common.SetExtras(nil, src)
+
+	extra = common.GetExtra(ctx, key2)
+	data, ok = extra.(TestStruct)
 	assert.True(ok)
 	assert.Equal("yo2", data.Field1)
 	assert.Equal(2, data.Field2)
