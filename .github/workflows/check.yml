@@ -1,0 +1,46 @@
+name: Run Style Check And Unit Test
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.8
+
+      - name: Set up tools
+        run: |
+          apt update && apt -y upgrade
+          apt install -y build-essential bc
+
+      - name: Install mockery and golint
+        run: |
+          go install golang.org/x/lint/golint@latest
+
+      - name: Style Check
+        run: |
+          for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
+            pushd "$pkg" > /dev/null 2>&1 || exit 255
+            go vet ./... || exit 255
+            golint -set_exit_status ./... || exit 255
+            popd > /dev/null 2>&1 || exit 255
+          done
+
+      - name: Run Unit Test
+        run: |
+          for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
+            pushd > /dev/null 2>&1 "$pkg" || exit 255
+            num_of_pros=$(grep -c ^processor /proc/cpuinfo)
+            go test ./... -race -cover -p "$num_of_pros"
+            popd > /dev/null 2>&1 || exit 255
+          done

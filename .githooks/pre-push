@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
+    pushd "$pkg" > /dev/null 2>&1 || exit 255
+    go vet ./... || exit 255
+    golint -set_exit_status ./... || exit 255
+    popd > /dev/null 2>&1 || exit 255
+done
