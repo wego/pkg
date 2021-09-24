@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
+  pkg=$(echo "$pkg" | sed 's/\.\///')
+  latest_version=$(git tag --sort=committerdate -l "$pkg/*" | head -1 | grep -Eo 'v.*')
+  minor_version=$(echo "$latest_version" | rev | cut -d'.' -f 1 | rev)
+  manor_version=$(echo "$latest_version" | rev | cut -d'.' -f2- | rev)
+  changes=$(git rev-list --count "$pkg/$latest_version"..HEAD)
+  if [ "$changes" -gt 0 ]; then
+    current_version=$manor_version.$minor_version
+    new_minor_version=$((minor_version + 1))
+    new_version=$manor_version.$new_minor_version
+    tag=$pkg/$new_version
+    echo "tagging package $pkg with version $new_version from $current_version"
+    git tag "$tag"
+    for remote in $(git remote); do
+      remote_repo=$(git remote get-url "$remote")
+      echo "pushing $tag to $remote_repo"
+      git push "$remote" "$tag"
+    done
+  else
+    echo "no changes in $pkg"
+  fi
+done
