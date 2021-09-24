@@ -23,7 +23,7 @@ jobs:
           apt update && apt -y upgrade
           apt install -y build-essential bc
 
-      - name: Install mockery and golint
+      - name: Install golint
         run: |
           go install golang.org/x/lint/golint@latest
 
