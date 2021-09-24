@@ -13,6 +13,9 @@ fi
 
 # update before tagging
 git fetch --all
+for remote in $(git remote); do
+  git pull "$remote" "$current_branch"
+done
 
 for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
   pkg=$(echo "$pkg" | sed 's/\.\///')

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo checking coding styles
 for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
