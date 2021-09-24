@@ -1,7 +1,35 @@
 #!/usr/bin/env bash
 
+POSITIONAL=()
+update_path_version=true
+update_major_version=false
+update_minor_version=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -p | --path)
+    update_path_version=true
+    shift 1
+    ;;
+  -m | --major)
+    update_major_version=true
+    shift 1
+    ;;
+  -n | --minor)
+    update_minor_version=true
+    shift 1
+    ;;
+  *)
+    POSITIONAL+=("$1")
+    shift
+    ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
+
 function git_current_branch() {
-    git symbolic-ref --short HEAD 2>/dev/null; or git rev-parse --short HEAD 2>/dev/null
+  git symbolic-ref --short HEAD 2>/dev/null
+  or git rev-parse --short HEAD 2>/dev/null
 }
 
 current_branch=$(git_current_branch)
@@ -12,21 +40,36 @@ if [[ ! $current_branch =~ ^(master|main)$ ]]; then
 fi
 
 # update before tagging
-git fetch --all
-for remote in $(git remote); do
-  git pull "$remote" "$current_branch"
-done
+#git fetch --all
+#for remote in $(git remote); do
+#  git pull "$remote" "$current_branch"
+#done
 
 for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
   pkg=$(echo "$pkg" | sed 's/\.\///')
-  latest_version=$(git tag --sort=committerdate -l "$pkg/*" | head -1 | grep -Eo 'v.*')
-  minor_version=$(echo "$latest_version" | rev | cut -d'.' -f 1 | rev)
-  manor_version=$(echo "$latest_version" | rev | cut -d'.' -f2- | rev)
-  changes=$(git rev-list --count "$pkg/$latest_version"..HEAD)
+  latest_version=$(git tag --sort=committerdate -l "$pkg/v*" | head -1 | grep -Eo 'v.*')
+
+  current_version=$latest_version
+  major_version=0
+  minor_version=0
+  patch_version=1
+
+  latest_version="${latest_version#[vV]}"
+  fields=$(echo "$latest_version" | grep -o "\." | wc -l)
+  if [ "$fields" -eq 2 ]; then
+    major_version="${latest_version%%\.*}"
+    minor_version="${latest_version#*.}"
+    minor_version="${minor_version%.*}"
+    patch_version="${latest_version##*.}"
+  fi
+
+  changes=$(git rev-list --count "$pkg/$current_version"..HEAD)
+
   if [ "$changes" -gt 0 ]; then
-    current_version=$manor_version.$minor_version
-    new_minor_version=$((minor_version + 1))
-    new_version=$manor_version.$new_minor_version
+    [[ $update_path_version == true ]] && patch_version=$((patch_version + 1))
+    [[ $update_minor_version == true ]] && minor_version=$((minor_version + 1)) && patch_version=0
+    [[ $update_major_version == true ]] && major_version=$((major_version + 1)) && minor_version=0 && patch_version=0
+    new_version=v$major_version.$minor_version.$patch_version
     tag=$pkg/$new_version
     echo "tagging package $pkg with version $new_version from $current_version"
     git tag "$tag"
