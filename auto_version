@@ -45,8 +45,8 @@ fi
 #  git pull "$remote" "$current_branch"
 #done
 
-for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
-  pkg=$(echo "$pkg" | sed 's/\.\///')
+for dir in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
+  pkg=$(echo "$dir" | sed 's/\.\///')
   latest_version=$(git tag --sort=-v:refname -l "$pkg/v*" | head -1 | grep -Eo 'v.*')
 
   current_version=$latest_version
@@ -63,7 +63,7 @@ for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
     patch_version="${latest_version##*.}"
   fi
 
-  changes=$(git rev-list --count "$pkg/$current_version"..HEAD)
+  changes=$(git diff --name-only "$pkg/$current_version"..HEAD "$dir" | wc -l)
 
   if [ "$changes" -gt 0 ]; then
     [[ $update_path_version == true ]] && patch_version=$((patch_version + 1))
