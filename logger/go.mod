@@ -21,8 +21,8 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf // indirect
-	golang.org/x/sys v0.0.0-20210921065528-437939a70204 // indirect
+	golang.org/x/net v0.0.0-20210924054057-cf34111cab4d // indirect
+	golang.org/x/sys v0.0.0-20210923061019-b8560ed6a9b7 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
 	gorm.io/gorm v1.21.15 // indirect
