@@ -11,6 +11,9 @@ if [[ ! $current_branch =~ ^(master|main)$ ]]; then
   exit 255
 fi
 
+# update before tagging
+git fetch --all
+
 for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
   pkg=$(echo "$pkg" | sed 's/\.\///')
   latest_version=$(git tag --sort=committerdate -l "$pkg/*" | head -1 | grep -Eo 'v.*')
