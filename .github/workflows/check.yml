@@ -2,9 +2,11 @@ name: Run Style Check And Unit Test
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches:
+      - '**'
   pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - main
 
 jobs:
 
@@ -20,8 +22,8 @@ jobs:
 
       - name: Set up tools
         run: |
-          apt update && apt -y upgrade
-          apt install -y build-essential bc
+          sudo apt update && sudo apt -y upgrade
+          sudo apt install -y build-essential bc
 
       - name: Install golint
         run: |
