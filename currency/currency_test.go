@@ -7,6 +7,17 @@ import (
 	"github.com/wego/pkg/currency"
 )
 
+func Test_IsISO4217(t *testing.T) {
+	assert := assert.New(t)
+	assert.True(currency.IsISO4217("afn"))
+	assert.True(currency.IsISO4217("UsD"))
+	assert.True(currency.IsISO4217("UsD "))
+	assert.True(currency.IsISO4217("CNY"))
+	assert.True(currency.IsISO4217("KWD"))
+	assert.False(currency.IsISO4217("UsDD"))
+	assert.False(currency.IsISO4217(""))
+}
+
 func Test_AmountToAmountInCents_Ok(t *testing.T) {
 	assert := assert.New(t)
 
@@ -40,33 +51,29 @@ func Test_AmountToAmountInCents_InvalidCurrency(t *testing.T) {
 
 	rs, err := currency.AmountToAmountInCents("", 25.12)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 
 	rs, err = currency.AmountToAmountInCents("sg", 25.12)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 
 	rs, err = currency.AmountToAmountInCents(" ", 25.12)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 
 	rs, err = currency.AmountToAmountInCents("      ", 25.12)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 }
 
 func Test_AmountToAmountInCents_ZeroAmount(t *testing.T) {
 	assert := assert.New(t)
 
-	rs, err := currency.AmountToAmountInCents("", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
-
-	rs, err = currency.AmountToAmountInCents("SGD", 0)
+	rs, err := currency.AmountToAmountInCents("SGD", 0)
 	assert.NoError(err)
 	assert.Zero(rs)
 }
@@ -74,7 +81,7 @@ func Test_AmountToAmountInCents_ZeroAmount(t *testing.T) {
 func Test_AmountToAmountInCents_InvalidAmount(t *testing.T) {
 	assert := assert.New(t)
 
-	rs, err := currency.AmountToAmountInCents("", -0.0001)
+	rs, err := currency.AmountToAmountInCents("USD", -0.0001)
 	assert.Error(err)
 	assert.Contains(err.Error(), "invalid amount")
 	assert.Zero(rs)
@@ -118,29 +125,29 @@ func Test_AmountInCentsToAmount_InvalidCurrency(t *testing.T) {
 
 	rs, err := currency.AmountInCentsToAmount("", 2512)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 
 	rs, err = currency.AmountInCentsToAmount("sg", 2512)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 
 	rs, err = currency.AmountInCentsToAmount(" ", 2512)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 
 	rs, err = currency.AmountInCentsToAmount("      ", 2512)
 	assert.Error(err)
-	assert.Contains(err.Error(), "invalid currency")
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
 	assert.Zero(rs)
 }
 
 func Test_AmountInCentsToAmount_ZeroAmount(t *testing.T) {
 	assert := assert.New(t)
 
-	rs, err := currency.AmountInCentsToAmount("", 0)
+	rs, err := currency.AmountInCentsToAmount("USD", 0)
 	assert.NoError(err)
 	assert.Zero(rs)
 
