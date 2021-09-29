@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/stretchr/testify v1.7.0
-	github.com/wego/pkg/errors v0.1.4
+	github.com/wego/pkg/errors v0.1.6
 )
 
 require (
@@ -19,9 +19,9 @@ require (
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/wego/pkg/common v0.1.6 // indirect
+	github.com/wego/pkg/common v0.1.7 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/sys v0.0.0-20210923061019-b8560ed6a9b7 // indirect
+	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/gorm v1.21.15 // indirect

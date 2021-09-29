@@ -15,12 +15,12 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/viper v1.9.0
 	github.com/tinylib/msgp v1.1.6 // indirect
-	github.com/wego/pkg/common v0.1.6
+	github.com/wego/pkg/common v0.1.7
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/sys v0.0.0-20210923061019-b8560ed6a9b7 // indirect
+	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
 	gopkg.in/ini.v1 v1.63.2 // indirect
-	gorm.io/driver/postgres v1.1.1
+	gorm.io/driver/postgres v1.1.2
 	gorm.io/gorm v1.21.15
 )
