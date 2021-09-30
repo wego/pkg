@@ -9,6 +9,7 @@ import (
 	"io"
 )
 
+// KeyLength is the min length of the secret key
 const KeyLength = 32
 
 // Encrypt encrypts data using 256-bit AES-GCM, key must have length 32 or more
@@ -80,7 +81,13 @@ func getKey(secret string) (key *[KeyLength]byte, err error) {
 		return nil, fmt.Errorf("secret key is too short, require [%d] or more", KeyLength)
 	}
 
+	// try to get the key if it's in hex code
+	secretBytes, err := hex.DecodeString(secret)
+	if err != nil {
+		secretBytes = []byte(secret)
+	}
+
 	key = &[KeyLength]byte{}
-	copy(key[:], secret[0:KeyLength])
-	return
+	copy(key[:], secretBytes[:KeyLength])
+	return key, nil
 }
