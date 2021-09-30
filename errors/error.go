@@ -32,6 +32,7 @@ const (
 	Unprocessable Kind = http.StatusUnprocessableEntity
 	Unexpected    Kind = http.StatusInternalServerError
 	Retry         Kind = -1 // Retry indicate an error we need to retry the action
+	NotSupported  Kind = -2 // NotSupported THe requested action/resource is not supported
 )
 
 // New construct a new error, default having kind Unexpected
