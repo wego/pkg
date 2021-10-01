@@ -12,82 +12,86 @@ import (
 // KeyLength is the min length of the secret key
 const KeyLength = 32
 
-// Encrypt encrypts data using 256-bit AES-GCM, key must have length 32 or more
-func Encrypt(plaintext string, key string) (ciphertext string, err error) {
-	keyBytes, err := getKey(key)
+// errors
+var (
+	ErrShortKey         = fmt.Errorf("key is too short, %d bytes is required", KeyLength)
+	ErrInvalidHexString = fmt.Errorf("ciphertext is not a valid hex string")
+	ErrShortData        = fmt.Errorf("data is too short")
+)
+
+// EncryptString encrypts plaintext to ciphertext (hex form) using 256-bit AES-GCM, key must have length 32 or more
+func EncryptString(plaintext, key string) (string, error) {
+	bytes, err := Encrypt([]byte(plaintext), []byte(key))
 	if err != nil {
-		return
+		return "", err
 	}
 
-	block, err := aes.NewCipher(keyBytes[:])
+	return hex.EncodeToString(bytes), nil
+}
+
+// DecryptString decrypts a hex form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
+func DecryptString(ciphertext, key string) (string, error) {
+	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return
+		return "", ErrInvalidHexString
+	}
+
+	bytes, err := Decrypt(data, []byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
+}
+
+// Encrypt encrypts data using 256-bit AES-GCM, key must have length 32 or more
+func Encrypt(data, key []byte) ([]byte, error) {
+	if len(key) < KeyLength {
+		return nil, ErrShortKey
+	}
+
+	block, err := aes.NewCipher(key[:KeyLength])
+	if err != nil {
+		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
 	_, err = io.ReadFull(rand.Reader, nonce)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return hex.EncodeToString(gcm.Seal(nonce, nonce, []byte(plaintext), nil)), nil
+	return gcm.Seal(nonce, nonce, data, nil), nil
 }
 
 // Decrypt decrypts data using 256-bit AES-GCM, key must have length 32 or more
-func Decrypt(ciphertext string, key string) (plaintext string, err error) {
-	cipherBytes, err := hex.DecodeString(ciphertext)
-	if err != nil {
-		return "", fmt.Errorf("ciphertext [%s] is not a valid hex string", ciphertext)
+func Decrypt(data, key []byte) ([]byte, error) {
+	if len(key) < KeyLength {
+		return nil, ErrShortKey
 	}
 
-	keyBytes, err := getKey(key)
+	block, err := aes.NewCipher(key[:KeyLength])
 	if err != nil {
-		return
-	}
-
-	block, err := aes.NewCipher(keyBytes[:])
-	if err != nil {
-		return
+		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	if len(cipherBytes) < gcm.NonceSize() {
-		return "", fmt.Errorf("ciphertext [%s] is too short", ciphertext)
+	if len(data) < gcm.NonceSize() {
+		return nil, ErrShortData
 	}
 
-	plainBytes, err := gcm.Open(nil,
-		cipherBytes[:gcm.NonceSize()],
-		cipherBytes[gcm.NonceSize():],
+	return gcm.Open(nil,
+		data[:gcm.NonceSize()],
+		data[gcm.NonceSize():],
 		nil,
 	)
-	if err != nil {
-		return
-	}
-
-	return string(plainBytes), nil
-}
-
-func getKey(secret string) (key *[KeyLength]byte, err error) {
-	if len(secret) < KeyLength {
-		return nil, fmt.Errorf("secret key is too short, require [%d] or more", KeyLength)
-	}
-
-	// try to get the key if it's in hex code
-	secretBytes, err := hex.DecodeString(secret)
-	if err != nil {
-		secretBytes = []byte(secret)
-	}
-
-	key = &[KeyLength]byte{}
-	copy(key[:], secretBytes[:KeyLength])
-	return key, nil
 }
