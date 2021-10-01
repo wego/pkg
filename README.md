@@ -9,6 +9,13 @@ E.g.
 
 `git tag errors/v0.1.2`
 
+# Setup local environment
+
+```
+git config core.hookspath .githooks
+sudo chmod +x .githooks/*
+```
+
 ---
 
 References:

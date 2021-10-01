@@ -13,7 +13,6 @@ const (
 	RequestIDHeader    = "X-Request-ID"
 	ClientCodeParam    = "clientCode"
 	MaxRequestIDLength = 64
-	AESKeyLength       = 32
 	BINLength          = 6
 )
 
