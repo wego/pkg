@@ -1,8 +1,8 @@
-package common_test
+package collection_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/wego/pkg/common"
+	"github.com/wego/pkg/collection"
 	"strings"
 	"testing"
 )

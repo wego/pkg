@@ -1,4 +1,4 @@
-module github.com/wego/pkg/currency
+module github.com/wego/pkg/collection
 
 go 1.16
 

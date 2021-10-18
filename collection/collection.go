@@ -1,4 +1,4 @@
-package common
+package collection
 
 // Index returns the first index of the target string t, or -1 if no match is found
 func Index(vs []string, t string) int {
