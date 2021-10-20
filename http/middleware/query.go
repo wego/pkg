@@ -7,6 +7,7 @@ import (
 )
 
 // QueryArraySupport since gin does not support comma seperated array like `?&query=1,2,3`, this middle try to do a workaround
+// Use this with cautions, this will break the normal query parameter containing comma
 func QueryArraySupport() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		updated := url.Values{}
