@@ -40,10 +40,10 @@ if [[ ! $current_branch =~ ^(master|main)$ ]]; then
 fi
 
 # update before tagging
-#git fetch --all
-#for remote in $(git remote); do
-#  git pull "$remote" "$current_branch"
-#done
+git fetch --all
+for remote in $(git remote); do
+  git pull "$remote" "$current_branch"
+done
 
 for dir in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
   pkg=$(echo "$dir" | sed 's/\.\///')
@@ -63,21 +63,37 @@ for dir in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
     patch_version="${latest_version##*.}"
   fi
 
-  changes=$(git diff --name-only "$pkg/$current_version"..HEAD "$dir" | wc -l)
+  changes=0
+  first_version=false
+  if [[ -n "${current_version// /}" ]]; then
+    changes=$(git diff --name-only "$pkg/$current_version"..HEAD "$dir" | wc -l)
+  else
+    changes=$(find "$dir" -exec printf %c {} + | wc -c)
+    first_version=true
+  fi
 
   if [ "$changes" -gt 0 ]; then
     [[ $update_path_version == true ]] && patch_version=$((patch_version + 1))
     [[ $update_minor_version == true ]] && minor_version=$((minor_version + 1)) && patch_version=0
     [[ $update_major_version == true ]] && major_version=$((major_version + 1)) && minor_version=0 && patch_version=0
+    [[ $first_version == true ]] && major_version=0 && minor_version=1 && patch_version=0
+
     new_version=v$major_version.$minor_version.$patch_version
     tag=$pkg/$new_version
-    echo "tagging package $pkg with version $new_version from $current_version"
+
+    if [[ $first_version == true ]]; then
+      echo "tagging package $pkg with version $new_version"
+    else
+      echo "tagging package $pkg with version $new_version from $current_version"
+    fi
+
     git tag "$tag"
     for remote in $(git remote); do
       remote_repo=$(git remote get-url "$remote")
       echo "pushing $tag to $remote_repo"
       git push "$remote" "$tag"
     done
+
   else
     echo "no changes in $pkg"
   fi
