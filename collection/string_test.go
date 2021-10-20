@@ -8,6 +8,8 @@ import (
 )
 
 var currencies = []string{"USD", "MYR", "SGD", "INR"}
+var strs = []string{"peach", "apple", "pear", "plum"}
+var allStrs = []string{"peach", "pear", "plum"}
 
 func Test_Index(t *testing.T) {
 	assert := assert.New(t)
@@ -46,4 +48,22 @@ func Test_Filter(t *testing.T) {
 		return strings.Contains(v, "JOD")
 	})
 	assert.Equal(0, len(resultNo))
+}
+
+func Test_All(t *testing.T) {
+	assert := assert.New(t)
+	resultNo := collection.All(strs, func(v string) bool {
+		return strings.HasPrefix(v, "p")
+	})
+	resultYes := collection.All(allStrs, func(v string) bool {
+		return strings.HasPrefix(v, "p")
+	})
+	assert.False(resultNo)
+	assert.True(resultYes)
+}
+
+func Test_Map(t *testing.T) {
+	assert := assert.New(t)
+	resultYes := collection.Map(strs, strings.ToUpper)
+	assert.Equal(resultYes[0], "PEACH")
 }
