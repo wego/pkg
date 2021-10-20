@@ -18,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16.8
+          go-version: 1.16.9
 
       - name: Set up tools
         run: |
@@ -31,7 +31,7 @@ jobs:
 
       - name: Style Check
         run: |
-          for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
+          for pkg in $(find . -name 'go.sum' -exec dirname {} \; | sort -u); do
             pushd "$pkg" > /dev/null 2>&1 || exit 255
             go vet ./... || exit 255
             golint -set_exit_status ./... || exit 255
@@ -40,7 +40,7 @@ jobs:
 
       - name: Run Unit Test
         run: |
-          for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
+          for pkg in $(find . -name 'go.sum' -exec dirname {} \; | sort -u); do
             pushd > /dev/null 2>&1 "$pkg" || exit 255
             num_of_pros=$(grep -c ^processor /proc/cpuinfo)
             go test ./... -race -cover -p "$num_of_pros"
