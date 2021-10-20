@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
 
-echo checking coding styles
+echo checking coding styles and running unit test
+
+num_of_pros=4
+dist="$(uname -s 2> /dev/null)"
+case $dist in
+   Darwin)
+      num_of_pros=$(sysctl hw.ncpu | awk '{print $2}')
+      ;;
+   Linux)
+      num_of_pros=$(grep -c ^processor /proc/cpuinfo)
+      ;;
+   *)
+      ;;
+esac
+
 for pkg in $(find . -name 'go.sum' -exec dirname {} \; | sort -u); do
     pushd "$pkg" > /dev/null 2>&1 || exit 255
     go vet ./... || exit 255
     golint -set_exit_status ./... || exit 255
+    go test ./... -race -cover -p "$num_of_pros"
     popd > /dev/null 2>&1 || exit 255
 done
 
-echo coding styles checked
+echo pre-check passed
