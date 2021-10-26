@@ -16,9 +16,9 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/viper v1.9.0
 	github.com/tinylib/msgp v1.1.6 // indirect
-	github.com/wego/pkg/common v0.1.9
+	github.com/wego/pkg/common v0.1.10
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
 	gopkg.in/ini.v1 v1.63.2 // indirect

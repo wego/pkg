@@ -16,14 +16,14 @@ require (
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	github.com/valyala/fastjson v1.6.3
-	github.com/wego/pkg/common v0.1.9
-	github.com/wego/pkg/errors v0.1.8
+	github.com/wego/pkg/common v0.1.10
+	github.com/wego/pkg/errors v0.1.9
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20211019232329-c6ed85c7a12d // indirect
-	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
+	golang.org/x/net v0.0.0-20211020060615-d418f374d309 // indirect
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
 	gorm.io/gorm v1.21.16 // indirect
