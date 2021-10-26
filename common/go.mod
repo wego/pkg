@@ -6,5 +6,5 @@ require (
 	github.com/DataDog/datadog-go v4.8.2+incompatible
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
 )

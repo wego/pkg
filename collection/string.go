@@ -25,7 +25,7 @@ func Any(vs []string, f func(string) bool) bool {
 	return false
 }
 
-// All returns true if all of the strings in the slice satisfy the predicate f
+// All returns true if all the strings in the slice satisfy the predicate f
 func All(vs []string, f func(string) bool) bool {
 	for _, v := range vs {
 		if !f(v) {
@@ -49,6 +49,15 @@ func Filter(vs []string, f func(string) bool) []string {
 // Map returns a new slice containing the results of applying the function f to each string in the original slice
 func Map(vs []string, f func(string) string) []string {
 	vsm := make([]string, len(vs))
+	for i, v := range vs {
+		vsm[i] = f(v)
+	}
+	return vsm
+}
+
+// MapI returns a new slice containing the results of applying the function f to each string in the original slice
+func MapI(vs []string, f func(string) interface{}) []interface{} {
+	vsm := make([]interface{}, len(vs))
 	for i, v := range vs {
 		vsm[i] = f(v)
 	}
