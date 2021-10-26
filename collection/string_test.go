@@ -67,3 +67,12 @@ func Test_Map(t *testing.T) {
 	resultYes := collection.Map(strs, strings.ToUpper)
 	assert.Equal(resultYes[0], "PEACH")
 }
+
+func Test_MapI(t *testing.T) {
+	assert := assert.New(t)
+	resultYes := collection.MapI(strs, func(s string) interface{} {
+		return strings.ToUpper(s)
+	})
+	assert.Equal(resultYes[0], "PEACH")
+	assert.Equal(resultYes[1], "APPLE")
+}
