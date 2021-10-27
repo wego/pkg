@@ -7,9 +7,11 @@ import (
 	"testing"
 )
 
-var currencies = []string{"USD", "MYR", "SGD", "INR"}
-var strs = []string{"peach", "apple", "pear", "plum"}
-var allStrs = []string{"peach", "pear", "plum"}
+var (
+	currencies = []string{"USD", "MYR", "SGD", "INR", "USD", "INR"}
+	strs       = []string{"peach", "apple", "pear", "plum"}
+	allStrs    = []string{"peach", "pear", "plum"}
+)
 
 func Test_Index(t *testing.T) {
 	assert := assert.New(t)
@@ -42,7 +44,7 @@ func Test_Filter(t *testing.T) {
 	resultYes := collection.Filter(currencies, func(v string) bool {
 		return strings.Contains(v, "USD")
 	})
-	assert.Equal(1, len(resultYes))
+	assert.Equal(2, len(resultYes))
 
 	resultNo := collection.Filter(currencies, func(v string) bool {
 		return strings.Contains(v, "JOD")
@@ -75,4 +77,12 @@ func Test_MapI(t *testing.T) {
 	})
 	assert.Equal(resultYes[0], "PEACH")
 	assert.Equal(resultYes[1], "APPLE")
+}
+
+func Test_Distinct(t *testing.T) {
+	assert := assert.New(t)
+	distinct := collection.Distinct(currencies)
+	assert.Equal(distinct, []string{"USD", "MYR", "SGD", "INR"})
+	distinct = collection.Distinct(distinct)
+	assert.Equal(distinct, []string{"USD", "MYR", "SGD", "INR"})
 }

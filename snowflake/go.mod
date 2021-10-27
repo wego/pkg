@@ -4,9 +4,9 @@ go 1.17
 
 require (
 	github.com/stretchr/testify v1.7.0
-	github.com/wego/pkg/common v0.1.10
-	github.com/wego/pkg/errors v0.1.9
-	github.com/wego/pkg/host v0.1.5
+	github.com/wego/pkg/common v0.1.11
+	github.com/wego/pkg/errors v0.1.10
+	github.com/wego/pkg/host v0.1.6
 )
 
 require (
@@ -25,5 +25,5 @@ require (
 	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	gorm.io/gorm v1.21.16 // indirect
+	gorm.io/gorm v1.22.0 // indirect
 )

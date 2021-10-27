@@ -429,6 +429,8 @@ github.com/wego/pkg/common v0.1.9 h1:mAGDSzoPuwvuzvTZ8ZQwYmwsaTNKfl6j//vZmKiOYE8
 github.com/wego/pkg/common v0.1.9/go.mod h1:jlMIzdTI6DwbhVyig6kw4k8RTmFwQWtha7VA0fgSF4g=
 github.com/wego/pkg/common v0.1.10 h1:DCeoZkeCf00o/zaXYauxnVfCoGQ6R2mT03YbCkB0hX0=
 github.com/wego/pkg/common v0.1.10/go.mod h1:qx4tBx0lG/geAqamSX+WhvNwcIQBDztOBT6bMwG0EEo=
+github.com/wego/pkg/common v0.1.11 h1:O9UBd2qhPe+tX7Y7KmH0fXABXjluC7hBOgOnv5J8EXg=
+github.com/wego/pkg/common v0.1.11/go.mod h1:Iqcqnosui6h9NK6VJLGhMmceHz+philuBEf1on3EnYI=
 github.com/wego/pkg/errors v0.1.3 h1:IwCVFkGJNTDI8vT3dEdbQI5Ix4cJMBJ9udX2IKgj2p4=
 github.com/wego/pkg/errors v0.1.3/go.mod h1:Ovy3Sv/TumJZYAX4k9rlO/LfFGXrvV/RPIKIO7ybmzM=
 github.com/wego/pkg/errors v0.1.4 h1:4bxUXfJtmWF+XCwNwkiY7F3FwR84Uft1GqOu7gJKSNI=
@@ -439,6 +441,8 @@ github.com/wego/pkg/errors v0.1.8 h1:+0y/zL1rHahOsYLZMcXu0H8idUrewVRW+Ceh0uNuaIc
 github.com/wego/pkg/errors v0.1.8/go.mod h1:VrK8ZiQbTqgSk5gj5x4JgiwOFurouOfRr6K3qzyj+Vc=
 github.com/wego/pkg/errors v0.1.9 h1:yTzixXDHD2H9kb9yAP4FJhwZtAf9vHbc27qJcBuYPnc=
 github.com/wego/pkg/errors v0.1.9/go.mod h1:vTl2IRpvTc4LY/A+fHAuV7V2qvCT4mfr1PK8/tb/6lo=
+github.com/wego/pkg/errors v0.1.10 h1:YwxDbk/v5xW3h+Z6wa1q4J48pv6NsTp7zYMC55vtBmg=
+github.com/wego/pkg/errors v0.1.10/go.mod h1:3wZpAxXkL1S3CKgkfSvJkODE2FN/Vya5OCYSdYt5r80=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415/go.mod h1:GwrjFmJcFw6At/Gs6z4yjiIwzuJ1/+UwLxMQDVQXShQ=
 github.com/xeipuuv/gojsonschema v1.2.0/go.mod h1:anYRn/JVcOK2ZgGU+IjEV4nwlhoK5sQluxsYJ78Id3Y=
@@ -915,6 +919,8 @@ gorm.io/gorm v1.21.15 h1:gAyaDoPw0lCyrSFWhBlahbUA1U4P5RViC1uIqoB+1Rk=
 gorm.io/gorm v1.21.15/go.mod h1:F+OptMscr0P2F2qU97WT1WimdH9GaQPoDW7AYd5i2Y0=
 gorm.io/gorm v1.21.16 h1:YBIQLtP5PLfZQz59qfrq7xbrK7KWQ+JsXXCH/THlMqs=
 gorm.io/gorm v1.21.16/go.mod h1:F+OptMscr0P2F2qU97WT1WimdH9GaQPoDW7AYd5i2Y0=
+gorm.io/gorm v1.22.0 h1:mTO7Im+aAEqixqnWfmb2Z9FCLnrdoaESc1tUAwM4GNE=
+gorm.io/gorm v1.22.0/go.mod h1:F+OptMscr0P2F2qU97WT1WimdH9GaQPoDW7AYd5i2Y0=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190106161140-3f1c8253044a/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190418001031-e561f6794a2a/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=

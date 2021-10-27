@@ -63,3 +63,16 @@ func MapI(vs []string, f func(string) interface{}) []interface{} {
 	}
 	return vsm
 }
+
+// Distinct remove the duplicated items from the slice
+func Distinct(vs []string) []string {
+	keys := make(map[string]bool)
+	var vsd []string
+	for _, v := range vs {
+		if !keys[v] {
+			keys[v] = true
+			vsd = append(vsd, v)
+		}
+	}
+	return vsd
+}
