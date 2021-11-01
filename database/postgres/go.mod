@@ -3,7 +3,7 @@ module github.com/wego/pkg/database/postgres
 go 1.16
 
 require (
-	github.com/DataDog/datadog-go v4.8.2+incompatible // indirect
+	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
 	github.com/DataDog/sketches-go v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/bketelsen/crypt v0.0.4 // indirect
@@ -18,10 +18,10 @@ require (
 	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/wego/pkg/common v0.1.11
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
+	golang.org/x/sys v0.0.0-20211031064116-611d5d643895 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
 	gopkg.in/ini.v1 v1.63.2 // indirect
-	gorm.io/driver/postgres v1.2.0
-	gorm.io/gorm v1.22.0
+	gorm.io/driver/postgres v1.2.1
+	gorm.io/gorm v1.22.2
 )
