@@ -1,4 +1,4 @@
-package admin
+package audit
 
 // Entity base fields used in audit
 type Entity struct {
