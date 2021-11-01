@@ -53,14 +53,11 @@ func BindChangeRequest(c *gin.Context, ctxKey string, request audit.IChangeReque
 		err = errors.New(errors.BadRequest, err)
 		return
 	}
-	var id uint64
-	idParam := c.Param("id")
-	id, err = strconv.ParseUint(idParam, 10, 64)
-	if err != nil || id == 0 {
-		err = errors.New(errors.BadRequest, fmt.Sprintf("invalid id [%s]", idParam))
+	var id uint
+	if id, err = BindID(c); err != nil {
 		return
 	}
-	request.SetID(uint(id))
+	request.SetID(id)
 	c.Set(ctxKey, request)
 	return
 }
