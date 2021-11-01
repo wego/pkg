@@ -50,11 +50,9 @@ func BindChangeRequest(c *gin.Context, ctxKey string, request audit.IChangeReque
 
 	// try to bind from request & set to context if ok
 	if err = c.ShouldBindJSON(request); err != nil {
-		fmt.Println(err)
 		err = errors.New(errors.BadRequest, err)
 		return
 	}
-	fmt.Println(request)
 	var id uint64
 	idParam := c.Param("id")
 	id, err = strconv.ParseUint(idParam, 10, 64)
