@@ -141,12 +141,12 @@ func (s *BindingSuite) Test_BindJSON_FromContext_OK() {
 	req, err := http.NewRequest(http.MethodPatch, testJSONEndpoint, strings.NewReader(requestBody))
 	s.NoError(err)
 
-	testReq := &testStruct{
+	inCtx := &testStruct{
 		Number: []uint{1, 2, 3, 4},
 		String: []string{"A", "B", "C", "D"},
 	}
 	s.router.Use(func(c *gin.Context) {
-		c.Set(ctxKey, testReq)
+		c.Set(ctxKey, inCtx)
 		c.Next()
 	})
 	s.router.PATCH(testJSONEndpoint, testJSONHandler)
@@ -155,7 +155,7 @@ func (s *BindingSuite) Test_BindJSON_FromContext_OK() {
 
 	s.Equal(http.StatusOK, r.Code)
 
-	body, err := json.Marshal(&testReq)
+	body, err := json.Marshal(&inCtx)
 	s.NoError(err)
 	s.Equal(r.Body.String(), string(body))
 }
@@ -173,13 +173,13 @@ func (s *BindingSuite) Test_BindJSON_FromContext_TypeMismatch() {
 	        "C"
 	    ]
 	}`
-	testReq := &testStruct{
+	inCtx := &testStruct{
 		Number: []uint{1, 2, 3, 4},
 		String: []string{"A", "B", "C", "D"},
 	}
 
 	s.router.Use(func(c *gin.Context) {
-		c.Set(ctxKey, &testReq)
+		c.Set(ctxKey, &inCtx)
 		c.Next()
 	})
 
@@ -195,7 +195,7 @@ func (s *BindingSuite) Test_BindJSON_FromContext_TypeMismatch() {
 	s.Equal(r.Body.String(), "{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}")
 }
 
-func (s *BindingSuite) Test_BindQuery_FromBodyBindError() {
+func (s *BindingSuite) Test_BindQuery_FromURL_BindError() {
 	s.router.POST(testQueryEndpoint, testQueryHandler)
 	params := url.Values{}
 	params.Add("Num", "0")
@@ -209,7 +209,7 @@ func (s *BindingSuite) Test_BindQuery_FromBodyBindError() {
 	s.Equal(http.StatusBadRequest, r.Code)
 }
 
-func (s *BindingSuite) Test_BindQuery_FromBody() {
+func (s *BindingSuite) Test_BindQuery_FromURL_OK() {
 	params := url.Values{}
 	params.Add("Num", "1")
 	params.Add("Num", "2")
@@ -240,13 +240,13 @@ func (s *BindingSuite) Test_BindQuery_FromContext_OK() {
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%v?%v", testQueryEndpoint, params.Encode()), nil)
 	s.NoError(err)
 
-	testReq := &testStruct{
+	inCtx := &testStruct{
 		Number: []uint{1, 2, 3, 4},
 		String: []string{"A", "B", "C", "D"},
 	}
 
 	s.router.Use(func(c *gin.Context) {
-		c.Set(ctxKey, testReq)
+		c.Set(ctxKey, inCtx)
 		c.Next()
 	})
 	s.router.POST(testQueryEndpoint, testQueryHandler)
@@ -255,7 +255,7 @@ func (s *BindingSuite) Test_BindQuery_FromContext_OK() {
 
 	s.Equal(http.StatusOK, r.Code)
 
-	body, err := json.Marshal(&testReq)
+	body, err := json.Marshal(&inCtx)
 	s.NoError(err)
 	s.Equal(r.Body.String(), string(body))
 }
@@ -272,13 +272,13 @@ func (s *BindingSuite) Test_BindQuery_FromContext_TypeMismatch() {
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%v?%v", testQueryEndpoint, params.Encode()), nil)
 	s.NoError(err)
 
-	testReq := &testStruct{
+	inCtx := &testStruct{
 		Number: []uint{1, 2, 3, 4},
 		String: []string{"A", "B", "C", "D"},
 	}
 
 	s.router.Use(func(c *gin.Context) {
-		c.Set(ctxKey, &testReq)
+		c.Set(ctxKey, &inCtx)
 		c.Next()
 	})
 	s.router.POST(testQueryEndpoint, testQueryHandler)
@@ -372,12 +372,12 @@ func (s *BindingSuite) Test_BindChangeRequest_FromContext_TypeMismatch() {
 	req, err := http.NewRequest(http.MethodPatch, testChangeRequestEndpoint+"/1", strings.NewReader(requestBody))
 	s.NoError(err)
 
-	testReq := testStruct{
+	inCtx := testStruct{
 		Number: []uint{1, 2, 3, 4},
 		String: []string{"A", "B", "C", "D"},
 	}
 	s.router.Use(func(c *gin.Context) {
-		c.Set(ctxKey, &testReq)
+		c.Set(ctxKey, &inCtx)
 		c.Next()
 	})
 	s.router.PATCH(testChangeRequestEndpoint+"/:id", testChangeRequestHandler)
@@ -404,7 +404,7 @@ func (s *BindingSuite) Test_BindChangeRequest_FromContext_OK() {
 		"reason": "update"
 	}`
 
-	testReq := testChangeStruct{
+	inCtx := testChangeStruct{
 		Number: []uint{1, 2, 3, 4},
 		String: []string{"A", "B", "C", "D"},
 		ChangeRequest: audit.ChangeRequest{
@@ -417,7 +417,7 @@ func (s *BindingSuite) Test_BindChangeRequest_FromContext_OK() {
 	}
 
 	s.router.Use(func(c *gin.Context) {
-		c.Set(ctxKey, &testReq)
+		c.Set(ctxKey, &inCtx)
 		c.Next()
 	})
 
@@ -429,7 +429,7 @@ func (s *BindingSuite) Test_BindChangeRequest_FromContext_OK() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
-	body, err := json.Marshal(testReq)
+	body, err := json.Marshal(inCtx)
 	s.NoError(err)
 	s.Equal(r.Body.String(), string(body))
 }
