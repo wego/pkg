@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
-	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/wego/pkg/common v0.1.11
