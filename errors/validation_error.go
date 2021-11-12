@@ -14,8 +14,20 @@ type FieldError struct {
 
 func (e FieldError) String() string {
 	var sb strings.Builder
+	var field string
 
-	sb.WriteString("validation failed on field '" + e.Field() + "'")
+	// try to get full path of field if it's a nested field
+	namespace := e.Namespace()
+	if namespace != "" {
+		// namespace has format RootStruct.parent_field.child_field
+		// we don't want to display the RootStruct because it doesn't make sense to the client
+		field = namespace[strings.Index(namespace, ".")+1:]
+	}
+	if field == "" {
+		field = e.Field()
+	}
+
+	sb.WriteString("validation failed on field '" + field + "'")
 	sb.WriteString(", condition: " + e.ActualTag())
 
 	if e.Param() != "" {
