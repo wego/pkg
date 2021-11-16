@@ -9,8 +9,11 @@ import (
 	"time"
 )
 
+var (
+	total = 10 * 10000
+)
+
 func TestInt63(t *testing.T) {
-	total := 100 * 10000
 	unique := make(map[int64]bool, total)
 	for i := 0; i < total; i++ {
 		v := rand.Int63()
@@ -21,11 +24,11 @@ func TestInt63(t *testing.T) {
 }
 
 func TestInt64Parallel(t *testing.T) {
-	total := 100 * 10000
 	concurrent := runtime.NumCPU()
 	if concurrent < 4 {
 		concurrent = 4
 	}
+	t.Logf("running test in parallel with %v goroutines", concurrent)
 	var uniqueMap sync.Map
 	var wg sync.WaitGroup
 	wg.Add(concurrent)
@@ -44,7 +47,6 @@ func TestInt64Parallel(t *testing.T) {
 }
 
 func TestUint64(t *testing.T) {
-	total := 100 * 10000
 	unique := make(map[uint64]bool, total)
 	for i := 0; i < total; i++ {
 		v := rand.Uint64()
@@ -55,11 +57,11 @@ func TestUint64(t *testing.T) {
 }
 
 func TestUint64Parallel(t *testing.T) {
-	total := 100 * 10000
 	concurrent := runtime.NumCPU()
 	if concurrent < 4 {
 		concurrent = 4
 	}
+	t.Logf("running test in parallel with %v goroutines", concurrent)
 	var uniqueMap sync.Map
 	var wg sync.WaitGroup
 	wg.Add(concurrent)
@@ -78,7 +80,6 @@ func TestUint64Parallel(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	total := 100 * 10000
 	uniqueMap := make(map[string]bool, total)
 	for i := 0; i < total; i++ {
 		s := rand.String(10)
@@ -107,11 +108,11 @@ func TestStringFor15s(t *testing.T) {
 }
 
 func TestStringParallel(t *testing.T) {
-	total := 100 * 10000
 	concurrent := runtime.NumCPU()
 	if concurrent < 4 {
 		concurrent = 4
 	}
+	t.Logf("running test in parallel with %v goroutines", concurrent)
 	var wg sync.WaitGroup
 	wg.Add(concurrent)
 	var uniqueMap sync.Map
@@ -137,7 +138,6 @@ func TestStringWithOptionInvalidOption(t *testing.T) {
 }
 
 func TestStringWithOption(t *testing.T) {
-	total := 100 * 10000
 	uniqueMap := make(map[string]bool, total)
 	for i := 0; i < total; i++ {
 		s, _ := rand.StringWithOption(10, rand.Numbers|rand.Lower|rand.Letters)
@@ -149,11 +149,11 @@ func TestStringWithOption(t *testing.T) {
 }
 
 func TestStringWithOptionParallel(t *testing.T) {
-	total := 100 * 10000
 	concurrent := runtime.NumCPU()
-	if concurrent < 10 {
-		concurrent = 10
+	if concurrent < 4 {
+		concurrent = 4
 	}
+	t.Logf("running test in parallel with %v goroutines", concurrent)
 	var wg sync.WaitGroup
 	wg.Add(concurrent)
 	var uniqueMap sync.Map
