@@ -1,8 +1,6 @@
 package rand
 
 import (
-	"fmt"
-	"github.com/wego/pkg/errors"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -95,24 +93,36 @@ func String(length int) string {
 // The basic idea of this function is to generate a random number and map it to a character in the given options.
 // This algorithm and idea is from https://stackoverflow.com/a/31832326 with an optimization for thead-safe by
 // pre-allocating a bulk of mutexes and rand.Source.
-func StringWithOption(length int, option int) (string, error) {
+// NOTE:
+// this function will not check the options, length, so you should make sure the options and length are valid and
+// correct before calling this function.
+func StringWithOption(length, option int, prefix, suffix string) string {
 	source, ok := optionMapping[option]
 	if !ok {
-		return "", errors.New(errors.NotSupported, fmt.Sprintf("option %v is not supported", option))
+		source = numbersAndLetters
+	}
+	prefixLength, suffixLength := len(prefix), len(suffix)
+	totalLength := length + prefixLength + suffixLength
+	buf := make([]byte, totalLength)
+
+	if prefixLength > 0 {
+		copy(buf, prefix)
+	}
+	if suffixLength > 0 {
+		copy(buf[totalLength-len(suffix):], suffix)
 	}
 
-	buf := make([]byte, length)
 	// 63 random bits, enough for charIdxMax characters!
-	for i, cache, remain := length-1, Int63(), charIdxMax; i >= 0; {
+	for i, start, cache, remain := length-1, prefixLength, Int63(), charIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = Int63(), charIdxMax
 		}
 		if idx := int(cache & charIdxMask); idx < len(source) {
-			buf[i] = source[idx]
+			buf[i+start] = source[idx]
 			i--
 		}
 		cache >>= charIdxBits
 		remain--
 	}
-	return *(*string)(unsafe.Pointer(&buf)), nil
+	return *(*string)(unsafe.Pointer(&buf))
 }

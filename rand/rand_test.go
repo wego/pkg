@@ -131,16 +131,18 @@ func TestStringParallel(t *testing.T) {
 	wg.Wait()
 }
 
-func TestStringWithOptionInvalidOption(t *testing.T) {
-	str, err := rand.StringWithOption(10, -1)
-	assert.Empty(t, str)
-	assert.Contains(t, err.Error(), "option -1 is not supported")
+func TestStringWithPrefixAndSuffix(t *testing.T) {
+	s := rand.StringWithOption(10, rand.Numbers|rand.Letters, "prefix", "suffix")
+	t.Logf("%s", s)
+	assert.Equal(t, 22, len(s))
+	assert.Equal(t, "prefix", s[:6])
+	assert.Equal(t, "suffix", s[len(s)-6:])
 }
 
 func TestStringWithOption(t *testing.T) {
 	uniqueMap := make(map[string]bool, total)
 	for i := 0; i < total; i++ {
-		s, _ := rand.StringWithOption(10, rand.Numbers|rand.Lower|rand.Letters)
+		s := rand.StringWithOption(10, rand.Numbers|rand.Letters|rand.Upper, "prefix", "suffix")
 		if _, ok := uniqueMap[s]; ok {
 			t.Errorf("String(10, Numbers |Lower | Letters) produced a duplicate: %s", s)
 		}
@@ -160,7 +162,7 @@ func TestStringWithOptionParallel(t *testing.T) {
 	for i := 0; i < concurrent; i++ {
 		go func() {
 			for i := 0; i < total; i++ {
-				s, _ := rand.StringWithOption(10, rand.Numbers|rand.Lower|rand.Letters)
+				s := rand.StringWithOption(10, rand.Numbers|rand.Letters|rand.Upper, "prefix", "suffix")
 				if _, ok := uniqueMap.Load(s); ok {
 					t.Errorf("String(10, Numbers |Lower | Letters) produced a duplicate: %s", s)
 				}
@@ -188,14 +190,14 @@ func BenchmarkStringParallel(b *testing.B) {
 
 func BenchmarkStringWithOption(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = rand.StringWithOption(10, rand.Numbers|rand.Letters|rand.Upper)
+		_ = rand.StringWithOption(10, rand.Numbers|rand.Letters|rand.Upper, "prefix", "suffix")
 	}
 }
 
 func BenchmarkStringWithOptionParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _ = rand.StringWithOption(10, rand.Numbers|rand.Letters|rand.Upper)
+			_ = rand.StringWithOption(10, rand.Numbers|rand.Letters|rand.Upper, "prefix", "suffix")
 		}
 	})
 }
