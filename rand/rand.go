@@ -33,9 +33,11 @@ const (
 	numbersAndUpperLettersLength = 36
 	numbersAndLettersLen         = 62
 
-	charIdxBits    = 6 // 6 bits to represent a letter index, for the biggest case, numbers and letters is 62
-	charIdxMask    = 1<<charIdxBits - 1
-	charIdxMax     = 63 / charIdxBits // # of letter indices fitting in 63 bits
+	charIdxBits = 6 // 6 bits to represent a letter index, for the biggest case, numbers and letters is 62
+	charIdxMask = 1<<charIdxBits - 1
+	charIdxMax  = 63 / charIdxBits // # of letter indices fitting in 63 bits
+	// this concurrent is chosen based on the benchmark result, if too small or too large, the performance will be bad
+	// the test result on a 4~56 cores container, the best range is from about 30 - around 100, choose 64 for it's easier to calculate
 	concurrent     = 64
 	concurrentMask = concurrent - 1
 )
