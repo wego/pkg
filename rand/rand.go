@@ -133,7 +133,7 @@ func String(length int) string {
 // pre-allocating a bulk of mutexes and rand.Source.
 // NOTE:
 // this function will not check the options, length, so you should make sure the options and length are valid and
-// correct before calling this function.
+// correct before calling this function. can use CheckOption to check the option, length and number.
 func StringWithOption(length, option int, prefix, suffix string) string {
 	source, ok := optionMapping[option]
 	if !ok {
