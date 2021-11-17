@@ -31,7 +31,7 @@ const (
 	upperLettersLength           = 26
 	numbersAndLowerLettersLength = 36
 	numbersAndUpperLettersLength = 36
-	numbersAndLettersLen         = 62
+	numbersAndLettersLength      = 62
 
 	charIdxBits = 6 // 6 bits to represent a letter index, for the biggest case, numbers and letters is 62
 	charIdxMask = 1<<charIdxBits - 1
@@ -66,7 +66,7 @@ var (
 		Letters | Lower | Upper:   lettersLength,
 		Upper:                     upperLettersLength,
 		Lower:                     lowerLettersLength,
-		Numbers | Letters:         numbersAndLettersLen,
+		Numbers | Letters:         numbersAndLettersLength,
 		Numbers | Letters | Upper: numbersAndUpperLettersLength,
 		Numbers | Upper:           numbersAndUpperLettersLength,
 		Numbers | Letters | Lower: numbersAndLowerLettersLength,
@@ -116,7 +116,7 @@ func String(length int) string {
 		if remain == 0 {
 			cache, remain = Int63(), charIdxMax
 		}
-		if idx := int(cache & charIdxMask); idx < numbersAndLettersLen {
+		if idx := int(cache & charIdxMask); idx < numbersAndLettersLength {
 			buf[i] = numbersAndLetters[idx]
 			i--
 		}
@@ -134,13 +134,13 @@ func String(length int) string {
 // NOTE:
 // this function will not check the options, length, so you should make sure the options and length are valid and
 // correct before calling this function. can use CheckOption to check the option, length and number.
-func StringWithOption(length, option int, prefix, suffix string) string {
+func StringWithOption(randomLength, option int, prefix, suffix string) string {
 	source, ok := optionMapping[option]
 	if !ok {
 		source = numbersAndLetters
 	}
 	prefixLength, suffixLength := len(prefix), len(suffix)
-	totalLength := length + prefixLength + suffixLength
+	totalLength := randomLength + prefixLength + suffixLength
 	buf := make([]byte, totalLength)
 
 	if prefixLength > 0 {
@@ -151,7 +151,7 @@ func StringWithOption(length, option int, prefix, suffix string) string {
 	}
 
 	// 63 random bits, enough for charIdxMax characters!
-	for i, start, cache, remain := length-1, prefixLength, Int63(), charIdxMax; i >= 0; {
+	for i, start, cache, remain := randomLength-1, prefixLength, Int63(), charIdxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = Int63(), charIdxMax
 		}
@@ -172,6 +172,14 @@ func CheckOption(option, length, numbers int) error {
 		return errors.New(errors.Unprocessable, fmt.Sprintf("invalid option: %d", option))
 	}
 
+	// calculate the minimum length of the random string based on the code and option we choose
+	// get the length of numbers in base len(source) source is the options we choose
+	// for example, we want to generate 30 codes with numbers only, so the length of numbers is log10(30)
+	// in other base, the length of numbers is logn(numbers), n is the length of the source
+	// such as we choose numbers and upper, n is 36
+	// since go lang doesn't have logn(n is not 2/e/10), but mathematically
+	// logn(numbers) = log(numbers)/log(n)
+	// use numbers+1 to avoid the corner case of numbers is 99/100 likewise
 	min := int(math.Ceil(math.Log(float64(numbers+1)) / math.Log(float64(seedLength))))
 	if min == 0 {
 		min = 1
