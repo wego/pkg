@@ -25,13 +25,13 @@ const (
 	numbersAndUpperLetters       = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	numberAndLowerLetters        = "0123456789abcdefghijklmnopqrstuvwxyz"
 	numbersAndLetters            = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	numbersLength                = 10
-	lettersLength                = 26
-	lowerLettersLength           = 26
-	upperLettersLength           = 26
-	numbersAndLowerLettersLength = 36
-	numbersAndUpperLettersLength = 36
-	numbersAndLettersLength      = 62
+	numbersLength                = len(numbers)
+	lettersLength                = len(letters)
+	lowerLettersLength           = len(lowerLetters)
+	upperLettersLength           = len(upperLetters)
+	numbersAndLowerLettersLength = len(numberAndLowerLetters)
+	numbersAndUpperLettersLength = len(numbersAndUpperLetters)
+	numbersAndLettersLength      = len(numbersAndLetters)
 
 	charIdxBits = 6 // 6 bits to represent a letter index, for the biggest case, numbers and letters is 62
 	charIdxMask = 1<<charIdxBits - 1
