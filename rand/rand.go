@@ -23,13 +23,13 @@ const (
 	lowerLetters                 = "abcdefghijklmnopqrstuvwxyz"
 	upperLetters                 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	numbersAndUpperLetters       = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	numberAndLowerLetters        = "0123456789abcdefghijklmnopqrstuvwxyz"
+	numbersAndLowerLetters       = "0123456789abcdefghijklmnopqrstuvwxyz"
 	numbersAndLetters            = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	numbersLength                = len(numbers)
 	lettersLength                = len(letters)
 	lowerLettersLength           = len(lowerLetters)
 	upperLettersLength           = len(upperLetters)
-	numbersAndLowerLettersLength = len(numberAndLowerLetters)
+	numbersAndLowerLettersLength = len(numbersAndLowerLetters)
 	numbersAndUpperLettersLength = len(numbersAndUpperLetters)
 	numbersAndLettersLength      = len(numbersAndLetters)
 
@@ -59,8 +59,8 @@ var (
 		Numbers | Letters | Upper | Lower: numbersAndLetters,
 		Numbers | Letters | Upper:         numbersAndUpperLetters,
 		Numbers | Upper:                   numbersAndUpperLetters,
-		Numbers | Letters | Lower:         numberAndLowerLetters,
-		Numbers | Lower:                   numberAndLowerLetters,
+		Numbers | Letters | Lower:         numbersAndLowerLetters,
+		Numbers | Lower:                   numbersAndLowerLetters,
 	}
 
 	optionMappingLen = map[int]int{
@@ -82,17 +82,17 @@ var (
 	optionNamesMapping = map[int]string{
 		Numbers:                           "Numbers",
 		Letters:                           "Letters",
-		Letters | Lower | Upper:           "Letters",
-		Upper:                             "Upper",
-		Letters | Upper:                   "Upper",
-		Lower:                             "Lower",
-		Letters | Lower:                   "Lower",
+		Letters | Lower | Upper:           "LowerAndUpperLetters",
+		Upper:                             "UpperLetters",
+		Letters | Upper:                   "UpperLetters",
+		Lower:                             "LowerLetters",
+		Letters | Lower:                   "LowerLetters",
 		Numbers | Letters:                 "NumbersAndLetters",
 		Numbers | Letters | Upper | Lower: "NumbersAndLetters",
 		Numbers | Letters | Upper:         "NumbersAndUpperLetters",
 		Numbers | Upper:                   "NumbersAndUpperLetters",
-		Numbers | Letters | Lower:         "NumberAndLowerLetters",
-		Numbers | Lower:                   "NumberAndLowerLetters",
+		Numbers | Letters | Lower:         "NumbersAndLowerLetters",
+		Numbers | Lower:                   "NumbersAndLowerLetters",
 	}
 )
 
