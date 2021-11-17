@@ -1,6 +1,9 @@
 package rand
 
 import (
+	"fmt"
+	"github.com/wego/pkg/errors"
+	"math"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -15,14 +18,20 @@ const (
 	Upper   = 1 << iota
 	Lower   = 1 << iota
 
-	numbers                = "0123456789"
-	letters                = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	lowerLetters           = "abcdefghijklmnopqrstuvwxyz"
-	upperLetters           = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	numbersAndUpperLetters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	numberAndLowerLetters  = "0123456789abcdefghijklmnopqrstuvwxyz"
-	numbersAndLetters      = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	numbersAndLettersLen   = 62
+	numbers                      = "0123456789"
+	letters                      = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	lowerLetters                 = "abcdefghijklmnopqrstuvwxyz"
+	upperLetters                 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numbersAndUpperLetters       = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numberAndLowerLetters        = "0123456789abcdefghijklmnopqrstuvwxyz"
+	numbersAndLetters            = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numbersLength                = 10
+	lettersLength                = 26
+	lowerLettersLength           = 26
+	upperLettersLength           = 26
+	numbersAndLowerLettersLength = 36
+	numbersAndUpperLettersLength = 36
+	numbersAndLettersLen         = 62
 
 	charIdxBits    = 6 // 6 bits to represent a letter index, for the biggest case, numbers and letters is 62
 	charIdxMask    = 1<<charIdxBits - 1
@@ -39,6 +48,7 @@ var (
 	optionMapping = map[int]string{
 		Numbers:                   numbers,
 		Letters:                   letters,
+		Letters | Lower | Upper:   letters,
 		Upper:                     upperLetters,
 		Lower:                     lowerLetters,
 		Numbers | Letters:         numbersAndLetters,
@@ -46,6 +56,32 @@ var (
 		Numbers | Upper:           numbersAndUpperLetters,
 		Numbers | Letters | Lower: numberAndLowerLetters,
 		Numbers | Lower:           numberAndLowerLetters,
+	}
+
+	optionMappingLen = map[int]int{
+		Numbers:                   numbersLength,
+		Letters:                   lettersLength,
+		Letters | Lower | Upper:   lettersLength,
+		Upper:                     upperLettersLength,
+		Lower:                     lowerLettersLength,
+		Numbers | Letters:         numbersAndLettersLen,
+		Numbers | Letters | Upper: numbersAndUpperLettersLength,
+		Numbers | Upper:           numbersAndUpperLettersLength,
+		Numbers | Letters | Lower: numbersAndLowerLettersLength,
+		Numbers | Lower:           numbersAndLowerLettersLength,
+	}
+
+	optionNamesMapping = map[int]string{
+		Numbers:                   "Numbers",
+		Letters:                   "Letters",
+		Letters | Lower | Upper:   "Letters",
+		Upper:                     "Upper",
+		Lower:                     "Lower",
+		Numbers | Letters:         "NumbersAndLetters",
+		Numbers | Letters | Upper: "NumbersAndUpperLetters",
+		Numbers | Upper:           "NumbersAndUpperLetters",
+		Numbers | Letters | Lower: "NumberAndLowerLetters",
+		Numbers | Lower:           "NumberAndLowerLetters",
 	}
 )
 
@@ -125,4 +161,24 @@ func StringWithOption(length, option int, prefix, suffix string) string {
 		remain--
 	}
 	return *(*string)(unsafe.Pointer(&buf))
+}
+
+// CheckOption checks if the given option is valid.
+func CheckOption(option, length, numbers int) error {
+	seedLength, ok := optionMappingLen[option]
+	if !ok {
+		return errors.New(errors.Unprocessable, fmt.Sprintf("invalid option: %d", option))
+	}
+
+	min := int(math.Ceil(math.Log(float64(numbers+1)) / math.Log(float64(seedLength))))
+	if min == 0 {
+		min = 1
+	}
+	if length < min {
+		return errors.New(errors.Unprocessable,
+			fmt.Sprintf("can not generate %v %v codes with length %v, minimal length should be %v",
+				numbers, optionNamesMapping[option], length, min))
+
+	}
+	return nil
 }

@@ -201,3 +201,18 @@ func BenchmarkStringWithOptionParallel(b *testing.B) {
 		}
 	})
 }
+
+func TestCheckOption(t *testing.T) {
+	err := rand.CheckOption(rand.Numbers, 2, 30)
+	assert.Nil(t, err)
+	err = rand.CheckOption(-1, 2, 30)
+	assert.Contains(t, err.Error(), "invalid option: -1")
+	err = rand.CheckOption(rand.Numbers, 1, 11)
+	assert.Contains(t, err.Error(), "can not generate 11 Numbers codes with length 1, minimal length should be 2")
+	err = rand.CheckOption(rand.Letters, 1, 30)
+	assert.Contains(t, err.Error(), "can not generate 30 Letters codes with length 1, minimal length should be 2")
+	err = rand.CheckOption(rand.Numbers|rand.Letters, 2, 5000)
+	assert.Contains(t, err.Error(), "can not generate 5000 NumbersAndLetters codes with length 2, minimal length should be 3")
+	err = rand.CheckOption(rand.Numbers|rand.Upper, 2, 1297)
+	assert.Contains(t, err.Error(), "can not generate 1297 NumbersAndUpperLetters codes with length 2, minimal length should be 3")
+}
