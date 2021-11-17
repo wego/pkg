@@ -91,7 +91,7 @@ for dir in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
     for remote in $(git remote); do
       remote_repo=$(git remote get-url "$remote")
       echo "pushing $tag to $remote_repo"
-      git push "$remote" "$tag"
+      git push --no-verify "$remote" "$tag"
     done
 
   else
