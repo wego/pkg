@@ -2,6 +2,7 @@ package ecies
 
 import (
 	"crypto/elliptic"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -11,16 +12,6 @@ import (
 type PrivateKey struct {
 	Pub *PublicKey
 	d   *big.Int
-}
-
-// PrivateKeyFromHex parses a private key from its hex form
-func PrivateKeyFromHex(hexKey string, curve elliptic.Curve) (*PrivateKey, error) {
-	b, err := hex.DecodeString(hexKey)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding hexKey: %w", err)
-	}
-
-	return PrivateKeyFromBytes(b, curve), nil
 }
 
 // PrivateKeyFromBytes parses a private key from its raw bytes
@@ -37,9 +28,34 @@ func PrivateKeyFromBytes(b []byte, curve elliptic.Curve) *PrivateKey {
 	}
 }
 
+// PrivateKeyFromBase64 parses a private key from its base64 form
+func PrivateKeyFromBase64(base64Key string, curve elliptic.Curve) (*PrivateKey, error) {
+	b, e := base64.StdEncoding.DecodeString(base64Key)
+	if e != nil {
+		return nil, fmt.Errorf("error decoding base64Key: %w", e)
+	}
+
+	return PrivateKeyFromBytes(b, curve), nil
+}
+
+// PrivateKeyFromHex parses a private key from its hex form
+func PrivateKeyFromHex(hexKey string, curve elliptic.Curve) (*PrivateKey, error) {
+	b, e := hex.DecodeString(hexKey)
+	if e != nil {
+		return nil, fmt.Errorf("error decoding hexKey: %w", e)
+	}
+
+	return PrivateKeyFromBytes(b, curve), nil
+}
+
 // Bytes returns private key raw bytes
 func (priv *PrivateKey) Bytes() []byte {
 	return priv.d.Bytes()
+}
+
+// Base64 returns private key bytes in base64 form
+func (priv *PrivateKey) Base64() string {
+	return base64.StdEncoding.EncodeToString(priv.Bytes())
 }
 
 // Hex returns private key bytes in hex form

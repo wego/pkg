@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -14,13 +15,14 @@ const KeyLength = 32
 
 // errors
 var (
-	ErrShortKey         = fmt.Errorf("key is too short, %d bytes is required", KeyLength)
-	ErrInvalidHexString = fmt.Errorf("ciphertext is not a valid hex string")
-	ErrShortData        = fmt.Errorf("data is too short")
+	ErrShortKey            = fmt.Errorf("key is too short, %d bytes is required", KeyLength)
+	ErrInvalidBase64String = fmt.Errorf("ciphertext is not a valid base64 string")
+	ErrInvalidHexString    = fmt.Errorf("ciphertext is not a valid hex string")
+	ErrShortData           = fmt.Errorf("data is too short")
 )
 
-// EncryptString encrypts plaintext to ciphertext (hex form) using 256-bit AES-GCM, key must have length 32 or more
-func EncryptString(plaintext, key string) (string, error) {
+// EncryptStringToHex encrypts plaintext to ciphertext (hex form) using 256-bit AES-GCM, key must have length 32 or more
+func EncryptStringToHex(plaintext, key string) (string, error) {
 	bytes, err := Encrypt([]byte(plaintext), []byte(key))
 	if err != nil {
 		return "", err
@@ -29,11 +31,36 @@ func EncryptString(plaintext, key string) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-// DecryptString decrypts a hex form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
-func DecryptString(ciphertext, key string) (string, error) {
+// DecryptHexString decrypts a hex form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
+func DecryptHexString(ciphertext, key string) (string, error) {
 	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
 		return "", ErrInvalidHexString
+	}
+
+	bytes, err := Decrypt(data, []byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
+}
+
+// EncryptStringToBase64 encrypts plaintext to ciphertext (base64 form) using 256-bit AES-GCM, key must have length 32 or more
+func EncryptStringToBase64(plaintext, key string) (string, error) {
+	bytes, err := Encrypt([]byte(plaintext), []byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(bytes), nil
+}
+
+// DecryptBase64String decrypts a base64 form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
+func DecryptBase64String(ciphertext, key string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return "", ErrInvalidBase64String
 	}
 
 	bytes, err := Decrypt(data, []byte(key))

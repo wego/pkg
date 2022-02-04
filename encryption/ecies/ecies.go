@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -31,8 +32,18 @@ func GenerateKey(curve elliptic.Curve) (*PrivateKey, error) {
 	}, nil
 }
 
-// EncryptString encrypts plaintext to ciphertext in hex form using receiver public key
-func EncryptString(plaintext string, pub *PublicKey) (string, error) {
+// EncryptStringToBase64 encrypts plaintext to ciphertext in base64 form using receiver public key
+func EncryptStringToBase64(plaintext string, pub *PublicKey) (string, error) {
+	bytes, err := Encrypt([]byte(plaintext), pub)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(bytes), nil
+}
+
+// EncryptStringToHex encrypts plaintext to ciphertext in hex form using receiver public key
+func EncryptStringToHex(plaintext string, pub *PublicKey) (string, error) {
 	bytes, err := Encrypt([]byte(plaintext), pub)
 	if err != nil {
 		return "", err
@@ -41,8 +52,29 @@ func EncryptString(plaintext string, pub *PublicKey) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-// DecryptString decrypts ciphertext in hex form to plaintext by receiver private key
-func DecryptString(ciphertext string, priv *PrivateKey) (string, error) {
+// DecryptBase64String decrypts ciphertext in base64 form to plaintext by receiver private key
+func DecryptBase64String(ciphertext string, priv *PrivateKey) (string, error) {
+	// check if the ciphertext is long enough
+	keyBase64Size := base64.StdEncoding.EncodedLen(publicKeySize(keySize(priv.Pub.curve)))
+	if len(ciphertext) <= keyBase64Size {
+		return "", fmt.Errorf("ciphertext is too short")
+	}
+
+	data, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return "", aes.ErrInvalidBase64String
+	}
+
+	bytes, err := Decrypt(data, priv)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
+}
+
+// DecryptHexString decrypts ciphertext in hex form to plaintext by receiver private key
+func DecryptHexString(ciphertext string, priv *PrivateKey) (string, error) {
 	// check if the ciphertext is long enough
 	keyHexSize := hex.EncodedLen(publicKeySize(keySize(priv.Pub.curve)))
 	if len(ciphertext) <= keyHexSize {
