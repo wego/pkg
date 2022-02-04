@@ -17,33 +17,33 @@ var (
 func Test_EncryptBase64_DecryptBase64_Ok(t *testing.T) {
 	assert := assert.New(t)
 
-	base64Ciphertext, err := aes.EncryptStringToBase64(plaintext, key)
+	ciphertext, err := aes.EncryptStringToBase64(plaintext, key)
 	assert.NoError(err)
-	assert.NotEmpty(base64Ciphertext)
+	assert.NotEmpty(ciphertext)
 
-	b64Bytes, err := base64.StdEncoding.DecodeString(base64Ciphertext)
+	bytes, err := base64.StdEncoding.DecodeString(ciphertext)
 	assert.NoError(err)
-	assert.NotZero(len(b64Bytes))
+	assert.NotZero(len(bytes))
 
-	b64Decrypted, err := aes.DecryptBase64String(base64Ciphertext, key)
+	decrypted, err := aes.DecryptBase64String(ciphertext, key)
 	assert.NoError(err)
-	assert.Equal(plaintext, b64Decrypted)
+	assert.Equal(plaintext, decrypted)
 }
 
 func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
 	assert := assert.New(t)
 
-	hexCiphertext, err := aes.EncryptStringToHex(plaintext, key)
+	ciphertext, err := aes.EncryptStringToHex(plaintext, key)
 	assert.NoError(err)
-	assert.NotEmpty(hexCiphertext)
+	assert.NotEmpty(ciphertext)
 
-	hexBytes, err := hex.DecodeString(hexCiphertext)
+	bytes, err := hex.DecodeString(ciphertext)
 	assert.NoError(err)
-	assert.NotZero(len(hexBytes))
+	assert.NotZero(len(bytes))
 
-	hexDecrypted, err := aes.DecryptHexString(hexCiphertext, key)
+	decrypted, err := aes.DecryptHexString(ciphertext, key)
 	assert.NoError(err)
-	assert.Equal(plaintext, hexDecrypted)
+	assert.Equal(plaintext, decrypted)
 }
 
 func Test_Encrypt_KeyIsTooShort(t *testing.T) {
