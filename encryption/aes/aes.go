@@ -8,17 +8,17 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+
+	"github.com/wego/pkg/encryption"
+	"github.com/wego/pkg/errors"
 )
 
 // KeyLength is the min length of the secret key
 const KeyLength = 32
 
-// errors
+// error
 var (
-	ErrShortKey            = fmt.Errorf("key is too short, %d bytes is required", KeyLength)
-	ErrInvalidBase64String = fmt.Errorf("ciphertext is not a valid base64 string")
-	ErrInvalidHexString    = fmt.Errorf("ciphertext is not a valid hex string")
-	ErrShortData           = fmt.Errorf("data is too short")
+	ErrShortKey = fmt.Errorf("key is too short, %d bytes is required", KeyLength)
 )
 
 // EncryptStringToHex encrypts plaintext to ciphertext (hex form) using 256-bit AES-GCM, key must have length 32 or more
@@ -35,7 +35,7 @@ func EncryptStringToHex(plaintext, key string) (string, error) {
 func DecryptHexString(ciphertext, key string) (string, error) {
 	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return "", ErrInvalidHexString
+		return "", errors.New(encryption.MsgInvalidHexString, err)
 	}
 
 	bytes, err := Decrypt(data, []byte(key))
@@ -60,7 +60,7 @@ func EncryptStringToBase64(plaintext, key string) (string, error) {
 func DecryptBase64String(ciphertext, key string) (string, error) {
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
-		return "", ErrInvalidBase64String
+		return "", errors.New(encryption.MsgInvalidBase64String, err)
 	}
 
 	bytes, err := Decrypt(data, []byte(key))
@@ -113,7 +113,7 @@ func Decrypt(data, key []byte) ([]byte, error) {
 	}
 
 	if len(data) < gcm.NonceSize() {
-		return nil, ErrShortData
+		return nil, errors.New(encryption.MsgCiphertextTooShort)
 	}
 
 	return gcm.Open(nil,

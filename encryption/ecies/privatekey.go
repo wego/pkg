@@ -4,8 +4,9 @@ import (
 	"crypto/elliptic"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"math/big"
+
+	"github.com/wego/pkg/errors"
 )
 
 // PrivateKey ...
@@ -32,7 +33,7 @@ func PrivateKeyFromBytes(b []byte, curve elliptic.Curve) *PrivateKey {
 func PrivateKeyFromBase64(base64Key string, curve elliptic.Curve) (*PrivateKey, error) {
 	b, e := base64.StdEncoding.DecodeString(base64Key)
 	if e != nil {
-		return nil, fmt.Errorf("error decoding base64Key: %w", e)
+		return nil, errors.New("error decoding base64Key", e)
 	}
 
 	return PrivateKeyFromBytes(b, curve), nil
@@ -42,7 +43,7 @@ func PrivateKeyFromBase64(base64Key string, curve elliptic.Curve) (*PrivateKey, 
 func PrivateKeyFromHex(hexKey string, curve elliptic.Curve) (*PrivateKey, error) {
 	b, e := hex.DecodeString(hexKey)
 	if e != nil {
-		return nil, fmt.Errorf("error decoding hexKey: %w", e)
+		return nil, errors.New("error decoding hexKey", e)
 	}
 
 	return PrivateKeyFromBytes(b, curve), nil

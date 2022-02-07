@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"crypto/elliptic"
 	"crypto/sha256"
-	"fmt"
 	"io"
 
 	"github.com/wego/pkg/encryption/aes"
+	"github.com/wego/pkg/errors"
 	"golang.org/x/crypto/hkdf"
 )
 
@@ -44,7 +44,7 @@ func defaultKDF(secret []byte) ([]byte, error) {
 	key := make([]byte, aes.KeyLength)
 	kdf := hkdf.New(sha256.New, secret, nil, nil)
 	if _, err := io.ReadFull(kdf, key); err != nil {
-		return nil, fmt.Errorf("cannot read secret from HKDF reader: %w", err)
+		return nil, errors.New("cannot read secret from HKDF reader", err)
 	}
 
 	return key, nil

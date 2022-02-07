@@ -6,10 +6,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 
+	"github.com/wego/pkg/encryption"
 	"github.com/wego/pkg/encryption/aes"
+	"github.com/wego/pkg/errors"
 )
 
 //GenerateKey generates a new elliptic curve key pair
@@ -51,15 +52,9 @@ func EncryptStringToHex(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF) (s
 
 // DecryptBase64String decrypts ciphertext in base64 form to plaintext by receiver private key
 func DecryptBase64String(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
-	// check if the ciphertext is long enough
-	keyBase64Size := base64.StdEncoding.EncodedLen(publicKeySize(keySize(priv.Pub.curve)))
-	if len(ciphertext) <= keyBase64Size {
-		return "", fmt.Errorf("ciphertext is too short")
-	}
-
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
-		return "", aes.ErrInvalidBase64String
+		return "", errors.New(encryption.MsgInvalidBase64String, err)
 	}
 
 	bytes, err := Decrypt(data, priv, ecdh, kdf)
@@ -72,15 +67,9 @@ func DecryptBase64String(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF
 
 // DecryptHexString decrypts ciphertext in hex form to plaintext by receiver private key
 func DecryptHexString(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
-	// check if the ciphertext is long enough
-	keyHexSize := hex.EncodedLen(publicKeySize(keySize(priv.Pub.curve)))
-	if len(ciphertext) <= keyHexSize {
-		return "", fmt.Errorf("ciphertext is too short")
-	}
-
 	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return "", aes.ErrInvalidHexString
+		return "", errors.New(encryption.MsgInvalidHexString, err)
 	}
 
 	bytes, err := Decrypt(data, priv, ecdh, kdf)
@@ -139,7 +128,7 @@ func Decrypt(data []byte, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte, error) 
 	// check if the ciphertext is long enough
 	pubKeySize := publicKeySize(keySize(priv.Pub.curve))
 	if len(data) <= pubKeySize {
-		return nil, fmt.Errorf("data is too short")
+		return nil, errors.New(encryption.MsgCiphertextTooShort)
 	}
 
 	// parse the public key

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wego/pkg/encryption/aes"
+	"github.com/wego/pkg/encryption"
 	"github.com/wego/pkg/encryption/ecies"
 )
 
@@ -52,23 +52,19 @@ func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
 func Test_DecryptBase64String_Ciphertext_TooShort(t *testing.T) {
 	assert := assert.New(t)
 
-	plaintext, err := ecies.DecryptBase64String("abcdef", priv, nil, nil)
+	plaintext, err := ecies.DecryptBase64String("ZGNjZGFjdmRm", priv, nil, nil)
 	assert.Error(err)
-	assert.Equal(err.Error(), "ciphertext is too short")
+	assert.Equal(encryption.MsgCiphertextTooShort, err.Error())
 	assert.Empty(plaintext)
 }
 
 func Test_DecryptBase64String_InvalidBase64String(t *testing.T) {
 	assert := assert.New(t)
 
-	ciphertext := `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
-deserunt mollit anim id est laborum`
+	ciphertext := `Lorem ipsum dolor sit amet`
 	plaintext, err := ecies.DecryptBase64String(ciphertext, priv, nil, nil)
 	assert.Error(err)
-	assert.Equal(aes.ErrInvalidBase64String, err)
+	assert.Contains(err.Error(), encryption.MsgInvalidBase64String)
 	assert.Empty(plaintext)
 }
 
@@ -87,26 +83,22 @@ func Test_DecryptBase64String_InvalidPublicKeyBytes(t *testing.T) {
 	assert.Empty(plaintext)
 }
 
-func Test_DecryptHexString_Ciphertext_TooShort(t *testing.T) {
-	assert := assert.New(t)
-
-	plaintext, err := ecies.DecryptHexString("abc", priv, nil, nil)
-	assert.Error(err)
-	assert.Equal(err.Error(), "ciphertext is too short")
-	assert.Empty(plaintext)
-}
-
 func Test_DecryptHexString_InvalidHexString(t *testing.T) {
 	assert := assert.New(t)
 
-	ciphertext := `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
-deserunt mollit anim id est laborum`
+	ciphertext := `Lorem ipsum dolor sit amet`
 	plaintext, err := ecies.DecryptHexString(ciphertext, priv, nil, nil)
 	assert.Error(err)
-	assert.Equal(aes.ErrInvalidHexString, err)
+	assert.Contains(err.Error(), encryption.MsgInvalidHexString)
+	assert.Empty(plaintext)
+}
+
+func Test_DecryptHexString_Ciphertext_TooShort(t *testing.T) {
+	assert := assert.New(t)
+
+	plaintext, err := ecies.DecryptHexString("013040f2b8", priv, nil, nil)
+	assert.Error(err)
+	assert.Equal(encryption.MsgCiphertextTooShort, err.Error())
 	assert.Empty(plaintext)
 }
 

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/wego/pkg/encryption"
 	"github.com/wego/pkg/encryption/aes"
 )
 
@@ -62,7 +63,7 @@ func Test_DecryptBase64String_InvalidString(t *testing.T) {
 
 	plaintext, err := aes.DecryptBase64String(ciphertext, key)
 	assert.Error(err)
-	assert.Equal(aes.ErrInvalidBase64String, err)
+	assert.Contains(err.Error(), encryption.MsgInvalidBase64String)
 	assert.Empty(plaintext)
 }
 
@@ -84,7 +85,7 @@ func Test_DecryptBase64String_MalformedCiphertext_InvalidNonceSize(t *testing.T)
 
 	plaintext, err := aes.DecryptBase64String(ciphertext, key)
 	assert.Error(err)
-	assert.Equal(aes.ErrShortData, err)
+	assert.Equal(encryption.MsgCiphertextTooShort, err.Error())
 	assert.Empty(plaintext)
 }
 
@@ -95,7 +96,7 @@ func Test_DecryptHexString_InvalidString(t *testing.T) {
 
 	plaintext, err := aes.DecryptHexString(ciphertext, key)
 	assert.Error(err)
-	assert.Equal(aes.ErrInvalidHexString, err)
+	assert.Contains(err.Error(), encryption.MsgInvalidHexString)
 	assert.Empty(plaintext)
 }
 
@@ -117,6 +118,6 @@ func Test_DecryptHexString_MalformedCiphertext_InvalidNonceSize(t *testing.T) {
 
 	plaintext, err := aes.DecryptHexString(ciphertext, key)
 	assert.Error(err)
-	assert.Equal(aes.ErrShortData, err)
+	assert.Equal(encryption.MsgCiphertextTooShort, err.Error())
 	assert.Empty(plaintext)
 }

@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+
+	"github.com/wego/pkg/errors"
 )
 
 // PublicKey ...
@@ -33,7 +35,7 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 func PublicKeyFromBase64(base64Key string, curve elliptic.Curve) (*PublicKey, error) {
 	b, e := base64.StdEncoding.DecodeString(base64Key)
 	if e != nil {
-		return nil, fmt.Errorf("error decoding base64Key: %w", e)
+		return nil, errors.New("error decoding base64Key: %w", e)
 	}
 
 	return PublicKeyFromBytes(b, curve)
@@ -43,7 +45,7 @@ func PublicKeyFromBase64(base64Key string, curve elliptic.Curve) (*PublicKey, er
 func PublicKeyFromHex(hexKey string, curve elliptic.Curve) (*PublicKey, error) {
 	b, e := hex.DecodeString(hexKey)
 	if e != nil {
-		return nil, fmt.Errorf("error decoding hexKey: %w", e)
+		return nil, errors.New("error decoding hexKey: %w", e)
 	}
 
 	return PublicKeyFromBytes(b, curve)
