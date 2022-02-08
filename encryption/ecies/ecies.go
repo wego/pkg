@@ -21,11 +21,12 @@ func GenerateKey(curve elliptic.Curve) (*PrivateKey, error) {
 	}
 
 	return &PrivateKey{
-		d: new(big.Int).SetBytes(priv),
+		k: new(big.Int).SetBytes(priv),
 		Pub: &PublicKey{
-			Curve: curve,
-			X:     x,
-			Y:     y,
+			curve: curve,
+			Point: &Point{
+				X: x,
+				Y: y},
 		},
 	}, nil
 }
@@ -91,7 +92,7 @@ func Encrypt(data []byte, pub *PublicKey, ecdh ECDH, kdf KDF) ([]byte, error) {
 	}
 
 	// generate an ephemeral key pair
-	priv, err := GenerateKey(pub.Curve)
+	priv, err := GenerateKey(pub.curve)
 	if err != nil {
 		return nil, err
 	}
@@ -126,13 +127,13 @@ func Decrypt(data []byte, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte, error) 
 	}
 
 	// check if the ciphertext is long enough
-	pubKeySize := publicKeySize(keySize(priv.Pub.Curve))
+	pubKeySize := publicKeySize(keySize(priv.Pub.curve))
 	if len(data) <= pubKeySize {
 		return nil, errors.New(encryption.MsgCiphertextTooShort)
 	}
 
 	// parse the public key
-	pub, err := PublicKeyFromBytes(data[:pubKeySize], priv.Pub.Curve)
+	pub, err := PublicKeyFromBytes(data[:pubKeySize], priv.Pub.curve)
 	if err != nil {
 		return nil, err
 	}
