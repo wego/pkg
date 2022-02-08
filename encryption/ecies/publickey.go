@@ -13,7 +13,7 @@ import (
 
 // PublicKey ...
 type PublicKey struct {
-	curve elliptic.Curve
+	Curve elliptic.Curve
 	x, y  *big.Int
 }
 
@@ -25,7 +25,7 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 	}
 
 	return &PublicKey{
-		curve: curve,
+		Curve: curve,
 		x:     new(big.Int).SetBytes(b[1 : size+1]),
 		y:     new(big.Int).SetBytes(b[size+1:]),
 	}, nil
@@ -54,7 +54,7 @@ func PublicKeyFromHex(hexKey string, curve elliptic.Curve) (*PublicKey, error) {
 // Bytes returns the public key to raw bytes in uncompressed format (Ox04|x|y)
 // https://secg.org/sec1-v2.pdf#subsubsection.2.3.3
 func (pub *PublicKey) Bytes() []byte {
-	size := keySize(pub.curve)
+	size := keySize(pub.Curve)
 
 	x := zeroPad(pub.x.Bytes(), size)
 	y := zeroPad(pub.y.Bytes(), size)
