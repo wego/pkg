@@ -19,7 +19,7 @@ type KDF func(masterSecret []byte) (key []byte, err error)
 type ECDH func(priv *PrivateKey, pub *PublicKey) (masterSecret []byte)
 
 func defaultEncryptECDH(sender *PrivateKey, receiver *PublicKey) []byte {
-	x, y := receiver.Curve.ScalarMult(receiver.x, receiver.y, sender.d.Bytes())
+	x, y := receiver.Curve.ScalarMult(receiver.X, receiver.Y, sender.d.Bytes())
 
 	var key bytes.Buffer
 	key.Write(x.Bytes())
@@ -30,7 +30,7 @@ func defaultEncryptECDH(sender *PrivateKey, receiver *PublicKey) []byte {
 }
 
 func defaultDecryptECDH(receiver *PrivateKey, sender *PublicKey) []byte {
-	x, y := sender.Curve.ScalarMult(sender.x, sender.y, receiver.d.Bytes())
+	x, y := sender.Curve.ScalarMult(sender.X, sender.Y, receiver.d.Bytes())
 
 	var key bytes.Buffer
 	key.Write(x.Bytes())

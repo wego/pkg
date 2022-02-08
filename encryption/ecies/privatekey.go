@@ -23,8 +23,8 @@ func PrivateKeyFromBytes(b []byte, curve elliptic.Curve) *PrivateKey {
 		d: new(big.Int).SetBytes(b),
 		Pub: &PublicKey{
 			Curve: curve,
-			x:     x,
-			y:     y,
+			X:     x,
+			Y:     y,
 		},
 	}
 }

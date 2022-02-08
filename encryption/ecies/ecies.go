@@ -24,8 +24,8 @@ func GenerateKey(curve elliptic.Curve) (*PrivateKey, error) {
 		d: new(big.Int).SetBytes(priv),
 		Pub: &PublicKey{
 			Curve: curve,
-			x:     x,
-			y:     y,
+			X:     x,
+			Y:     y,
 		},
 	}, nil
 }

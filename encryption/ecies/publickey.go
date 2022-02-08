@@ -14,7 +14,7 @@ import (
 // PublicKey ...
 type PublicKey struct {
 	Curve elliptic.Curve
-	x, y  *big.Int
+	X, Y  *big.Int
 }
 
 // PublicKeyFromBytes parses a public key from its uncompressed raw bytes
@@ -26,8 +26,8 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 
 	return &PublicKey{
 		Curve: curve,
-		x:     new(big.Int).SetBytes(b[1 : size+1]),
-		y:     new(big.Int).SetBytes(b[size+1:]),
+		X:     new(big.Int).SetBytes(b[1 : size+1]),
+		Y:     new(big.Int).SetBytes(b[size+1:]),
 	}, nil
 }
 
@@ -56,8 +56,8 @@ func PublicKeyFromHex(hexKey string, curve elliptic.Curve) (*PublicKey, error) {
 func (pub *PublicKey) Bytes() []byte {
 	size := keySize(pub.Curve)
 
-	x := zeroPad(pub.x.Bytes(), size)
-	y := zeroPad(pub.y.Bytes(), size)
+	x := zeroPad(pub.X.Bytes(), size)
+	y := zeroPad(pub.Y.Bytes(), size)
 
 	return bytes.Join([][]byte{{0x04}, x, y}, nil)
 }
