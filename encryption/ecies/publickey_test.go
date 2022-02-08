@@ -15,10 +15,30 @@ func Test_Load_Unload_PublicKey_Ok(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(bytes, pub.Bytes())
 
+	b64 := priv.Pub.Base64()
+	pub, err = ecies.PublicKeyFromBase64(b64, curve)
+	assert.NoError(err)
+	assert.Equal(b64, pub.Base64())
+
 	hex := priv.Pub.Hex()
 	pub, err = ecies.PublicKeyFromHex(hex, curve)
 	assert.NoError(err)
 	assert.Equal(hex, pub.Hex())
+}
+
+func Test_PublicKeyFromBase64_Error(t *testing.T) {
+	assert := assert.New(t)
+
+	pub, err := ecies.PublicKeyFromBase64("abc", curve)
+	assert.Error(err)
+	assert.Contains(err.Error(), "error decoding base64Key")
+	assert.Nil(pub)
+
+	b64 := `dGFrZWl0ZWFzeQ==`
+	pub, err = ecies.PublicKeyFromBase64(b64, curve)
+	assert.Error(err)
+	assert.Contains(err.Error(), "invalid key length")
+	assert.Nil(pub)
 }
 
 func Test_PublicKeyFromHex_Error(t *testing.T) {

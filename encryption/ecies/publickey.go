@@ -3,25 +3,18 @@ package ecies
 import (
 	"bytes"
 	"crypto/elliptic"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math/big"
+
+	"github.com/wego/pkg/errors"
 )
 
 // PublicKey ...
 type PublicKey struct {
 	curve elliptic.Curve
 	x, y  *big.Int
-}
-
-// PublicKeyFromHex parses a public key from its hex form
-func PublicKeyFromHex(hexKey string, curve elliptic.Curve) (*PublicKey, error) {
-	b, err := hex.DecodeString(hexKey)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding hexKey: %w", err)
-	}
-
-	return PublicKeyFromBytes(b, curve)
 }
 
 // PublicKeyFromBytes parses a public key from its uncompressed raw bytes
@@ -38,6 +31,26 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 	}, nil
 }
 
+// PublicKeyFromBase64 parses a public key from its base64 form
+func PublicKeyFromBase64(base64Key string, curve elliptic.Curve) (*PublicKey, error) {
+	b, e := base64.StdEncoding.DecodeString(base64Key)
+	if e != nil {
+		return nil, errors.New("error decoding base64Key: %w", e)
+	}
+
+	return PublicKeyFromBytes(b, curve)
+}
+
+// PublicKeyFromHex parses a public key from its hex form
+func PublicKeyFromHex(hexKey string, curve elliptic.Curve) (*PublicKey, error) {
+	b, e := hex.DecodeString(hexKey)
+	if e != nil {
+		return nil, errors.New("error decoding hexKey: %w", e)
+	}
+
+	return PublicKeyFromBytes(b, curve)
+}
+
 // Bytes returns the public key to raw bytes in uncompressed format (Ox04|x|y)
 // https://secg.org/sec1-v2.pdf#subsubsection.2.3.3
 func (pub *PublicKey) Bytes() []byte {
@@ -47,6 +60,11 @@ func (pub *PublicKey) Bytes() []byte {
 	y := zeroPad(pub.y.Bytes(), size)
 
 	return bytes.Join([][]byte{{0x04}, x, y}, nil)
+}
+
+// Base64 returns public key bytes in base64 form
+func (pub *PublicKey) Base64() string {
+	return base64.StdEncoding.EncodeToString(pub.Bytes())
 }
 
 // Hex returns public key bytes in hex form
