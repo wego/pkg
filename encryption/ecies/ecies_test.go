@@ -114,3 +114,18 @@ func Test_DecryptHexString_InvalidPublicKeyBytes(t *testing.T) {
 	assert.Contains(err.Error(), "message authentication failed")
 	assert.Empty(plaintext)
 }
+
+func Test_PublicKey_ScalarMult(t *testing.T) {
+	assert := assert.New(t)
+
+	newPriv, err := ecies.GenerateKey(curve)
+	assert.NoError(err)
+
+	// if we implement correctly then
+	// (publicKeyA * privateKeyB) = (publicKeyB * privateKeyA)
+	point1 := newPriv.Pub.ScalarMult(priv)
+	point2 := priv.Pub.ScalarMult(newPriv)
+
+	assert.Equal(point1.X, point2.X)
+	assert.Equal(point1.Y, point2.Y)
+}

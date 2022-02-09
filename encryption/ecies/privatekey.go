@@ -12,7 +12,7 @@ import (
 // PrivateKey ...
 type PrivateKey struct {
 	Pub *PublicKey
-	d   *big.Int
+	k   *big.Int
 }
 
 // PrivateKeyFromBytes parses a private key from its raw bytes
@@ -20,11 +20,13 @@ func PrivateKeyFromBytes(b []byte, curve elliptic.Curve) *PrivateKey {
 	x, y := curve.ScalarBaseMult(b)
 
 	return &PrivateKey{
-		d: new(big.Int).SetBytes(b),
+		k: new(big.Int).SetBytes(b),
 		Pub: &PublicKey{
 			curve: curve,
-			x:     x,
-			y:     y,
+			Point: &Point{
+				X: x,
+				Y: y,
+			},
 		},
 	}
 }
@@ -51,7 +53,7 @@ func PrivateKeyFromHex(hexKey string, curve elliptic.Curve) (*PrivateKey, error)
 
 // Bytes returns private key raw bytes
 func (priv *PrivateKey) Bytes() []byte {
-	return priv.d.Bytes()
+	return priv.k.Bytes()
 }
 
 // Base64 returns private key bytes in base64 form

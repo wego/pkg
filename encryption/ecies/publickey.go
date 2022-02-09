@@ -11,10 +11,15 @@ import (
 	"github.com/wego/pkg/errors"
 )
 
+// Point is a pont on the curve
+type Point struct {
+	X, Y *big.Int
+}
+
 // PublicKey ...
 type PublicKey struct {
 	curve elliptic.Curve
-	x, y  *big.Int
+	*Point
 }
 
 // PublicKeyFromBytes parses a public key from its uncompressed raw bytes
@@ -26,8 +31,9 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 
 	return &PublicKey{
 		curve: curve,
-		x:     new(big.Int).SetBytes(b[1 : size+1]),
-		y:     new(big.Int).SetBytes(b[size+1:]),
+		Point: &Point{
+			X: new(big.Int).SetBytes(b[1 : size+1]),
+			Y: new(big.Int).SetBytes(b[size+1:])},
 	}, nil
 }
 
@@ -56,8 +62,8 @@ func PublicKeyFromHex(hexKey string, curve elliptic.Curve) (*PublicKey, error) {
 func (pub *PublicKey) Bytes() []byte {
 	size := keySize(pub.curve)
 
-	x := zeroPad(pub.x.Bytes(), size)
-	y := zeroPad(pub.y.Bytes(), size)
+	x := zeroPad(pub.X.Bytes(), size)
+	y := zeroPad(pub.Y.Bytes(), size)
 
 	return bytes.Join([][]byte{{0x04}, x, y}, nil)
 }
@@ -70,4 +76,10 @@ func (pub *PublicKey) Base64() string {
 // Hex returns public key bytes in hex form
 func (pub *PublicKey) Hex() string {
 	return hex.EncodeToString(pub.Bytes())
+}
+
+// ScalarMult returns pubclicKey * privateKey
+func (pub *PublicKey) ScalarMult(priv *PrivateKey) *Point {
+	x, y := pub.curve.ScalarMult(pub.X, pub.Y, priv.k.Bytes())
+	return &Point{x, y}
 }
