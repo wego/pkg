@@ -36,14 +36,19 @@ func EncryptStringToHex(plaintext, key string) (string, error) {
 	return EncryptToHex([]byte(plaintext), key)
 }
 
-// DecryptHexString decrypts a hex form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
-func DecryptHexString(ciphertext, key string) (string, error) {
+// DecryptHex decrypts a hex form ciphertext to raw data([]byte) using 256-bit AES-GCM, key must have length 32 or more
+func DecryptHex(ciphertext, key string) ([]byte, error) {
 	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return "", errors.New(encryption.MsgInvalidHexString, err)
+		return nil, errors.New(encryption.MsgInvalidHexString, err)
 	}
 
-	bytes, err := Decrypt(data, []byte(key))
+	return Decrypt(data, []byte(key))
+}
+
+// DecryptHexString decrypts a hex form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
+func DecryptHexString(ciphertext, key string) (string, error) {
+	bytes, err := DecryptHex(ciphertext, key)
 	if err != nil {
 		return "", err
 	}
@@ -66,14 +71,19 @@ func EncryptStringToBase64(plaintext, key string) (string, error) {
 	return EncryptToBase64([]byte(plaintext), key)
 }
 
-// DecryptBase64String decrypts a base64 form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
-func DecryptBase64String(ciphertext, key string) (string, error) {
+// DecryptBase64 decrypts a base64 form ciphertext to raw data([]byte) using 256-bit AES-GCM, key must have length 32 or more
+func DecryptBase64(ciphertext, key string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
-		return "", errors.New(encryption.MsgInvalidBase64String, err)
+		return nil, errors.New(encryption.MsgInvalidBase64String, err)
 	}
 
-	bytes, err := Decrypt(data, []byte(key))
+	return Decrypt(data, []byte(key))
+}
+
+// DecryptBase64String decrypts a base64 form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
+func DecryptBase64String(ciphertext, key string) (string, error) {
+	bytes, err := DecryptBase64(ciphertext, key)
 	if err != nil {
 		return "", err
 	}

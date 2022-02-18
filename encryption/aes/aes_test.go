@@ -39,9 +39,9 @@ func Test_EncryptBase64_DecryptBase64_Ok(t *testing.T) {
 	assert.NoError(err)
 	assert.NotZero(len(bytes))
 
-	decrypted, err = aes.DecryptBase64String(ciphertext, key)
+	decryptedData, err := aes.DecryptBase64(ciphertext, key)
 	assert.NoError(err)
-	assert.Equal(plaintext, decrypted)
+	assert.Equal(plainBytes, decryptedData)
 }
 
 func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
@@ -67,9 +67,9 @@ func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
 	assert.NoError(err)
 	assert.NotZero(len(bytes))
 
-	decrypted, err = aes.DecryptHexString(ciphertext, key)
+	decryptedData, err := aes.DecryptHex(ciphertext, key)
 	assert.NoError(err)
-	assert.Equal(plaintext, decrypted)
+	assert.Equal(plainBytes, decryptedData)
 }
 
 func Test_Encrypt_KeyIsTooShort(t *testing.T) {
