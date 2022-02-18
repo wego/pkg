@@ -16,19 +16,24 @@ import (
 // KeyLength is the min length of the secret key
 const KeyLength = 32
 
-// error
 var (
+	// ErrShortKey key is too short
 	ErrShortKey = fmt.Errorf("key is too short, %d bytes is required", KeyLength)
 )
 
-// EncryptStringToHex encrypts plaintext to ciphertext (hex form) using 256-bit AES-GCM, key must have length 32 or more
-func EncryptStringToHex(plaintext, key string) (string, error) {
-	bytes, err := Encrypt([]byte(plaintext), []byte(key))
+// EncryptToHex encrypts data to ciphertext (hex form) using 256-bit AES-GCM, key must have length 32 or more
+func EncryptToHex(data []byte, key string) (string, error) {
+	bytes, err := Encrypt(data, []byte(key))
 	if err != nil {
 		return "", err
 	}
 
 	return hex.EncodeToString(bytes), nil
+}
+
+// EncryptStringToHex encrypts plaintext to ciphertext (hex form) using 256-bit AES-GCM, key must have length 32 or more
+func EncryptStringToHex(plaintext, key string) (string, error) {
+	return EncryptToHex([]byte(plaintext), key)
 }
 
 // DecryptHexString decrypts a hex form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
@@ -46,14 +51,19 @@ func DecryptHexString(ciphertext, key string) (string, error) {
 	return string(bytes), nil
 }
 
-// EncryptStringToBase64 encrypts plaintext to ciphertext (base64 form) using 256-bit AES-GCM, key must have length 32 or more
-func EncryptStringToBase64(plaintext, key string) (string, error) {
-	bytes, err := Encrypt([]byte(plaintext), []byte(key))
+// EncryptToBase64 encrypts data to ciphertext (base64 form) using 256-bit AES-GCM, key must have length 32 or more
+func EncryptToBase64(data []byte, key string) (string, error) {
+	bytes, err := Encrypt(data, []byte(key))
 	if err != nil {
 		return "", err
 	}
 
 	return base64.StdEncoding.EncodeToString(bytes), nil
+}
+
+// EncryptStringToBase64 encrypts plaintext to ciphertext (base64 form) using 256-bit AES-GCM, key must have length 32 or more
+func EncryptStringToBase64(plaintext, key string) (string, error) {
+	return EncryptToBase64([]byte(plaintext), key)
 }
 
 // DecryptBase64String decrypts a base64 form ciphertext to the plaintext using 256-bit AES-GCM, key must have length 32 or more
