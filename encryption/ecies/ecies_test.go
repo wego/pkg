@@ -12,15 +12,16 @@ import (
 )
 
 var (
-	curve   = elliptic.P521()
-	priv, _ = ecies.GenerateKey(curve)
-	msg     = "Wego is awesome!"
+	curve      = elliptic.P521()
+	priv, _    = ecies.GenerateKey(curve)
+	plainText  = "Wego is awesome!"
+	plainBytes = []byte(plainText)
 )
 
 func Test_EncryptBase64String_DecryptBase64String_Ok(t *testing.T) {
 	assert := assert.New(t)
 
-	ciphertext, err := ecies.EncryptStringToBase64(msg, priv.Pub, nil, nil)
+	ciphertext, err := ecies.EncryptStringToBase64(plainText, priv.Pub, nil, nil)
 	assert.NoError(err)
 	assert.NotEmpty(ciphertext)
 
@@ -30,13 +31,26 @@ func Test_EncryptBase64String_DecryptBase64String_Ok(t *testing.T) {
 
 	decoded, err := ecies.DecryptBase64String(ciphertext, priv, nil, nil)
 	assert.NoError(err)
-	assert.Equal(msg, decoded)
+	assert.Equal(plainText, decoded)
+
+	ciphertext, err = ecies.EncryptToBase64(plainBytes, priv.Pub, nil, nil)
+	assert.NoError(err)
+	assert.NotEmpty(ciphertext)
+
+	bytes, err = base64.StdEncoding.DecodeString(ciphertext)
+	assert.NoError(err)
+	assert.NotEmpty(bytes)
+
+	decryptedData, err := ecies.DecryptBase64(ciphertext, priv, nil, nil)
+	assert.NoError(err)
+	assert.Equal(plainBytes, decryptedData)
+
 }
 
 func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
 	assert := assert.New(t)
 
-	ciphertext, err := ecies.EncryptStringToHex(msg, priv.Pub, nil, nil)
+	ciphertext, err := ecies.EncryptStringToHex(plainText, priv.Pub, nil, nil)
 	assert.NoError(err)
 	assert.NotEmpty(ciphertext)
 
@@ -46,7 +60,19 @@ func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
 
 	decoded, err := ecies.DecryptHexString(ciphertext, priv, nil, nil)
 	assert.NoError(err)
-	assert.Equal(msg, decoded)
+	assert.Equal(plainText, decoded)
+
+	ciphertext, err = ecies.EncryptToHex(plainBytes, priv.Pub, nil, nil)
+	assert.NoError(err)
+	assert.NotEmpty(ciphertext)
+
+	bytes, err = hex.DecodeString(ciphertext)
+	assert.NoError(err)
+	assert.NotEmpty(bytes)
+
+	decryptedData, err := ecies.DecryptHex(ciphertext, priv, nil, nil)
+	assert.NoError(err)
+	assert.Equal(plainBytes, decryptedData)
 }
 
 func Test_DecryptBase64String_Ciphertext_TooShort(t *testing.T) {

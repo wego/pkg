@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	key       = "1234567890qwertyuiop0123456789as"
-	plaintext = "Wego is awesome!"
+	key        = "1234567890qwertyuiop0123456789as"
+	plaintext  = "Wego is awesome!"
+	plainBytes = []byte(plaintext)
 )
 
 func Test_EncryptBase64_DecryptBase64_Ok(t *testing.T) {
@@ -29,6 +30,18 @@ func Test_EncryptBase64_DecryptBase64_Ok(t *testing.T) {
 	decrypted, err := aes.DecryptBase64String(ciphertext, key)
 	assert.NoError(err)
 	assert.Equal(plaintext, decrypted)
+
+	ciphertext, err = aes.EncryptToBase64(plainBytes, key)
+	assert.NoError(err)
+	assert.NotEmpty(ciphertext)
+
+	bytes, err = base64.StdEncoding.DecodeString(ciphertext)
+	assert.NoError(err)
+	assert.NotZero(len(bytes))
+
+	decryptedData, err := aes.DecryptBase64(ciphertext, key)
+	assert.NoError(err)
+	assert.Equal(plainBytes, decryptedData)
 }
 
 func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
@@ -45,6 +58,18 @@ func Test_EncryptHexString_DecryptHexString_Ok(t *testing.T) {
 	decrypted, err := aes.DecryptHexString(ciphertext, key)
 	assert.NoError(err)
 	assert.Equal(plaintext, decrypted)
+
+	ciphertext, err = aes.EncryptToHex(plainBytes, key)
+	assert.NoError(err)
+	assert.NotEmpty(ciphertext)
+
+	bytes, err = hex.DecodeString(ciphertext)
+	assert.NoError(err)
+	assert.NotZero(len(bytes))
+
+	decryptedData, err := aes.DecryptHex(ciphertext, key)
+	assert.NoError(err)
+	assert.Equal(plainBytes, decryptedData)
 }
 
 func Test_Encrypt_KeyIsTooShort(t *testing.T) {

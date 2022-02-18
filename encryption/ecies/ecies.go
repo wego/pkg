@@ -31,9 +31,9 @@ func GenerateKey(curve elliptic.Curve) (*PrivateKey, error) {
 	}, nil
 }
 
-// EncryptStringToBase64 encrypts plaintext to ciphertext in base64 form using receiver public key
-func EncryptStringToBase64(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
-	bytes, err := Encrypt([]byte(plaintext), pub, ecdh, kdf)
+// EncryptToBase64 encrypts data to ciphertext in base64 form using receiver public key
+func EncryptToBase64(data []byte, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
+	bytes, err := Encrypt(data, pub, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
@@ -41,9 +41,14 @@ func EncryptStringToBase64(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF)
 	return base64.StdEncoding.EncodeToString(bytes), nil
 }
 
-// EncryptStringToHex encrypts plaintext to ciphertext in hex form using receiver public key
-func EncryptStringToHex(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
-	bytes, err := Encrypt([]byte(plaintext), pub, ecdh, kdf)
+// EncryptStringToBase64 encrypts plaintext to ciphertext in base64 form using receiver public key
+func EncryptStringToBase64(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
+	return EncryptToBase64([]byte(plaintext), pub, ecdh, kdf)
+}
+
+// EncryptToHex encrypts data to ciphertext in hex form using receiver public key
+func EncryptToHex(data []byte, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
+	bytes, err := Encrypt(data, pub, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
@@ -51,14 +56,24 @@ func EncryptStringToHex(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF) (s
 	return hex.EncodeToString(bytes), nil
 }
 
-// DecryptBase64String decrypts ciphertext in base64 form to plaintext by receiver private key
-func DecryptBase64String(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
+// EncryptStringToHex encrypts plaintext to ciphertext in hex form using receiver public key
+func EncryptStringToHex(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
+	return EncryptToHex([]byte(plaintext), pub, ecdh, kdf)
+}
+
+// DecryptBase64 decrypts ciphertext in base64 form to raw data([]byte) by receiver private key
+func DecryptBase64(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
-		return "", errors.New(encryption.MsgInvalidBase64String, err)
+		return nil, errors.New(encryption.MsgInvalidBase64String, err)
 	}
 
-	bytes, err := Decrypt(data, priv, ecdh, kdf)
+	return Decrypt(data, priv, ecdh, kdf)
+}
+
+// DecryptBase64String decrypts ciphertext in base64 form to plaintext by receiver private key
+func DecryptBase64String(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
+	bytes, err := DecryptBase64(ciphertext, priv, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
@@ -66,14 +81,19 @@ func DecryptBase64String(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF
 	return string(bytes), nil
 }
 
-// DecryptHexString decrypts ciphertext in hex form to plaintext by receiver private key
-func DecryptHexString(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
+// DecryptHex decrypts ciphertext in hex form to raw data([]byte) by receiver private key
+func DecryptHex(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte, error) {
 	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return "", errors.New(encryption.MsgInvalidHexString, err)
+		return nil, errors.New(encryption.MsgInvalidHexString, err)
 	}
 
-	bytes, err := Decrypt(data, priv, ecdh, kdf)
+	return Decrypt(data, priv, ecdh, kdf)
+}
+
+// DecryptHexString decrypts ciphertext in hex form to plaintext by receiver private key
+func DecryptHexString(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
+	bytes, err := DecryptHex(ciphertext, priv, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
