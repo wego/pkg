@@ -9,6 +9,11 @@ func BoolRef(v bool) *bool {
 	return &v
 }
 
+// Float64Ref returns a reference to a float64 value
+func Float64Ref(v float64) *float64 {
+	return &v
+}
+
 // StrRef returns a reference to a string value
 func StrRef(v string) *string {
 	return &v
