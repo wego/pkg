@@ -35,6 +35,11 @@ func (d Date) Before(other Date) bool {
 	return time.Time(d).Before(time.Time(other))
 }
 
+// After checks if the date is before the other date
+func (d Date) After(other Date) bool {
+	return time.Time(d).After(time.Time(other))
+}
+
 // IsZero check if date is present zero time instance
 func (d Date) IsZero() bool {
 	return time.Time(d).IsZero()
