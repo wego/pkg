@@ -4,7 +4,8 @@ go 1.16
 
 require (
 	github.com/DataDog/datadog-go v4.8.3+incompatible
-	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20211031064116-611d5d643895 // indirect
+	golang.org/x/sys v0.0.0-20220222200937-f2425489ef4c // indirect
 )

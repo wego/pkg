@@ -37,11 +37,18 @@ type Request struct {
 
 // SetBasics set the basics value
 func (r *Request) SetBasics(basics map[string]interface{}) {
+	if r == nil {
+		return
+	}
 	r.Basics = basics
 }
 
 // AddBasics add the basics value
 func (r *Request) AddBasics(basics map[string]interface{}) {
+	if r == nil {
+		return
+	}
+
 	if r.Basics == nil {
 		r.Basics = basics
 		return
@@ -53,6 +60,10 @@ func (r *Request) AddBasics(basics map[string]interface{}) {
 
 // SetBasic set the basic value for key
 func (r *Request) SetBasic(key string, val interface{}) {
+	if r == nil {
+		return
+	}
+
 	if r.Basics == nil {
 		r.Basics = make(common.Basics)
 	}
@@ -61,7 +72,7 @@ func (r *Request) SetBasic(key string, val interface{}) {
 
 // GetBasic set the basic value for key
 func (r *Request) GetBasic(key string) interface{} {
-	if r.Basics == nil {
+	if r == nil || r.Basics == nil {
 		return nil
 	}
 	return r.Basics[key]
