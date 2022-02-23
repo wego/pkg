@@ -3,5 +3,6 @@
 for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
     pushd "$pkg" > /dev/null 2>&1 || exit 255
     go get -u -v ./... || exit 255
+    go mod download || exit 255
     popd > /dev/null 2>&1 || exit 255
 done
