@@ -93,6 +93,7 @@ func Test_Equal(t *testing.T) {
 	s2 := []string{"1", "2", "3"}
 	s3 := []string{"1"}
 	s4 := []string{"2", "1"}
+	assert.True(collection.Equal(s1, s1))
 	assert.False(collection.Equal(s1, s2))
 	assert.False(collection.Equal(s1, s3))
 	assert.True(collection.Equal(s1, s4))
