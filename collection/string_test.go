@@ -86,3 +86,17 @@ func Test_Distinct(t *testing.T) {
 	distinct = collection.Distinct(distinct)
 	assert.Equal(distinct, []string{"USD", "MYR", "SGD", "INR"})
 }
+
+func Test_Equal(t *testing.T) {
+	assert := assert.New(t)
+	s1 := []string{"1", "2"}
+	s2 := []string{"1", "2", "3"}
+	s3 := []string{"1"}
+	s4 := []string{"1", "3"}
+	s5 := []string{"2", "1"}
+	assert.True(collection.Equal(s1, s1))
+	assert.False(collection.Equal(s1, s2))
+	assert.False(collection.Equal(s1, s3))
+	assert.False(collection.Equal(s1, s4))
+	assert.True(collection.Equal(s1, s5))
+}

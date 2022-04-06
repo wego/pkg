@@ -76,3 +76,23 @@ func Distinct(vs []string) []string {
 	}
 	return vsd
 }
+
+// Equal checks whether 2 slices have the same items
+func Equal(s1 []string, s2 []string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	s1Map := make(map[string]bool)
+	for _, v := range s1 {
+		s1Map[v] = true
+	}
+
+	for _, v := range s2 {
+		if !s1Map[v] {
+			return false
+		}
+	}
+
+	return true
+}
