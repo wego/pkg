@@ -77,6 +77,7 @@ func Distinct(vs []string) []string {
 	return vsd
 }
 
+// Equal checks whether 2 slices have the same items
 func Equal(s1 []string, s2 []string) bool {
 	if len(s1) != len(s2) {
 		return false
