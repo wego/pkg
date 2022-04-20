@@ -45,26 +45,27 @@ var iso4217Currencies = map[string]bool{
 	"YER": true, "ZAR": true, "ZMW": true, "ZWL": true,
 }
 
-//  https://docs.checkout.com/docs/calculating-the-value
+//  https://www.checkout.com/docs/resources/calculating-the-value
 const defaultCurrencyFactor = 100
 
 var currencyFactors = map[string]uint{
 	// Currencies have full value
 	"BIF": 1, // Burundian Franc
+	"CLF": 1, // Chilean Unidad de Fomentos
 	"DJF": 1, // Djiboutian Franc
 	"GNF": 1, // Guinean Franc
 	"ISK": 1, // Icelandic Krona
-	"KMF": 1, // Comoran Franc
-	"XAF": 1, // Central African Franc
-	"CLF": 1, // Chilean Unidad de Fomentos
-	"XPF": 1, // Comptoirs Français du Pacifique
 	"JPY": 1, // Japanese Yen
+	"KMF": 1, // Comoran Franc
+	"KRW": 1, // South Korean Won
 	"PYG": 1, // Paraguayan Guarani
 	"RWF": 1, // Rwandan Franc
-	"KRW": 1, // South Korean Won
+	"UGX": 1, // Ugandan Shilling
 	"VUV": 1, // Vanuatu Vatu
 	"VND": 1, // Vietnamese Dong
+	"XAF": 1, // Central African Franc
 	"XOF": 1, // West African CFA franc
+	"XPF": 1, // Comptoirs Français du Pacifique
 
 	// Currencies have value divided by 1000
 	"BHD": 1000, // Bahraini Dinar
@@ -76,8 +77,9 @@ var currencyFactors = map[string]uint{
 	"TND": 1000, // Tunisian Dinar
 }
 
-// AmountToAmountInCents converts amount in a currency to amount in smallest unit of that currency
-func AmountToAmountInCents(currencyCode string, amount float64) (amountInCents uint64, err error) {
+// ToMinorUnit converts amount in a currency to amount in smallest unit (minor unit)
+// https://en.wikipedia.org/wiki/ISO_4217#Minor_units_of_currency
+func ToMinorUnit(currencyCode string, amount float64) (minorUnitAmount uint64, err error) {
 	if !IsISO4217(currencyCode) {
 		err = fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
 		return
@@ -85,28 +87,28 @@ func AmountToAmountInCents(currencyCode string, amount float64) (amountInCents u
 	switch {
 	case amount > 0:
 		factor := getCurrencyFactor(currencyCode)
-		amountInCents = uint64(math.Round(amount * float64(factor)))
+		minorUnitAmount = uint64(math.Round(amount * float64(factor)))
 	case amount == 0:
-		amountInCents = 0
+		minorUnitAmount = 0
 	default:
 		err = fmt.Errorf("invalid amount: %f", amount)
 	}
 	return
 }
 
-// AmountInCentsToAmount converts amount in the smallest unit of a currency to amount in that currency
-func AmountInCentsToAmount(currencyCode string, amountInCents uint64) (amount float64, err error) {
+// FromMinorUnit converts amount in the smallest unit (minor unit) of a currency to amount in that currency
+func FromMinorUnit(currencyCode string, minorUnitAmount uint64) (amount float64, err error) {
 	if !IsISO4217(currencyCode) {
 		err = fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
 		return
 	}
 	switch {
-	case amountInCents > 0:
+	case minorUnitAmount > 0:
 		factor := getCurrencyFactor(currencyCode)
-		amount = float64(amountInCents) / float64(factor)
+		amount = float64(minorUnitAmount) / float64(factor)
 		amount = math.Round(amount*float64(factor)) / float64(factor)
 		return
-	case amountInCents == 0:
+	case minorUnitAmount == 0:
 		amount = 0
 	default:
 		err = fmt.Errorf("invalid amount: %f", amount)
