@@ -61,7 +61,7 @@ func LogUltronEx(msg *UltronExMsg) {
 // LogPartnerRequest logs a partner request to local file
 func LogPartnerRequest(log *Request) {
 	logger := loggers[logTypePartnerRequest]
-	if logger != nil && log != nil {
+	if logger != nil && log != nil && len(log.Type) > 0 {
 		logger.Info("", log.fields()...)
 	}
 }
@@ -69,7 +69,7 @@ func LogPartnerRequest(log *Request) {
 // LogRequest logs a request to local file
 func LogRequest(log *Request) {
 	logger := loggers[logTypeRequest]
-	if logger != nil && log != nil {
+	if logger != nil && log != nil && len(log.Type) > 0 {
 		logger.Info("", log.fields()...)
 	}
 }
