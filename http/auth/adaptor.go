@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"errors"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
+	"github.com/wego/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -19,25 +19,26 @@ type adapter struct {
 }
 
 // newAdapter is the constructor for adapter.
-func newAdapter(db *gorm.DB) *adapter {
+func newAdapter(db *gorm.DB) (a *adapter, err error) {
 	if db == nil {
-		panic("db is nil")
+		err = errors.New("can not create casbin adapter, db is nil")
 	}
 
 	sqlDB, err := db.DB()
 
 	if err != nil {
-		panic("can not get db connection")
+		err = errors.New("can not create casbin adapter, can not get db connection", err)
 	}
 
 	if err = sqlDB.Ping(); err != nil {
-		panic(err)
+		err = errors.New("can not create casbin adapter, error connecting to db", err)
 	}
 
 	if err = db.SetupJoinTable(&Role{}, "Users", &UserRoles{}); err != nil {
-		panic(err)
+		err = errors.New("can not create casbin adapter, error setting up join tables", err)
 	}
-	return &adapter{db: db}
+	a = &adapter{db: db}
+	return
 }
 
 func (a *adapter) UpdatePolicy(string, string, []string, []string) error {

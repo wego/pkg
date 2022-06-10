@@ -27,8 +27,11 @@ type Authorizer struct {
 
 // NewAuthorizer returns the authorizer
 func NewAuthorizer(conf string, db *gorm.DB, userHandler func(r *http.Request) string) (*Authorizer, error) {
-	adapter := newAdapter(db)
-	e, err := casbin.NewEnforcer(conf, adapter)
+	a, err := newAdapter(db)
+	if err != nil {
+		return nil, err
+	}
+	e, err := casbin.NewEnforcer(conf, a)
 	if err != nil {
 		return nil, errors.New("can not create a Casbin Enforcer", err)
 	}
