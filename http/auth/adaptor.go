@@ -18,6 +18,28 @@ type adapter struct {
 	db *gorm.DB
 }
 
+// newAdapter is the constructor for adapter.
+func newAdapter(db *gorm.DB) *adapter {
+	if db == nil {
+		panic("db is nil")
+	}
+
+	sqlDB, err := db.DB()
+
+	if err != nil {
+		panic("can not get db connection")
+	}
+
+	if err = sqlDB.Ping(); err != nil {
+		panic(err)
+	}
+
+	if err = db.SetupJoinTable(&Role{}, "Users", &UserRoles{}); err != nil {
+		panic(err)
+	}
+	return &adapter{db: db}
+}
+
 func (a *adapter) UpdatePolicy(string, string, []string, []string) error {
 	return errors.New("not implemented")
 }
@@ -103,26 +125,4 @@ func loadRoleLine(role *Role, model model.Model) {
 		g := []string{groupTag, user.Email, role.Name}
 		persist.LoadPolicyArray(g, model)
 	}
-}
-
-// newAdapter is the constructor for adapter.
-func newAdapter(db *gorm.DB) *adapter {
-	if db == nil {
-		panic("db is nil")
-	}
-
-	sqlDB, err := db.DB()
-
-	if err != nil {
-		panic("can not get db connection")
-	}
-
-	if err = sqlDB.Ping(); err != nil {
-		panic(err)
-	}
-
-	if err = db.SetupJoinTable(&Role{}, "Users", &UserRoles{}); err != nil {
-		panic(err)
-	}
-	return &adapter{db: db}
 }
