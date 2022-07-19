@@ -11,21 +11,25 @@ import (
 	"github.com/wego/pkg/errors"
 )
 
-// BindJSON Bind general json request
-func BindJSON(c *gin.Context, ctxKey string, request interface{}) (err error) {
-	// try to get from context
+// ShouldBindJSON binds general JSON request. It will ignore request without body.
+func ShouldBindJSON(c *gin.Context, ctxKey string, request interface{}) error {
 	if fromContext(c, ctxKey, request) {
-		return
+		return nil
 	}
 
-	// try to bind from request & set to context if ok
 	if c.Request.Body != nil && c.Request.Body != http.NoBody {
-		if err = c.ShouldBindJSON(request); err != nil {
-			return errors.New(errors.BadRequest, err)
-		}
-		c.Set(ctxKey, request)
+		return bindJSON(c, ctxKey, request)
 	}
-	return
+	return nil
+}
+
+// BindJSON binds general JSON request. It will return error if request doesn't have body.
+func BindJSON(c *gin.Context, ctxKey string, request interface{}) error {
+	if fromContext(c, ctxKey, request) {
+		return nil
+	}
+
+	return bindJSON(c, ctxKey, request)
 }
 
 // BindQuery Bind general form request
@@ -87,4 +91,13 @@ func fromContext(c *gin.Context, ctxKey string, value interface{}) bool {
 		}
 	}
 	return false
+}
+
+// bindJSON tries to bind JSON object from request body & set to context if ok
+func bindJSON(c *gin.Context, ctxKey string, request interface{}) (err error) {
+	if err = c.ShouldBindJSON(request); err != nil {
+		return errors.New(errors.BadRequest, err)
+	}
+	c.Set(ctxKey, request)
+	return
 }
