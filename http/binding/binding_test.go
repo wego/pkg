@@ -3,17 +3,18 @@ package binding_test
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/wego/pkg/audit"
 	"github.com/wego/pkg/common"
 	"github.com/wego/pkg/errors"
 	"github.com/wego/pkg/http/binding"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"strings"
-	"testing"
 )
 
 var (
@@ -39,6 +40,7 @@ func testJSONHandler(c *gin.Context) {
 	var t testStruct
 	if err := binding.BindJSON(c, ctxKey, &t); err != nil {
 		c.AbortWithStatus(errors.Code(err))
+		return
 	}
 	c.JSON(http.StatusOK, t)
 }
@@ -47,6 +49,7 @@ func testQueryHandler(c *gin.Context) {
 	var t testStruct
 	if err := binding.BindQuery(c, ctxKey, &t); err != nil {
 		c.AbortWithStatusJSON(errors.Code(err), err)
+		return
 	}
 	c.JSON(http.StatusOK, t)
 }
@@ -55,14 +58,16 @@ func testChangeRequestHandler(c *gin.Context) {
 	var t testChangeStruct
 	if err := binding.BindChangeRequest(c, ctxKey, &t); err != nil {
 		c.AbortWithStatus(errors.Code(err))
+		return
 	}
 	c.JSON(http.StatusOK, t)
 }
 
-func testIDtHandler(c *gin.Context) {
+func testIDHandler(c *gin.Context) {
 	id, err := binding.BindID(c)
 	if err != nil {
 		c.AbortWithStatus(errors.Code(err))
+		return
 	}
 	c.JSON(http.StatusOK, id)
 }
@@ -122,7 +127,22 @@ func (s *BindingSuite) Test_BindJSON_FromBody() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
-	s.Equal(r.Body.String(), "{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}")
+	s.Equal("{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}", r.Body.String())
+}
+
+func (s *BindingSuite) Test_BindJSON_NoBody() {
+	req, err := http.NewRequest(http.MethodPatch, testJSONEndpoint, nil)
+	s.NoError(err)
+
+	s.router.PATCH(testJSONEndpoint, testJSONHandler)
+	r := httptest.NewRecorder()
+	s.router.ServeHTTP(r, req)
+
+	s.Equal(http.StatusOK, r.Code)
+	var empty testStruct
+	bytes, err := json.Marshal(empty)
+	s.NoError(err)
+	s.ElementsMatch(bytes, r.Body.Bytes())
 }
 
 func (s *BindingSuite) Test_BindJSON_FromContext_OK() {
@@ -157,7 +177,7 @@ func (s *BindingSuite) Test_BindJSON_FromContext_OK() {
 
 	body, err := json.Marshal(&inCtx)
 	s.NoError(err)
-	s.Equal(r.Body.String(), string(body))
+	s.Equal(string(body), r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindJSON_FromContext_TypeMismatch() {
@@ -191,8 +211,7 @@ func (s *BindingSuite) Test_BindJSON_FromContext_TypeMismatch() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
-
-	s.Equal(r.Body.String(), "{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}")
+	s.Equal("{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}", r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindQuery_FromURL_BindError() {
@@ -225,7 +244,7 @@ func (s *BindingSuite) Test_BindQuery_FromURL_OK() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
-	s.Equal(r.Body.String(), "{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}")
+	s.Equal("{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}", r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindQuery_FromContext_OK() {
@@ -257,7 +276,7 @@ func (s *BindingSuite) Test_BindQuery_FromContext_OK() {
 
 	body, err := json.Marshal(&inCtx)
 	s.NoError(err)
-	s.Equal(r.Body.String(), string(body))
+	s.Equal(string(body), r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindQuery_FromContext_TypeMismatch() {
@@ -287,7 +306,7 @@ func (s *BindingSuite) Test_BindQuery_FromContext_TypeMismatch() {
 
 	s.Equal(http.StatusOK, r.Code)
 
-	s.Equal(r.Body.String(), "{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}")
+	s.Equal("{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}", r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindChangeRequest_FromBody_BindError() {
@@ -315,8 +334,10 @@ func (s *BindingSuite) Test_BindChangeRequest_FromBody_BindIDError() {
 	        1
 	    ],
 	    "string": [
-	        "A",
-	    ]
+	        "A"
+	    ],
+		"requestedBy": "admin@payments",
+		"reason": "update"
 	}`
 	req, err := http.NewRequest(http.MethodPatch, testChangeRequestEndpoint+"/0", strings.NewReader(requestBody))
 	s.NoError(err)
@@ -326,9 +347,10 @@ func (s *BindingSuite) Test_BindChangeRequest_FromBody_BindIDError() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusBadRequest, r.Code)
+	s.Empty(r.Body)
 }
 
-func (s *BindingSuite) Test_BindChangeRequest_FromBody_Ok() {
+func (s *BindingSuite) Test_BindChangeRequest_FromBody_OK() {
 	requestBody := `{
 	    "number": [
 	        1,
@@ -351,7 +373,7 @@ func (s *BindingSuite) Test_BindChangeRequest_FromBody_Ok() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
-	s.Equal(r.Body.String(), "{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"],\"requestedBy\":\"admin@payments\",\"reason\":\"update\"}")
+	s.Equal("{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"],\"requestedBy\":\"admin@payments\",\"reason\":\"update\"}", r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindChangeRequest_FromContext_TypeMismatch() {
@@ -385,7 +407,7 @@ func (s *BindingSuite) Test_BindChangeRequest_FromContext_TypeMismatch() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
-	s.Equal(r.Body.String(), "{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"],\"requestedBy\":\"admin@payments\",\"reason\":\"update\"}")
+	s.Equal("{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"],\"requestedBy\":\"admin@payments\",\"reason\":\"update\"}", r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindChangeRequest_FromContext_OK() {
@@ -420,26 +442,24 @@ func (s *BindingSuite) Test_BindChangeRequest_FromContext_OK() {
 		c.Set(ctxKey, &inCtx)
 		c.Next()
 	})
-
+	s.router.PATCH(testChangeRequestEndpoint+"/:id", testChangeRequestHandler)
 	req, err := http.NewRequest(http.MethodPatch, testChangeRequestEndpoint+"/1", strings.NewReader(requestBody))
 	s.NoError(err)
 
-	s.router.PATCH(testChangeRequestEndpoint+"/:id", testChangeRequestHandler)
 	r := httptest.NewRecorder()
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
 	body, err := json.Marshal(inCtx)
 	s.NoError(err)
-	s.Equal(r.Body.String(), string(body))
+	s.Equal(string(body), r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindID_BadRequest() {
-
 	req, err := http.NewRequest(http.MethodGet, testIDEndpoint+"/ABC", nil)
 	s.NoError(err)
 
-	s.router.GET(testIDEndpoint+"/:id", testIDtHandler)
+	s.router.GET(testIDEndpoint+"/:id", testIDHandler)
 	r := httptest.NewRecorder()
 	s.router.ServeHTTP(r, req)
 
@@ -451,22 +471,21 @@ func (s *BindingSuite) Test_BindID_BadRequest_ZeroID() {
 	req, err := http.NewRequest(http.MethodGet, testIDEndpoint+"/0", nil)
 	s.NoError(err)
 
-	s.router.GET(testIDEndpoint+"/:id", testIDtHandler)
+	s.router.GET(testIDEndpoint+"/:id", testIDHandler)
 	r := httptest.NewRecorder()
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusBadRequest, r.Code)
 }
 
-func (s *BindingSuite) Test_BindID_BadRequest_Ok() {
-
+func (s *BindingSuite) Test_BindID_OK() {
 	req, err := http.NewRequest(http.MethodGet, testIDEndpoint+"/1", nil)
 	s.NoError(err)
 
-	s.router.GET(testIDEndpoint+"/:id", testIDtHandler)
+	s.router.GET(testIDEndpoint+"/:id", testIDHandler)
 	r := httptest.NewRecorder()
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
-	s.Equal(r.Body.String(), "1")
+	s.Equal("1", r.Body.String())
 }

@@ -2,11 +2,13 @@ package binding
 
 import (
 	"fmt"
+	"net/http"
+	"reflect"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/wego/pkg/audit"
 	"github.com/wego/pkg/errors"
-	"reflect"
-	"strconv"
 )
 
 // BindJSON Bind general json request
@@ -17,11 +19,12 @@ func BindJSON(c *gin.Context, ctxKey string, request interface{}) (err error) {
 	}
 
 	// try to bind from request & set to context if ok
-	if err = c.ShouldBindJSON(request); err != nil {
-		err = errors.New(errors.BadRequest, err)
-		return
+	if c.Request.Body != nil && c.Request.Body != http.NoBody {
+		if err = c.ShouldBindJSON(request); err != nil {
+			return errors.New(errors.BadRequest, err)
+		}
+		c.Set(ctxKey, request)
 	}
-	c.Set(ctxKey, request)
 	return
 }
 
