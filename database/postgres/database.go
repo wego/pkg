@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/jackc/pgx/v4/stdlib"
@@ -33,7 +34,7 @@ func NewConnection(dbConfigFilePath string) (*gorm.DB, error) {
 	}
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		config.Username, config.Password, config.Host, config.Port, config.Database)
+		url.QueryEscape(config.Username), url.QueryEscape(config.Password), config.Host, config.Port, config.Database)
 	sqlTrace.Register("pgx", &stdlib.Driver{}, sqlTrace.WithServiceName(viper.GetString("service_name")))
 	sqlDB, err := sqlTrace.Open("pgx", connStr)
 	if err != nil {
