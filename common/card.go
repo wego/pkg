@@ -1,5 +1,7 @@
 package common
 
+import "math/rand"
+
 // ValidateCardNumber will check the credit card's number against the Luhn algorithm
 func ValidateCardNumber(number string) bool {
 	var sum int
@@ -32,4 +34,42 @@ func ValidateCardNumber(number string) bool {
 	}
 
 	return sum%10 == 0
+}
+
+// Generate a random number with the specified length
+func Generate(bin string, length int) string {
+	result := make([]byte, length)
+	binLen := len(bin)
+	for i := 0; i < binLen; i++ {
+		result[i] = bin[i]
+	}
+	remainingLen := length - (len(bin) + 1)
+	for i := 0; i < remainingLen; i++ {
+		result[binLen+i] = byte(rand.Intn(9) + 48)
+	}
+	result[length-1] = byte(getCheckDigit(result, length-1) + 48)
+	return string(result)
+}
+
+func getCheckDigit(number []byte, end int) int {
+	var sum int
+	for i := 0; i < end; i++ {
+
+		// Get the digit at the current position.
+		digit := int(number[i] - '0')
+
+		if (i % 2) == 0 {
+			digit = digit * 2
+			if digit > 9 {
+				digit = (digit / 10) + (digit % 10)
+			}
+		}
+		sum += digit
+	}
+
+	mod := sum % 10
+	if mod == 0 {
+		return 0
+	}
+	return 10 - mod
 }

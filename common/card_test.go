@@ -1,6 +1,7 @@
 package common_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,4 +30,13 @@ func Test_ValidateCardNumber(t *testing.T) {
 	assert.True(common.ValidateCardNumber("4012888888881881"))
 	assert.True(common.ValidateCardNumber("4222222222222"))
 	assert.False(common.ValidateCardNumber("1234567812345678"))
+
+	for i := 0; i <= 999999; i++ {
+		bin := fmt.Sprintf("%06d", i)
+		for round := 0; round < 100; round++ {
+			for l := 13; l <= 19; l++ {
+				assert.True(common.ValidateCardNumber(common.Generate(bin, l)))
+			}
+		}
+	}
 }
