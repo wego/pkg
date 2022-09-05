@@ -1,5 +1,10 @@
 package common
 
+import (
+	"github.com/Ardesco/credit-card-generator/api/cards"
+	"github.com/Ardesco/credit-card-generator/api/models"
+)
+
 // ValidateCardNumber will check the credit card's number against the Luhn algorithm
 func ValidateCardNumber(number string) bool {
 	var sum int
@@ -32,4 +37,12 @@ func ValidateCardNumber(number string) bool {
 	}
 
 	return sum%10 == 0
+}
+
+// GenerateCardNumberFromBin will generate credit card number based on bin number and the card number length
+func GenerateCardNumberFromBin(bin string, cardNumberLen int) string {
+	return cards.GeneratePAN(models.CardProperties{
+		Prefix:  []string{bin},
+		PanSize: cardNumberLen,
+	}).Raw
 }
