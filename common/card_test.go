@@ -30,3 +30,26 @@ func Test_ValidateCardNumber(t *testing.T) {
 	assert.True(common.ValidateCardNumber("4222222222222"))
 	assert.False(common.ValidateCardNumber("1234567812345678"))
 }
+
+func TestGenerateCardNumberFromBin(t *testing.T) {
+	type args struct {
+		bin           string
+		cardNumberLen int
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{"generate visa card number", args{"409636", 16}},
+		{"generate amex card number", args{"376212", 15}},
+		{"generate mastercard card number", args{"547071", 16}},
+		{"generate random card number", args{"123456", 16}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if cardNum := common.GenerateCardNumberFromBin(tt.args.bin, tt.args.cardNumberLen); !common.ValidateCardNumber(cardNum) {
+				t.Errorf("GenerateCardNumberFromBin() = %v card number is invalid", cardNum)
+			}
+		})
+	}
+}
