@@ -3,6 +3,8 @@ package postgres
 import (
 	"fmt"
 	"net/url"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v4/stdlib"
@@ -26,23 +28,37 @@ type config struct {
 	ConnMaxLifeTimeMinutes int `mapstructure:"conn_max_life_time_minutes"`
 }
 
-// NewConnection : create new db instance
+// NewConnection create new db instance from config file
 func NewConnection(dbConfigFilePath string) (*gorm.DB, error) {
 	config, err := readConfig(dbConfigFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load config for DB: %w", err)
 	}
 
+	return connectDB(config)
+}
+
+// NewConnectionFromEnv create new db instance from env
+func NewConnectionFromEnv(envName string, configType string) (*gorm.DB, error) {
+	config, err := readConfigFromEnv(envName, configType)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load config for DB: %w", err)
+	}
+
+	return connectDB(config)
+}
+
+func connectDB(c *config) (*gorm.DB, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		url.QueryEscape(config.Username), url.QueryEscape(config.Password), config.Host, config.Port, config.Database)
+		url.QueryEscape(c.Username), url.QueryEscape(c.Password), c.Host, c.Port, c.Database)
 	sqlTrace.Register("pgx", &stdlib.Driver{}, sqlTrace.WithServiceName(viper.GetString("service_name")))
 	sqlDB, err := sqlTrace.Open("pgx", connStr)
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxIdleConns(config.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(config.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(time.Duration(config.ConnMaxLifeTimeMinutes) * time.Minute)
+	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifeTimeMinutes) * time.Minute)
 
 	db, err := gormTrace.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
 		Logger:  logger.Default.LogMode(logger.Silent),
@@ -63,10 +79,30 @@ func readConfig(dbConfigFilePath string) (*config, error) {
 		return nil, err
 	}
 
-	env := viper.GetString("env")
-	var c config
+	return unmarshalConfig(configReader)
+}
 
-	if err := configReader.Sub(env).Unmarshal(&c); err != nil {
+func readConfigFromEnv(envName string, configType string) (*config, error) {
+	configReader := viper.New()
+	configReader.SetConfigType(configType)
+
+	if err := configReader.ReadConfig(strings.NewReader(os.Getenv(envName))); err != nil {
+		return nil, err
+	}
+
+	return unmarshalConfig(configReader)
+}
+
+func unmarshalConfig(configReader *viper.Viper) (*config, error) {
+	var c config
+	env := viper.GetString("env")
+
+	envConfig := configReader.Sub(env)
+	if envConfig == nil {
+		return nil, fmt.Errorf("env[%s] not found in config", env)
+	}
+
+	if err := envConfig.Unmarshal(&c); err != nil {
 		return nil, err
 	}
 
