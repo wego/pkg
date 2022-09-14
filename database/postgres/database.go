@@ -28,9 +28,23 @@ type config struct {
 	ConnMaxLifeTimeMinutes int `mapstructure:"conn_max_life_time_minutes"`
 }
 
-// NewConnection create new db instance from config file
-func NewConnection(dbConfigFilePath string) (*gorm.DB, error) {
-	config, err := readConfig(dbConfigFilePath)
+const (
+	// ConfigEnvName is the name of the env that contains the config value
+	ConfigEnvName = "DB_CONFIG_SECRET"
+)
+
+// NewConnection create new db instance from env and fallback to config file if env is empty
+func NewConnection(dbConfigEnvName, dbConfigFilePath, dbConfigFormat string) (*gorm.DB, error) {
+	if len(os.Getenv(dbConfigEnvName)) > 0 {
+		return NewConnectionFromEnv(dbConfigEnvName, dbConfigFormat)
+	}
+
+	return NewConnectionFromFile(dbConfigFilePath, dbConfigFormat)
+}
+
+// NewConnectionFromFile create new db instance from config file
+func NewConnectionFromFile(dbConfigFilePath, dbConfigFormat string) (*gorm.DB, error) {
+	config, err := readConfigFromFile(dbConfigFilePath, dbConfigFormat)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load config for DB: %w", err)
 	}
@@ -39,7 +53,7 @@ func NewConnection(dbConfigFilePath string) (*gorm.DB, error) {
 }
 
 // NewConnectionFromEnv create new db instance from env
-func NewConnectionFromEnv(envName string, configType string) (*gorm.DB, error) {
+func NewConnectionFromEnv(envName, configType string) (*gorm.DB, error) {
 	config, err := readConfigFromEnv(envName, configType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load config for DB: %w", err)
@@ -71,9 +85,10 @@ func connectDB(c *config) (*gorm.DB, error) {
 	return db, nil
 }
 
-func readConfig(dbConfigFilePath string) (*config, error) {
+func readConfigFromFile(dbConfigFilePath, dbConfigFormat string) (*config, error) {
 	configReader := viper.New()
 	configReader.SetConfigFile(dbConfigFilePath)
+	configReader.SetConfigType(dbConfigFormat)
 
 	if err := configReader.ReadInConfig(); err != nil {
 		return nil, err
@@ -82,7 +97,7 @@ func readConfig(dbConfigFilePath string) (*config, error) {
 	return unmarshalConfig(configReader)
 }
 
-func readConfigFromEnv(envName string, configType string) (*config, error) {
+func readConfigFromEnv(envName, configType string) (*config, error) {
 	configReader := viper.New()
 	configReader.SetConfigType(configType)
 
