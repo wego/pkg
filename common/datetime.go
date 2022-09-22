@@ -2,6 +2,8 @@ package common
 
 import (
 	"time"
+
+	"github.com/wego/pkg/pointer"
 )
 
 // CurrentUTCTime returns current date time in UTC
@@ -11,7 +13,7 @@ func CurrentUTCTime() time.Time {
 
 // CurrentUTCTimeRef returns current date time reference in UTC
 func CurrentUTCTimeRef() *time.Time {
-	return TimeRef(time.Now().UTC())
+	return pointer.To(time.Now().UTC())
 }
 
 // CurrentLocalTime returns current date time in local timezone

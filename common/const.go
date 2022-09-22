@@ -2,15 +2,6 @@ package common
 
 // common constants
 const (
-	AcceptLanguage     = "Accept-Language"
-	Authorization      = "Authorization"
-	ContentType        = "Content-Type"
-	UserAgent          = "User-Agent"
-	APIKey             = "ApiKey"
-	BearerPrefix       = "Bearer "
-	ApplicationJSON    = "application/json"
-	TextXML            = "text/xml"
-	RequestIDHeader    = "X-Request-ID"
 	ClientCodeParam    = "clientCode"
 	MaxRequestIDLength = 64
 	BINLength          = 6
