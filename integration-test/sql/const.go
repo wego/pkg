@@ -4,9 +4,8 @@ package sql
 const (
 	env = "env"
 
-	defaultDbConfigFilePath = "config/database.yml"
-	defaultDbName           = "postgres"
-
-	dbMigrationSourceFolder = "migrations"
-	dbDataSeedFilePath      = "data-seed-test/insert_test.sql"
+	defaultDbConfigFilePath        = "config/database.yml"
+	defaultDbName                  = "postgres"
+	defaultDbMigrationSourceFolder = "migrations"
+	defaultDbDataSeedFilePath      = "data-seed-test/insert_test.sql"
 )

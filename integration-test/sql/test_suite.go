@@ -28,14 +28,18 @@ import (
 
 // TestSuite ...
 type TestSuite struct {
-	DbConn *gorm.DB
-	DbName string
+	dbConn                  *gorm.DB
+	dbName                  string
+	dbMigrationSourceFolder string
+	dbDataSeedFilePath      string
 }
 
 // TestSuiteParams ...
 type TestSuiteParams struct {
-	DbConfigFilePath string
-	DbName           string
+	DbConfigFilePath        string
+	DbName                  string
+	DbMigrationSourceFolder string
+	DbDataSeedFilePath      string
 }
 
 // NewTestSuite return a new TestSuite for SQL
@@ -53,20 +57,32 @@ func NewTestSuite(p TestSuiteParams) intTest.TestSuite {
 		dbName = defaultDbName
 	}
 
+	dbMigrationSourceFolder := p.DbMigrationSourceFolder
+	if len(dbMigrationSourceFolder) == 0 {
+		dbMigrationSourceFolder = defaultDbMigrationSourceFolder
+	}
+
+	dbDataSeedFilePath := p.DbDataSeedFilePath
+	if len(dbDataSeedFilePath) == 0 {
+		dbDataSeedFilePath = defaultDbDataSeedFilePath
+	}
+
 	db, err := database.NewConnection(resolveExternalPath(dbConfigFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return &TestSuite{
-		DbConn: db,
-		DbName: dbName,
+		dbConn:                  db,
+		dbName:                  dbName,
+		dbMigrationSourceFolder: dbMigrationSourceFolder,
+		dbDataSeedFilePath:      dbDataSeedFilePath,
 	}
 }
 
 // StartUp runs database migration up scripts
 func (s *TestSuite) StartUp() interface{} {
-	sqlDB, err := s.DbConn.DB()
+	sqlDB, err := s.dbConn.DB()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,8 +92,8 @@ func (s *TestSuite) StartUp() interface{} {
 		log.Fatal(err)
 	}
 
-	migrationPath := "file://" + resolveExternalPath(dbMigrationSourceFolder)
-	m, err := migrate.NewWithDatabaseInstance(migrationPath, s.DbName, driver)
+	migrationPath := "file://" + resolveExternalPath(s.dbMigrationSourceFolder)
+	m, err := migrate.NewWithDatabaseInstance(migrationPath, s.dbName, driver)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +101,7 @@ func (s *TestSuite) StartUp() interface{} {
 	err = m.Up()
 	handleMigrateErr(err)
 
-	return s.DbConn
+	return s.dbConn
 }
 
 func resolveExternalPath(externalPath string) string {
@@ -121,7 +137,7 @@ func (s *TestSuite) CleanUp() {
 	}
 
 	// delete all records
-	err = s.DbConn.Transaction(func(tx *gorm.DB) error {
+	err = s.dbConn.Transaction(func(tx *gorm.DB) error {
 		for _, table := range tables {
 			query := `TRUNCATE ` + pq.QuoteIdentifier(table) + ` RESTART IDENTITY CASCADE`
 			fmt.Println(query)
@@ -137,12 +153,12 @@ func (s *TestSuite) CleanUp() {
 	}
 
 	// insert data seed test data for next test suite
-	seedSQLPath := resolveExternalPath(dbDataSeedFilePath)
+	seedSQLPath := resolveExternalPath(s.dbDataSeedFilePath)
 	seedSQL, err := ioutil.ReadFile(filepath.Clean(seedSQLPath))
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = s.DbConn.Exec(string(seedSQL)).Error; err != nil {
+	if err = s.dbConn.Exec(string(seedSQL)).Error; err != nil {
 		log.Fatal(err)
 	}
 }
@@ -165,7 +181,7 @@ func (s *TestSuite) Create(ctx context.Context, value interface{}) error {
 }
 
 func (s *TestSuite) create(ctx context.Context, op errors.Op, v interface{}) error {
-	if err := s.DbConn.WithContext(ctx).
+	if err := s.dbConn.WithContext(ctx).
 		Clauses(clause.OnConflict{
 			UpdateAll: true,
 		}).
@@ -179,7 +195,7 @@ func (s *TestSuite) create(ctx context.Context, op errors.Op, v interface{}) err
 // FindByID retrieves the entity from database by primary key ID
 func (s *TestSuite) FindByID(ctx context.Context, entity interface{}, id uint) error {
 	const op errors.Op = "sql.TestSuite.FindByID"
-	if err := s.DbConn.WithContext(ctx).
+	if err := s.dbConn.WithContext(ctx).
 		Preload(clause.Associations).
 		First(entity, id).
 		Error; err != nil {
@@ -195,7 +211,7 @@ func (s *TestSuite) getAllTableNames() ([]string, error) {
 										table_type='BASE TABLE' AND
 										table_name<>'schema_migrations'`
 	var tables []string
-	err := s.DbConn.Raw(query).Scan(&tables).Error
+	err := s.dbConn.Raw(query).Scan(&tables).Error
 	if err != nil {
 		return nil, err
 	}
