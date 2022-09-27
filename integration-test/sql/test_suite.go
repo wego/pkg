@@ -41,18 +41,26 @@ type TestSuiteParams struct {
 // NewTestSuite return a new TestSuite for SQL
 func NewTestSuite(p TestSuiteParams) intTest.TestSuite {
 	viper.SetDefault(env, "test")
-
 	viper.BindEnv(env, "APP_ENV")
 
-	dbConfigFilePath := resolveExternalPath(p.DbConfigFilePath)
-	db, err := database.NewConnection(dbConfigFilePath)
+	dbConfigFilePath := p.DbConfigFilePath
+	if len(dbConfigFilePath) == 0 {
+		dbConfigFilePath = defaultDbConfigFilePath
+	}
+
+	dbName := p.DbName
+	if len(dbName) == 0 {
+		dbName = defaultDbName
+	}
+
+	db, err := database.NewConnection(resolveExternalPath(dbConfigFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return &TestSuite{
 		DbConn: db,
-		DbName: p.DbName,
+		DbName: dbName,
 	}
 }
 
