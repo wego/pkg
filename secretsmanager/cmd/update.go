@@ -13,6 +13,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/pkg/browser"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
@@ -45,37 +46,40 @@ func UpdateCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			secret, newSecret := openSecretInEditor(secretID, awsProfile)
-			if secret == newSecret {
+			secret, err := retrieveSecret(secretID, awsProfile)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			newSecretString := openSecretInEditor(secret)
+			if *secret.SecretString == newSecretString {
 				log.Println("No changes in the secret, aborting...")
 				os.Exit(0)
 			}
 
-			if !confirmDiffs(secret, newSecret) {
+			if !confirmDiffs(*secret.SecretString, newSecretString) {
 				os.Exit(0)
 			}
 
 			// TODO: make validation customizable
-			c := config.Load(newSecret, "", "toml")
+			c := config.Load(newSecretString, "", "toml")
 			if err := c.Validate(); err != nil {
 				log.Fatal(err)
 			}
 
-			// TODO: check existing version before update to AWS secrets manager
 			log.Println("Updating secret to AWS...")
+			if _, err := updateSecret(*secret.ARN, awsProfile, newSecretString); err != nil {
+				log.Fatal(err)
+			}
+			log.Println("Updated successfully.")
 		},
 	}
 
 	return &cmd
 }
 
-func openSecretInEditor(secretID, awsProfile string) (old, new string) {
-	secret, err := retrieveSecret(secretID, awsProfile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tempFileName := fmt.Sprintf("%s-%s", secretID, secret.CreatedDate.UTC().Format(time.RFC3339))
+func openSecretInEditor(secret *secretsmanager.GetSecretValueOutput) (updated string) {
+	tempFileName := fmt.Sprintf("%s-%s", *secret.Name, secret.CreatedDate.UTC().Format(time.RFC3339))
 	f, err := ioutil.TempFile("", tempFileName)
 	if err != nil {
 		log.Fatal(err)
@@ -118,7 +122,7 @@ func openSecretInEditor(secretID, awsProfile string) (old, new string) {
 		log.Fatal(err)
 	}
 
-	return *secret.SecretString, string(newSecret)
+	return string(newSecret)
 }
 
 func renderHTML(diffs []diffmatchpatch.Diff) string {
