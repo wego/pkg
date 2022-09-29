@@ -3,13 +3,12 @@ name: Run Style Check And Unit Test
 on:
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
     branches:
       - main
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +32,6 @@ jobs:
         run: |
           for pkg in $(find . -name 'go.sum' -exec dirname {} \; | sort -u); do
             pushd "$pkg" > /dev/null 2>&1 || exit 255
-            go mod download || exit 255
             go vet ./... || exit 255
             golint -set_exit_status ./... || exit 255
             popd > /dev/null 2>&1 || exit 255
