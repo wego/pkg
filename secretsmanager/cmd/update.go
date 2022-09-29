@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/pkg/browser"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -54,6 +55,7 @@ func UpdateCmd() *cobra.Command {
 				os.Exit(0)
 			}
 
+			// TODO: make validation customizable
 			c := config.Load(newSecret, "", "toml")
 			if err := c.Validate(); err != nil {
 				log.Fatal(err)
@@ -73,7 +75,7 @@ func openSecretInEditor(secretID, awsProfile string) (old, new string) {
 		log.Fatal(err)
 	}
 
-	tempFileName := fmt.Sprintf("%s-%d", secretID, secret.CreatedDate.Unix())
+	tempFileName := fmt.Sprintf("%s-%s", secretID, secret.CreatedDate.UTC().Format(time.RFC3339))
 	f, err := ioutil.TempFile("", tempFileName)
 	if err != nil {
 		log.Fatal(err)
