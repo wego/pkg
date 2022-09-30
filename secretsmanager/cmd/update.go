@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -69,6 +70,10 @@ func UpdateCmd(c UpdateCmdConfig) *cobra.Command {
 				if err := c.Validate(newSecretString); err != nil {
 					log.Fatal(err)
 				}
+			}
+
+			if err := checkLatestSecretVersion(secret, awsProfile); err != nil {
+				log.Fatal(err)
 			}
 
 			log.Println("Updating secret to AWS...")
@@ -192,6 +197,19 @@ func confirmDiffs(secretBody, newSecretBody string) bool {
 		return true
 	}
 	return false
+}
+
+func checkLatestSecretVersion(secret *secretsmanager.GetSecretValueOutput, awsProfile string) error {
+	latestSecret, err := retrieveSecret(*secret.ARN, awsProfile)
+	if err != nil {
+		return err
+	}
+
+	if *latestSecret.VersionId != *secret.VersionId {
+		return errors.New("newer secret version available, aborting update")
+	}
+
+	return nil
 }
 
 func diffSummary(diffs []diffmatchpatch.Diff) string {
