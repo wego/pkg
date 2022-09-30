@@ -5,18 +5,13 @@ import (
 	"github.com/wego/pkg/secretsmanager/cmd"
 )
 
-const defaultAWSRegion = "ap-southeast-1"
-
 func main() {
 	var rootCmd = cobra.Command{}
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	rootCmd.AddCommand(cmd.UpdateCmd())
+	rootCmd.AddCommand(cmd.UpdateCmd(cmd.UpdateCmdConfig{}))
 	rootCmd.AddCommand(cmd.BackupCmd())
-
-	rootCmd.PersistentFlags().StringP("secret-id", "s", "", "Secret id to be updated")
-	rootCmd.PersistentFlags().StringP("aws-profile", "p", "", "Specify the aws sso profile")
 
 	rootCmd.Execute()
 }

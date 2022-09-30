@@ -11,7 +11,7 @@ import (
 
 var sm *secretsmanager.SecretsManager
 
-func newSecretManagerClient(awsProfile string) *secretsmanager.SecretsManager {
+func client(awsProfile string) *secretsmanager.SecretsManager {
 	if sm != nil {
 		return sm
 	}
@@ -36,13 +36,13 @@ func newSecretManagerClient(awsProfile string) *secretsmanager.SecretsManager {
 }
 
 func retrieveSecret(secretID, awsProfile string) (*secretsmanager.GetSecretValueOutput, error) {
-	return newSecretManagerClient(awsProfile).GetSecretValue(&secretsmanager.GetSecretValueInput{
+	return client(awsProfile).GetSecretValue(&secretsmanager.GetSecretValueInput{
 		SecretId: &secretID,
 	})
 }
 
 func updateSecret(secretARN, awsProfile, secretString string) (*secretsmanager.PutSecretValueOutput, error) {
-	return newSecretManagerClient(awsProfile).PutSecretValue(&secretsmanager.PutSecretValueInput{
+	return client(awsProfile).PutSecretValue(&secretsmanager.PutSecretValueInput{
 		SecretId:     aws.String(secretARN),
 		SecretString: aws.String(secretString),
 	})

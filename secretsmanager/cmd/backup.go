@@ -48,5 +48,9 @@ func BackupCmd() *cobra.Command {
 		},
 	}
 
+	cmd.PersistentFlags().StringP("secret-id", "s", "", "Secret id to be updated")
+	cmd.PersistentFlags().StringP("aws-profile", "p", "", "Specify the aws sso profile")
+	cmd.CompletionOptions.DisableDefaultCmd = true
+
 	return &cmd
 }

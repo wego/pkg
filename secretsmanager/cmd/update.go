@@ -17,15 +17,19 @@ import (
 	"github.com/pkg/browser"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
-	"github.com/wego/payments/pkg/config"
 )
 
 const (
 	defaultEditor = "vim"
 )
 
+// UpdateCmdConfig ...
+type UpdateCmdConfig struct {
+	Validate func(secretString string) error
+}
+
 // UpdateCmd update secret on AWS Secrets Manager
-func UpdateCmd() *cobra.Command {
+func UpdateCmd(c UpdateCmdConfig) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "update",
 		Short: "Update secret on AWS Secrets Manager",
@@ -61,10 +65,10 @@ func UpdateCmd() *cobra.Command {
 				os.Exit(0)
 			}
 
-			// TODO: make validation customizable
-			c := config.Load(newSecretString, "", "toml")
-			if err := c.Validate(); err != nil {
-				log.Fatal(err)
+			if c.Validate != nil {
+				if err := c.Validate(newSecretString); err != nil {
+					log.Fatal(err)
+				}
 			}
 
 			log.Println("Updating secret to AWS...")
@@ -74,6 +78,10 @@ func UpdateCmd() *cobra.Command {
 			log.Println("Updated successfully.")
 		},
 	}
+
+	cmd.PersistentFlags().StringP("secret-id", "s", "", "Secret id to be updated")
+	cmd.PersistentFlags().StringP("aws-profile", "p", "", "Specify the aws sso profile")
+	cmd.CompletionOptions.DisableDefaultCmd = true
 
 	return &cmd
 }
@@ -94,7 +102,7 @@ func openSecretInEditor(secret *secretsmanager.GetSecretValueOutput) (updated st
 
 	path, err := exec.LookPath(editor)
 	if err != nil {
-		fmt.Printf("Error %s while looking up for %s!!", path, editor)
+		log.Fatalf("Error %s while looking up for %s!!", path, editor)
 	}
 
 	editCmdArgs := []string{}
@@ -103,7 +111,9 @@ func openSecretInEditor(secret *secretsmanager.GetSecretValueOutput) (updated st
 		editCmdArgs = append(editCmdArgs, "--wait")
 	}
 
-	f.WriteString(*secret.SecretString)
+	if _, err := f.WriteString(*secret.SecretString); err != nil {
+		log.Fatal(err)
+	}
 	editCmdArgs = append(editCmdArgs, f.Name())
 
 	editCmd := exec.Command(path, editCmdArgs...)
@@ -154,18 +164,22 @@ func renderHTML(diffs []diffmatchpatch.Diff) string {
 	</body>
 	</html>
 	`))
-	tmpl.Execute(&output, map[string]interface{}{
+	if err := tmpl.Execute(&output, map[string]interface{}{
 		"Diffs": diffs,
-	})
+	}); err != nil {
+		log.Fatal(err)
+	}
 
 	return output.String()
 }
 
 func confirmDiffs(secretBody, newSecretBody string) bool {
 	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffMain(string(secretBody), string(newSecretBody), true)
+	diffs := dmp.DiffCleanupEfficiency(dmp.DiffMain(string(secretBody), string(newSecretBody), true))
 
-	browser.OpenReader(strings.NewReader(renderHTML(dmp.DiffCleanupEfficiency(diffs))))
+	browser.OpenReader(strings.NewReader(renderHTML(diffs)))
+
+	log.Println(diffSummary(diffs))
 
 	log.Println("Do you want to update the secret? [Y/n]:")
 	reader := bufio.NewReader(os.Stdin)
@@ -178,4 +192,26 @@ func confirmDiffs(secretBody, newSecretBody string) bool {
 		return true
 	}
 	return false
+}
+
+func diffSummary(diffs []diffmatchpatch.Diff) string {
+	insertedCount := 0
+	deletedCount := 0
+	for _, diff := range diffs {
+		switch diff.Type {
+		case diffmatchpatch.DiffInsert:
+			insertedCount += countNewLines(diff.Text)
+		case diffmatchpatch.DiffDelete:
+			deletedCount += countNewLines(diff.Text)
+		}
+	}
+	return fmt.Sprintf("Updated lines: +%d -%d (please check the changes from your browser)", insertedCount, deletedCount)
+}
+
+func countNewLines(s string) int {
+	n := strings.Count(s, "\n")
+	if len(s) > 0 && !strings.HasSuffix(s, "\n") {
+		n++
+	}
+	return n
 }
