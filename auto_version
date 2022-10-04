@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 POSITIONAL=()
-update_path_version=true
+update_patch_version=true
 update_major_version=false
 update_minor_version=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-  -p | --path)
-    update_path_version=true
+  -p | --patch)
+    update_patch_version=true
     shift 1
     ;;
   -m | --major)
@@ -73,7 +73,7 @@ for dir in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
   fi
 
   if [ "$changes" -gt 0 ]; then
-    [[ $update_path_version == true ]] && patch_version=$((patch_version + 1))
+    [[ $update_patch_version == true ]] && patch_version=$((patch_version + 1))
     [[ $update_minor_version == true ]] && minor_version=$((minor_version + 1)) && patch_version=0
     [[ $update_major_version == true ]] && major_version=$((major_version + 1)) && minor_version=0 && patch_version=0
     [[ $first_version == true ]] && major_version=0 && minor_version=1 && patch_version=0

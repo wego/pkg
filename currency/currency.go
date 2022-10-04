@@ -46,9 +46,9 @@ var iso4217Currencies = map[string]bool{
 }
 
 //  https://www.checkout.com/docs/resources/calculating-the-value
-const defaultCurrencyFactor = 100
+const defaultCurrencyFactor float64 = 100
 
-var currencyFactors = map[string]uint{
+var currencyFactors = map[string]float64{
 	// Currencies have full value
 	"BIF": 1, // Burundian Franc
 	"CLF": 1, // Chilean Unidad de Fomentos
@@ -87,7 +87,7 @@ func ToMinorUnit(currencyCode string, amount float64) (minorUnitAmount uint64, e
 	switch {
 	case amount > 0:
 		factor := getCurrencyFactor(currencyCode)
-		minorUnitAmount = uint64(math.Round(amount * float64(factor)))
+		minorUnitAmount = uint64(math.Round(amount * factor))
 	case amount == 0:
 		minorUnitAmount = 0
 	default:
@@ -102,16 +102,11 @@ func FromMinorUnit(currencyCode string, minorUnitAmount uint64) (amount float64,
 		err = fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
 		return
 	}
-	switch {
-	case minorUnitAmount > 0:
+
+	if minorUnitAmount > 0 {
 		factor := getCurrencyFactor(currencyCode)
-		amount = float64(minorUnitAmount) / float64(factor)
-		amount = math.Round(amount*float64(factor)) / float64(factor)
-		return
-	case minorUnitAmount == 0:
-		amount = 0
-	default:
-		err = fmt.Errorf("invalid amount: %f", amount)
+		amount = float64(minorUnitAmount) / factor
+		amount = math.Round(amount*factor) / factor
 	}
 	return
 }
@@ -121,7 +116,7 @@ func IsISO4217(code string) bool {
 	return iso4217Currencies[strings.ToUpper(strings.TrimSpace(code))]
 }
 
-func getCurrencyFactor(currency string) (factor uint) {
+func getCurrencyFactor(currency string) (factor float64) {
 	factor, ok := currencyFactors[strings.ToUpper(currency)]
 	if !ok {
 		factor = defaultCurrencyFactor

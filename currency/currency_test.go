@@ -95,9 +95,9 @@ func Test_ToMinorUnit_InvalidAmount(t *testing.T) {
 func Test_FromMinorUnit_OK(t *testing.T) {
 	assert := assert.New(t)
 
-	rs, err := currency.FromMinorUnit("SGD", 2512)
+	rs, err := currency.FromMinorUnit("SGD", 2599)
 	assert.NoError(err)
-	assert.EqualValues(25.12, rs)
+	assert.EqualValues(25.99, rs)
 
 	rs, err = currency.FromMinorUnit("SGD", 25123)
 	assert.NoError(err)
@@ -107,9 +107,9 @@ func Test_FromMinorUnit_OK(t *testing.T) {
 	assert.NoError(err)
 	assert.EqualValues(25.123, rs)
 
-	rs, err = currency.FromMinorUnit("BHD", 251234)
+	rs, err = currency.FromMinorUnit("BHD", 251987)
 	assert.NoError(err)
-	assert.EqualValues(251.234, rs)
+	assert.EqualValues(251.987, rs)
 
 	rs, err = currency.FromMinorUnit("VND", 2512345)
 	assert.NoError(err)
@@ -151,7 +151,11 @@ func Test_FromMinorUnit_ZeroAmount(t *testing.T) {
 	assert.NoError(err)
 	assert.Zero(rs)
 
-	rs, err = currency.FromMinorUnit("SGD", 0)
+	rs, err = currency.FromMinorUnit("VND", 0)
+	assert.NoError(err)
+	assert.Zero(rs)
+
+	rs, err = currency.FromMinorUnit("KWD", 0)
 	assert.NoError(err)
 	assert.Zero(rs)
 }
