@@ -81,16 +81,13 @@ var currencyFactors = map[string]float64{
 // https://en.wikipedia.org/wiki/ISO_4217#Minor_units_of_currency
 func ToMinorUnit(currencyCode string, amount float64) (minorUnitAmount uint64, err error) {
 	if !IsISO4217(currencyCode) {
-		err = fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
-		return
+		return 0, fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
 	}
 	switch {
 	case amount > 0:
 		factor := getCurrencyFactor(currencyCode)
 		minorUnitAmount = uint64(math.Round(amount * factor))
-	case amount == 0:
-		minorUnitAmount = 0
-	default:
+	case amount < 0:
 		err = fmt.Errorf("invalid amount: %f", amount)
 	}
 	return
@@ -99,8 +96,7 @@ func ToMinorUnit(currencyCode string, amount float64) (minorUnitAmount uint64, e
 // FromMinorUnit converts amount in the smallest unit (minor unit) of a currency to amount in that currency
 func FromMinorUnit(currencyCode string, minorUnitAmount uint64) (amount float64, err error) {
 	if !IsISO4217(currencyCode) {
-		err = fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
-		return
+		return 0, fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
 	}
 
 	if minorUnitAmount > 0 {
