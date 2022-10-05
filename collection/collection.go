@@ -13,7 +13,7 @@ func Dedup[T comparable](in []T) (out []T) {
 	return
 }
 
-// IndexOf returns the first index of the target string t, or -1 if no match is found
+// IndexOf returns the first index of the target element t, or -1 if no match is found
 func IndexOf[T comparable](vs []T, t T) int {
 	for i, v := range vs {
 		if v == t {
