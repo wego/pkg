@@ -78,11 +78,6 @@ func MapI[T comparable](vs []T, f func(T) interface{}) []interface{} {
 	return vsm
 }
 
-// Distinct remove the duplicated items from the slice
-func Distinct[T comparable](in []T) (out []T) {
-	return Dedup(in)
-}
-
 // Equal checks whether 2 slices have the same items
 func Equal[T comparable](s1 []T, s2 []T) bool {
 	if len(s1) != len(s2) {

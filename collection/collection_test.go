@@ -9,37 +9,147 @@ import (
 )
 
 func Test_Dedup(t *testing.T) {
-	as := assert.New(t)
+	for _, test := range []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "string empty",
+			input:    []string{},
+			expected: []string{},
+		},
+		{
+			name:     "string no duplicates",
+			input:    []string{"a", "b", "c"},
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			name:     "string duplicates",
+			input:    []string{"a", "b", "c", "a", "b", "c"},
+			expected: []string{"a", "b", "c"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, collection.Dedup(test.input))
+		})
+	}
 
-	stringOut := collection.Dedup([]string{"b", "a", "b", "c"})
-	as.ElementsMatch(stringOut, []string{"a", "b", "c"})
+	for _, test := range []struct {
+		name     string
+		input    []int
+		expected []int
+	}{
+		{
+			name:     "int empty",
+			input:    []int{},
+			expected: []int{},
+		},
+		{
+			name:     "int no duplicates",
+			input:    []int{1, 2, 3},
+			expected: []int{1, 2, 3},
+		},
+		{
+			name:     "int duplicates",
+			input:    []int{1, 2, 3, 1, 2, 3},
+			expected: []int{1, 2, 3},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, collection.Dedup(test.input))
+		})
+	}
 
-	intOut := collection.Dedup([]int{3, 1, 2, 1, 2, 3, 3})
-	as.ElementsMatch(intOut, []int{1, 2, 3})
+	for _, test := range []struct {
+		name     string
+		input    []float64
+		expected []float64
+	}{
+		{
+			name:     "float64 empty",
+			input:    []float64{},
+			expected: []float64{},
+		},
+		{
+			name:     "float64 no duplicates",
+			input:    []float64{1.1, 2.2, 3.3},
+			expected: []float64{1.1, 2.2, 3.3},
+		},
+		{
+			name:     "float64 duplicates",
+			input:    []float64{1.1, 2.2, 3.3, 1.1, 2.2, 3.3},
+			expected: []float64{1.1, 2.2, 3.3},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, collection.Dedup(test.input))
+		})
+	}
 
-	floatOut := collection.Dedup([]float64{3.1, 1.2, 2.3, 1.2, 3.1})
-	as.ElementsMatch(floatOut, []float64{1.2, 2.3, 3.1})
+	for _, test := range []struct {
+		name     string
+		input    []bool
+		expected []bool
+	}{
+		{
+			name:     "bool empty",
+			input:    []bool{},
+			expected: []bool{},
+		},
+		{
+			name:     "bool duplicates",
+			input:    []bool{true, false},
+			expected: []bool{true, false},
+		},
+		{
+			name:     "bool duplicates",
+			input:    []bool{true, false, true, true, false, true},
+			expected: []bool{true, false},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, collection.Dedup(test.input))
+		})
+	}
 
-	boolOut := collection.Dedup([]bool{true, false, false, true, true})
-	as.ElementsMatch(boolOut, []bool{true, false})
+	type address struct {
+		City       string
+		State      string
+		PostalCode string
+	}
 
 	type comparableStruct struct {
-		i int
-		f float64
-		s string
-		b bool
+		name    string
+		age     int
+		address address
 	}
-	structIn := []comparableStruct{
-		{1, 1.0, "1", true},
-		{2, 2.0, "2", true},
-		{1, 1.0, "1", true},
+
+	for _, test := range []struct {
+		name     string
+		input    []comparableStruct
+		expected []comparableStruct
+	}{
+		{
+			name:     "struct empty",
+			input:    []comparableStruct{},
+			expected: []comparableStruct{},
+		},
+		{
+			name:     "struct no duplicates",
+			input:    []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
+			expected: []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
+		},
+		{
+			name:     "struct duplicates",
+			input:    []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}, {"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
+			expected: []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, collection.Dedup(test.input))
+		})
 	}
-	expectedStructOut := []comparableStruct{
-		{1, 1.0, "1", true},
-		{2, 2.0, "2", true},
-	}
-	structOut := collection.Dedup(structIn)
-	as.ElementsMatch(structOut, expectedStructOut)
 }
 
 func Test_Any(t *testing.T) {
@@ -175,150 +285,6 @@ func Test_MapI(t *testing.T) {
 	})
 	assertions.Equal(resultYes[0], "PEACH")
 	assertions.Equal(resultYes[1], "APPLE")
-}
-
-func Test_Distinct(t *testing.T) {
-	for _, test := range []struct {
-		name     string
-		input    []string
-		expected []string
-	}{
-		{
-			name:     "string empty",
-			input:    []string{},
-			expected: []string{},
-		},
-		{
-			name:     "string no duplicates",
-			input:    []string{"a", "b", "c"},
-			expected: []string{"a", "b", "c"},
-		},
-		{
-			name:     "string duplicates",
-			input:    []string{"a", "b", "c", "a", "b", "c"},
-			expected: []string{"a", "b", "c"},
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, collection.Distinct(test.input))
-		})
-	}
-
-	for _, test := range []struct {
-		name     string
-		input    []int
-		expected []int
-	}{
-		{
-			name:     "int empty",
-			input:    []int{},
-			expected: []int{},
-		},
-		{
-			name:     "int no duplicates",
-			input:    []int{1, 2, 3},
-			expected: []int{1, 2, 3},
-		},
-		{
-			name:     "int duplicates",
-			input:    []int{1, 2, 3, 1, 2, 3},
-			expected: []int{1, 2, 3},
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, collection.Distinct(test.input))
-		})
-	}
-
-	for _, test := range []struct {
-		name     string
-		input    []float64
-		expected []float64
-	}{
-		{
-			name:     "float64 empty",
-			input:    []float64{},
-			expected: []float64{},
-		},
-		{
-			name:     "float64 no duplicates",
-			input:    []float64{1.1, 2.2, 3.3},
-			expected: []float64{1.1, 2.2, 3.3},
-		},
-		{
-			name:     "float64 duplicates",
-			input:    []float64{1.1, 2.2, 3.3, 1.1, 2.2, 3.3},
-			expected: []float64{1.1, 2.2, 3.3},
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, collection.Distinct(test.input))
-		})
-	}
-
-	for _, test := range []struct {
-		name     string
-		input    []bool
-		expected []bool
-	}{
-		{
-			name:     "bool empty",
-			input:    []bool{},
-			expected: []bool{},
-		},
-		{
-			name:     "bool duplicates",
-			input:    []bool{true, false},
-			expected: []bool{true, false},
-		},
-		{
-			name:     "bool duplicates",
-			input:    []bool{true, false, true, true, false, true},
-			expected: []bool{true, false},
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, collection.Distinct(test.input))
-		})
-	}
-
-	type address struct {
-		City       string
-		State      string
-		PostalCode string
-	}
-
-	type comparableStruct struct {
-		name    string
-		age     int
-		address address
-	}
-
-	for _, test := range []struct {
-		name     string
-		input    []comparableStruct
-		expected []comparableStruct
-	}{
-		{
-			name:     "struct empty",
-			input:    []comparableStruct{},
-			expected: []comparableStruct{},
-		},
-		{
-			name:     "struct no duplicates",
-			input:    []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
-			expected: []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
-		},
-		{
-			name:     "struct duplicates",
-			input:    []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}, {"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
-			expected: []comparableStruct{{"a", 1, address{"a", "a", "a"}}, {"b", 2, address{"b", "b", "b"}}, {"c", 3, address{"c", "c", "c"}}},
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, collection.Distinct(test.input))
-		})
-	}
 }
 
 func Test_Equal(t *testing.T) {
