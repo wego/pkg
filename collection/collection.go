@@ -60,7 +60,7 @@ func Filter[T comparable](vs []T, f func(T) bool) []T {
 }
 
 // Map returns a new slice containing the results of applying the function f to each element in the original slice
-func Map[I, R comparable](vs []I, f func(I) R) []R {
+func Map[I, R any](vs []I, f func(I) R) []R {
 	vsm := make([]R, len(vs))
 	for i, v := range vs {
 		vsm[i] = f(v)
@@ -70,7 +70,7 @@ func Map[I, R comparable](vs []I, f func(I) R) []R {
 
 // MapI returns a new slice containing the results of applying the function f to each element in the original slice
 // FIXME: will deprecate this function in the future
-func MapI[T comparable](vs []T, f func(T) interface{}) []interface{} {
+func MapI[T any](vs []T, f func(T) interface{}) []interface{} {
 	vsm := make([]interface{}, len(vs))
 	for i, v := range vs {
 		vsm[i] = f(v)
