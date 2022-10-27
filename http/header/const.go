@@ -7,6 +7,7 @@ const (
 	ContentType    = "Content-Type"
 	UserAgent      = "User-Agent"
 	ForwaredFor    = "X-Forwarded-For"
+	ForwardedProto = "X-Forwarded-Proto"
 	RealIP         = "X-Real-Ip"
 )
 
