@@ -1,8 +1,6 @@
 package ecies_test
 
 import (
-	"encoding/hex"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/wego/pkg/encryption/ecies"
 	"testing"
@@ -43,7 +41,6 @@ func Test_Load_Unload_Keys_Ok(t *testing.T) {
 	encrypted, err := ecies.Encrypt(toEncrypt, pub, nil, nil)
 	assert.NoError(err)
 	assert.NotNil(encrypted)
-	fmt.Println(hex.EncodeToString(encrypted))
 
 	decrypted, err := ecies.Decrypt(encrypted, priv, nil, nil)
 	assert.NoError(err)
