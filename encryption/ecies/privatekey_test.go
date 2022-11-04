@@ -23,6 +23,13 @@ func Test_Load_Unload_PrivateKey_Ok(t *testing.T) {
 	loadedPriv, err = ecies.PrivateKeyFromHex(hex, curve)
 	assert.NoError(err)
 	assert.Equal(hex, loadedPriv.Hex())
+
+	pem := priv.PEM()
+	loadedPriv, err = ecies.PrivateKeyFromPEMString(pem)
+
+	assert.NoError(err)
+	assert.Equal(pem, loadedPriv.PEM())
+	assert.Equal(priv.Bytes(), loadedPriv.Bytes())
 }
 
 func Test_PrivateKeyFromBase64_Error(t *testing.T) {

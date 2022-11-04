@@ -94,15 +94,12 @@ func Test_DecryptBase64String_InvalidBase64String(t *testing.T) {
 	assert.Empty(plaintext)
 }
 
-func Test_DecryptBase64String_InvalidPublicKeyBytes(t *testing.T) {
+func Test_DecryptBase64String_PublicKeyMismatch(t *testing.T) {
 	assert := assert.New(t)
 
-	ciphertext := `Z2Znc3Rnc2dyZ3JzZ3ZydGdkZnZkc2RmZHNnZmdzdGdzZ3JncnNndnJ0Z2RmdmRzZGZkc2dmZ3N0Z3Nncmdyc2d2cnRn` +
-		`ZGZ2ZHNkZmRzZ2Znc3Rnc2dyZ3JzZ3ZydGdkZnZkc2RmZHNnZmdzdGdzZ3JncnNndnJ0Z2RmdmRzZGZkc2dmZ3N0Z3Nncmdyc2d2cn` +
-		`RnZGZ2ZHNkZmRzZ2Znc3Rnc2dyZ3JzZ3ZydGdkZnZkc2RmZHNnZmdzdGdzZ3JncnNndnJ0Z2RmdmRzZGZkc2dmZ3N0Z3Nncmdyc2d2` +
-		`cnRnZGZ2ZHNkZmRzZ2Znc3Rnc2dyZ3JzZ3ZydGdkZnZkc2RmZHNnZmdzdGdzZ3JncnNndnJ0Z2RmdmRzZGZkc2dmZ3N0Z3Nncmdyc2` +
-		`d2cnRnZGZ2ZHNkZmRzZ2Znc3Rnc2dyZ3JzZ3ZydGdkZnZkc2RmZHNnZmdzdGdzZ3JncnNndnJ0Z2RmdmRzZGZkc2dmZ3N0Z3Nncmdy` +
-		`c2d2cnRnZGZ2ZHNkZmRzZ2Znc3Rnc2dyZ3JzZ3ZydGdkZnZkc2RmZHM=`
+	ciphertext := `BAAxCirH5mdrsQk/viVLKABpJOUTFqIqvzpklhb5VME41lR1G3QwTx+X+VzsvQsWLUkUKQCkxOOU6+M3GBwOhwINS` +
+		`QH8eOQbXOb0uAXcbmPCHaJ1kq5QH7pkHMMMWtUAqR7Ls/7PCy1KJ3vb+5P15MVm9WN3uB7T+NAdVNIbKyQJNUnLuCbc236I9LkJ` +
+		`/SiZ3AkwQhJkSbc7w2mHP1sdN2gE7UyBsonL/+G5Hw==`
 	plaintext, err := ecies.DecryptBase64String(ciphertext, priv, nil, nil)
 	assert.Error(err)
 	assert.Contains(err.Error(), "message authentication failed")
@@ -128,13 +125,13 @@ func Test_DecryptHexString_Ciphertext_TooShort(t *testing.T) {
 	assert.Empty(plaintext)
 }
 
-func Test_DecryptHexString_InvalidPublicKeyBytes(t *testing.T) {
+func Test_DecryptHexString_PublicKeyMismatch(t *testing.T) {
 	assert := assert.New(t)
 
-	ciphertext := `013040f2b8bb9e32fec39eb3d79e7ffa06ebae89790bd099fb7004b85ee92f09e0a564081619478d15a3fbad8` +
-		`cfc5b05f1c9fdd0ee9a974461214739a0b47268497a01189e1884f0e1249e3b4ee08396c47f81cf5b0d00447554cb291ebb` +
-		`804ff632e682596953311b880f8337b099eca655f4cdbb1a413bd5182991fa771e62e5028c30ef369b739f9e084be78efbd2` +
-		`075db61fd40118478281b6c874bcc3f450459804112b6e76a53405a260b836f79718856e3e0c7d58`
+	ciphertext := `04013f40882961559ee7d283221eff5f7639aa2c4ffe69215ddf6491fa3acf69897e97100a26713da7e5b1d61` +
+		`e59825c1b80723f428c5d517efdcc00e64408b6f6d38e0078e34747b78c588d672b6b7368622be61406e2478992ebd62c21` +
+		`63f16d0eccd0915829b05e702feb0a6933cb9b6a81f06b33fb8648b1e7269d91d170d93869b8f983f1f7be5536258d39dd8` +
+		`ca64b9ced2bd316be805702d8728206f168ab7f8ecb14fcd29ee0c5e5`
 	plaintext, err := ecies.DecryptHexString(ciphertext, priv, nil, nil)
 	assert.Error(err)
 	assert.Contains(err.Error(), "message authentication failed")

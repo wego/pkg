@@ -24,6 +24,12 @@ func Test_Load_Unload_PublicKey_Ok(t *testing.T) {
 	pub, err = ecies.PublicKeyFromHex(hex, curve)
 	assert.NoError(err)
 	assert.Equal(hex, pub.Hex())
+
+	pem := priv.Pub.PEM()
+	pub, err = ecies.PublicKeyFromPEMString(pem)
+	assert.NoError(err)
+	assert.Equal(pem, pub.PEM())
+	assert.Equal(priv.Pub.Bytes(), pub.Bytes())
 }
 
 func Test_PublicKeyFromBase64_Error(t *testing.T) {
