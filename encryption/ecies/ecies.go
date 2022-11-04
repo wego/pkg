@@ -13,7 +13,7 @@ import (
 	"github.com/wego/pkg/errors"
 )
 
-//GenerateKey generates a new elliptic curve key pair
+// GenerateKey generates a new elliptic curve key pair
 func GenerateKey(curve elliptic.Curve) (*PrivateKey, error) {
 	priv, x, y, err := elliptic.GenerateKey(curve, rand.Reader)
 	if err != nil {

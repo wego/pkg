@@ -26,6 +26,20 @@ bQL2AvSRjuwK+LJil0E=
 `
 )
 
+// ecdh ...
+func ecdh(priv *ecies.PrivateKey, pub *ecies.PublicKey) (secret []byte) {
+	p := pub.ScalarMult(priv)
+
+	// ECDH on browser only support up to 528 bits (66 bytes)
+	// sometimes the x length is not enough, we need to left pad with 0
+	const length = 66
+	secret = p.X.Bytes()
+	if len(secret) < length {
+		return append(make([]byte, length-len(secret)), secret...)
+	}
+	return secret
+}
+
 func Test_Load_Unload_Keys_Ok(t *testing.T) {
 	assert := assert.New(t)
 	priv, err := ecies.PrivateKeyFromPEMString(privateKey)
@@ -38,11 +52,11 @@ func Test_Load_Unload_Keys_Ok(t *testing.T) {
 	assert.Equal(priv.Pub.Hex(), pub.Hex())
 
 	toEncrypt := []byte("hello world")
-	encrypted, err := ecies.Encrypt(toEncrypt, pub, nil, nil)
+	encrypted, err := ecies.Encrypt(toEncrypt, pub, ecdh, nil)
 	assert.NoError(err)
 	assert.NotNil(encrypted)
 
-	decrypted, err := ecies.Decrypt(encrypted, priv, nil, nil)
+	decrypted, err := ecies.Decrypt(encrypted, priv, ecdh, nil)
 	assert.NoError(err)
 	assert.NotNil(decrypted)
 	assert.Equal(toEncrypt, decrypted)

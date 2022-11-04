@@ -68,7 +68,7 @@ func PrivateKeyFromPEMBytes(bytes []byte) (*PrivateKey, error) {
 
 	priv, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to parse DER encoded public key: %s", hex.EncodeToString(bytes)), err)
+		return nil, errors.New(fmt.Sprintf("failed to parse DER encoded private key: %s", hex.EncodeToString(bytes)), err)
 	}
 
 	return &PrivateKey{
