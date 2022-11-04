@@ -51,23 +51,9 @@ func defaultKDF(secret []byte) ([]byte, error) {
 }
 
 func keySize(curve elliptic.Curve) int {
-	bitSize := curve.Params().BitSize
-
-	size := bitSize / 8
-	if bitSize%8 > 0 {
-		size++
-	}
-	return size
+	return (curve.Params().BitSize + 7) / 8
 }
 
 func publicKeySize(keySize int) int {
 	return keySize*2 + 1
-}
-
-func zeroPad(b []byte, length int) []byte {
-	if len(b) < length {
-		b = append(make([]byte, length-len(b)), b...)
-	}
-
-	return b
 }
