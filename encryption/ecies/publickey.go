@@ -1,7 +1,6 @@
 package ecies
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/x509"
@@ -110,11 +109,13 @@ func PublicKeyFromPEMBytes(bytes []byte) (*PublicKey, error) {
 // https://secg.org/sec1-v2.pdf#subsubsection.2.3.3
 func (pub *PublicKey) Bytes() []byte {
 	size := keySize(pub.curve)
+	ret := make([]byte, 1+2*size)
+	ret[0] = 0x04 // uncompressed point
 
-	x := zeroPad(pub.X.Bytes(), size)
-	y := zeroPad(pub.Y.Bytes(), size)
-
-	return bytes.Join([][]byte{{0x04}, x, y}, nil)
+	// the FillBytes function will pad the bytes with 0s
+	pub.X.FillBytes(ret[1 : 1+size])
+	pub.Y.FillBytes(ret[1+size : 1+2*size])
+	return ret
 }
 
 // Base64 returns public key bytes in base64 form
