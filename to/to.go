@@ -19,9 +19,8 @@ func String[T any](v T) string {
 	case reflect.Bool:
 		if val.Bool() {
 			return "true"
-		} else {
-			return "false"
 		}
+		return "false"
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return strconv.FormatInt(val.Int(), 10)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
