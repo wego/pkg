@@ -24,15 +24,23 @@ type Error struct {
 
 // error kinds
 const (
-	BadRequest    Kind = http.StatusBadRequest
-	Conflict      Kind = http.StatusConflict
-	Forbidden     Kind = http.StatusForbidden
-	NotFound      Kind = http.StatusNotFound
-	Unauthorized  Kind = http.StatusUnauthorized
-	Unprocessable Kind = http.StatusUnprocessableEntity
-	Unexpected    Kind = http.StatusInternalServerError
-	Retry         Kind = -1 // Retry indicate an error we need to retry the action
-	NotSupported  Kind = -2 // NotSupported THe requested action/resource is not supported
+	BadRequest     Kind = http.StatusBadRequest
+	Conflict       Kind = http.StatusConflict
+	Forbidden      Kind = http.StatusForbidden
+	NotFound       Kind = http.StatusNotFound
+	Unauthorized   Kind = http.StatusUnauthorized
+	Unprocessable  Kind = http.StatusUnprocessableEntity
+	Unexpected     Kind = http.StatusInternalServerError
+	Retry          Kind = -1 // Retry indicate an error we need to retry the action
+	NotSupported   Kind = -2 // NotSupported THe requested action/resource is not supported
+	NotImplemented Kind = -3 // NotImplemented The requested action/resource is not implemented
+)
+
+var (
+	// ErrNotSupported the requested action/resource is not supported
+	ErrNotSupported = New(NotSupported, "not supported")
+	// ErrNotImplemented the requested action/resource is not implemented
+	ErrNotImplemented = New(NotImplemented, "not implemented")
 )
 
 // New construct a new error, default having kind Unexpected
