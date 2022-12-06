@@ -69,15 +69,22 @@ func BindChangeRequest(c *gin.Context, ctxKey string, request audit.IChangeReque
 	return
 }
 
-// BindID Bind param ID
-func BindID(c *gin.Context) (id uint, err error) {
-	idParam := c.Param("id")
-	val, err := strconv.ParseUint(idParam, 10, 64)
-	if err != nil || val == 0 {
-		err = errors.New(errors.BadRequest, fmt.Sprintf("invalid id [%s]", idParam))
+// BindUriUint binds uint from uri
+func BindUriUint(c *gin.Context, uri string) (val uint, err error) {
+	uintParam := c.Param(uri)
+	var uintVal uint64
+	uintVal, err = strconv.ParseUint(uintParam, 10, 64)
+	if err != nil || uintVal == 0 {
+		err = errors.New(errors.BadRequest, fmt.Sprintf("invalid %s [%s]", uri, uintParam))
 		return
 	}
-	id = uint(val)
+	val = uint(uintVal)
+	return
+}
+
+// BindID Bind param ID
+func BindID(c *gin.Context) (id uint, err error) {
+	id, err = BindUriUint(c, "id")
 	return
 }
 

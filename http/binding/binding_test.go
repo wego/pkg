@@ -549,3 +549,22 @@ func (s *BindingSuite) Test_BindID_OK() {
 	s.Equal(http.StatusOK, r.Code)
 	s.Equal("1", r.Body.String())
 }
+
+func (s *BindingSuite) Test_BindUriUint_OK() {
+	req, err := http.NewRequest(http.MethodGet, testIDEndpoint+"/1", nil)
+	s.NoError(err)
+	uriParam := "someUint"
+	s.router.GET(testIDEndpoint+"/:"+uriParam, func(c *gin.Context) {
+		id, err := binding.BindUriUint(c, uriParam)
+		if err != nil {
+			c.AbortWithStatus(errors.Code(err))
+			return
+		}
+		c.JSON(http.StatusOK, id)
+	})
+	r := httptest.NewRecorder()
+	s.router.ServeHTTP(r, req)
+
+	s.Equal(http.StatusOK, r.Code)
+	s.Equal("1", r.Body.String())
+}
