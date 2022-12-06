@@ -555,7 +555,7 @@ func (s *BindingSuite) Test_BindUriUint_OK() {
 	s.NoError(err)
 	uriParam := "someUint"
 	s.router.GET(testIDEndpoint+"/:"+uriParam, func(c *gin.Context) {
-		id, err := binding.BindUriUint(c, uriParam)
+		id, err := binding.BindURIUint(c, uriParam)
 		if err != nil {
 			c.AbortWithStatus(errors.Code(err))
 			return
