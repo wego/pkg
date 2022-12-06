@@ -550,9 +550,7 @@ func (s *BindingSuite) Test_BindID_OK() {
 	s.Equal("1", r.Body.String())
 }
 
-func (s *BindingSuite) Test_BindUriUint_OK() {
-	req, err := http.NewRequest(http.MethodGet, testIDEndpoint+"/1", nil)
-	s.NoError(err)
+func (s *BindingSuite) Test_BindURIUint() {
 	uriParam := "someUint"
 	s.router.GET(testIDEndpoint+"/:"+uriParam, func(c *gin.Context) {
 		id, err := binding.BindURIUint(c, uriParam)
@@ -562,9 +560,32 @@ func (s *BindingSuite) Test_BindUriUint_OK() {
 		}
 		c.JSON(http.StatusOK, id)
 	})
+
+	// OK
+	req, err := http.NewRequest(http.MethodGet, testIDEndpoint+"/1", nil)
+	s.NoError(err)
+
 	r := httptest.NewRecorder()
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusOK, r.Code)
 	s.Equal("1", r.Body.String())
+
+	// Bad Request
+	req, err = http.NewRequest(http.MethodGet, testIDEndpoint+"/ABC", nil)
+	s.NoError(err)
+
+	r = httptest.NewRecorder()
+	s.router.ServeHTTP(r, req)
+
+	s.Equal(http.StatusBadRequest, r.Code)
+
+	// Zero ID
+	req, err = http.NewRequest(http.MethodGet, testIDEndpoint+"/0", nil)
+	s.NoError(err)
+
+	r = httptest.NewRecorder()
+	s.router.ServeHTTP(r, req)
+
+	s.Equal(http.StatusBadRequest, r.Code)
 }
