@@ -88,6 +88,18 @@ func BindID(c *gin.Context) (id uint, err error) {
 	return
 }
 
+// BindUri binds param from uri
+func BindUri(c *gin.Context, ctxKey string, request interface{}) (err error) {
+	if fromContext(c, ctxKey, request) {
+		return nil
+	}
+	if err = c.ShouldBindUri(request); err != nil {
+		return errors.New(errors.BadRequest, err)
+	}
+	c.Set(ctxKey, request)
+	return
+}
+
 func fromContext(c *gin.Context, ctxKey string, value interface{}) bool {
 	// try to get from context
 	fromCtx, ok := c.Get(ctxKey)

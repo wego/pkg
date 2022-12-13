@@ -22,6 +22,7 @@ var (
 	testQueryEndpoint         = "/test/query"
 	testChangeRequestEndpoint = "/test/cr"
 	testIDEndpoint            = "/test"
+	testUriEndpoint           = "/test/:id/child/:child_id"
 	ctxKey                    = "testRequest"
 )
 
@@ -34,6 +35,12 @@ type testChangeStruct struct {
 	Number []uint   `form:"Num,omitempty" json:"number" binding:"required,dive,number,min=1"`
 	String []string `form:"Str,omitempty" json:"string" binding:"required,dive,printascii"`
 	audit.ChangeRequest
+}
+
+type testUriStruct struct {
+	ID      string `uri:"id" json:"id"`
+	ChildID string `uri:"child_id" json:"child_id"`
+	Name    string `json:"name"`
 }
 
 func shouldBindJSONHandler(c *gin.Context) {
@@ -79,6 +86,22 @@ func bindIDHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, id)
+}
+
+func bindUriHandler(c *gin.Context) {
+	var t testUriStruct
+	ctxKeyUri := "keyUri"
+	ctxKeyBody := "keyBody"
+
+	if err := binding.BindUri(c, ctxKeyUri, &t); err != nil {
+		c.AbortWithStatus(errors.Code(err))
+		return
+	}
+	if err := binding.BindJSON(c, ctxKeyBody, &t); err != nil {
+		c.AbortWithStatus(errors.Code(err))
+		return
+	}
+	c.JSON(http.StatusOK, t)
 }
 
 type BindingSuite struct {
@@ -588,4 +611,19 @@ func (s *BindingSuite) Test_BindURIUint() {
 	s.router.ServeHTTP(r, req)
 
 	s.Equal(http.StatusBadRequest, r.Code)
+}
+
+func (s *BindingSuite) Test_BindUri_WithBody() {
+	requestBody := `{
+	    "name": "test name"
+	}`
+	req, err := http.NewRequest(http.MethodPatch, "/test/123/child/456", strings.NewReader(requestBody))
+	s.NoError(err)
+
+	s.router.PATCH(testUriEndpoint, bindUriHandler)
+	r := httptest.NewRecorder()
+	s.router.ServeHTTP(r, req)
+
+	s.Equal(http.StatusOK, r.Code)
+	s.Equal("{\"id\":\"123\",\"child_id\":\"456\",\"name\":\"test name\"}", r.Body.String())
 }
