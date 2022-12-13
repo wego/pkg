@@ -88,8 +88,8 @@ func BindID(c *gin.Context) (id uint, err error) {
 	return
 }
 
-// BindUri binds param from uri
-func BindUri(c *gin.Context, ctxKey string, request interface{}) (err error) {
+// BindURI binds param from uri
+func BindURI(c *gin.Context, ctxKey string, request interface{}) (err error) {
 	if fromContext(c, ctxKey, request) {
 		return nil
 	}

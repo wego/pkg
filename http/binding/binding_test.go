@@ -93,7 +93,7 @@ func bindUriHandler(c *gin.Context) {
 	ctxKeyUri := "keyUri"
 	ctxKeyBody := "keyBody"
 
-	if err := binding.BindUri(c, ctxKeyUri, &t); err != nil {
+	if err := binding.BindURI(c, ctxKeyUri, &t); err != nil {
 		c.AbortWithStatus(errors.Code(err))
 		return
 	}
