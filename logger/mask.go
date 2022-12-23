@@ -11,7 +11,7 @@ import (
 
 // MaskData the data as well as the information on how to mask the data
 type MaskData struct {
-	FistCharsToShow int
+	FirstCharsToShow int
 	LastCharsToShow int
 	CharsToIgnore   []rune
 	XMLTag          string
@@ -164,11 +164,11 @@ func maskCharOrDefault(maskChar string) string {
 }
 
 func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
-	if toMask.FistCharsToShow < 0 || toMask.LastCharsToShow < 0 || valueToReplace == "" {
+	if toMask.FirstCharsToShow < 0 || toMask.LastCharsToShow < 0 || valueToReplace == "" {
 		return valueToReplace
 	}
 
-	totalCharsToShow := toMask.FistCharsToShow + toMask.LastCharsToShow
+	totalCharsToShow := toMask.FirstCharsToShow + toMask.LastCharsToShow
 	valueToReplaceLen := len(valueToReplace)
 	lastIndexToShowStart := valueToReplaceLen - toMask.LastCharsToShow
 
@@ -178,7 +178,7 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 		return valueToReplace
 	}
 
-	valToMask := valueToReplace[toMask.FistCharsToShow:lastIndexToShowStart]
+	valToMask := valueToReplace[toMask.FirstCharsToShow:lastIndexToShowStart]
 	var sb strings.Builder
 	for _, c := range valToMask {
 		// do not mask characters that should be ignored like '@'
@@ -190,7 +190,7 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	}
 
 	replacement := sb.String()
-	maskedVal := valueToReplace[:toMask.FistCharsToShow] + replacement + valueToReplace[lastIndexToShowStart:]
+	maskedVal := valueToReplace[:toMask.FirstCharsToShow] + replacement + valueToReplace[lastIndexToShowStart:]
 
 	return maskedVal
 }

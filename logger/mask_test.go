@@ -38,38 +38,38 @@ func Test_MaskXML_Ok(t *testing.T) {
 	maskData := []logger.MaskData{
 		{
 			XMLTag:          "Number",
-			FistCharsToShow: 4,
+			FirstCharsToShow: 4,
 			LastCharsToShow: 6,
 		},
 		{
 			XMLTag:          "Email",
-			FistCharsToShow: 3,
+			FirstCharsToShow: 3,
 			LastCharsToShow: 5,
 			CharsToIgnore:   []rune{'@'},
 		},
 		{
 			XMLTag:          "SomethingThatDoesNotExists",
-			FistCharsToShow: 2,
+			FirstCharsToShow: 2,
 			LastCharsToShow: 6,
 		},
 		{
 			XMLTag:          "AgentID",
-			FistCharsToShow: 0,
+			FirstCharsToShow: 0,
 			LastCharsToShow: 0,
 		},
 		{
 			XMLTag:          "ClientID",
-			FistCharsToShow: 2,
+			FirstCharsToShow: 2,
 			LastCharsToShow: 0,
 		},
 		{
 			XMLTag:          "BookerID",
-			FistCharsToShow: 0,
+			FirstCharsToShow: 0,
 			LastCharsToShow: 2,
 		},
 		{
 			XMLTag:          "Phone",
-			FistCharsToShow: 4,
+			FirstCharsToShow: 4,
 			LastCharsToShow: 3,
 			CharsToIgnore:   []rune{'$'},
 		},
@@ -136,18 +136,18 @@ func Test_MaskJSON_DoNothing_WhenKeysNotFound(t *testing.T) {
 			maskData: []logger.MaskData{
 				{
 					JSONKeys:        []string{"yo"},
-					FistCharsToShow: 4,
+					FirstCharsToShow: 4,
 					LastCharsToShow: 6,
 				},
 				{
 					JSONKeys:        []string{"source", "billing_address", "whatsup"},
-					FistCharsToShow: 3,
+					FirstCharsToShow: 3,
 					LastCharsToShow: 5,
 					CharsToIgnore:   []rune{'@'},
 				},
 				{
 					JSONKeys:        []string{"3ds", "hi"},
-					FistCharsToShow: 2,
+					FirstCharsToShow: 2,
 					LastCharsToShow: 6,
 				},
 			},
@@ -168,44 +168,44 @@ func Test_MaskJSON_Ok(t *testing.T) {
 	maskData := []logger.MaskData{
 		{
 			JSONKeys:        []string{"source", "phone", "number"},
-			FistCharsToShow: 2,
+			FirstCharsToShow: 2,
 			LastCharsToShow: 4,
 		},
 		{
 			JSONKeys:        []string{"yo"},
-			FistCharsToShow: 4,
+			FirstCharsToShow: 4,
 			LastCharsToShow: 6,
 		},
 		{
 			JSONKeys:        []string{"destination", "phone", "number"},
-			FistCharsToShow: 2,
+			FirstCharsToShow: 2,
 			LastCharsToShow: 4,
 			CharsToIgnore:   []rune{'+'},
 		},
 		{
 			JSONKeys:        []string{"test1"},
-			FistCharsToShow: 0,
+			FirstCharsToShow: 0,
 			LastCharsToShow: 0,
 		},
 		{
 			JSONKeys:        []string{"test2"},
-			FistCharsToShow: 2,
+			FirstCharsToShow: 2,
 			LastCharsToShow: 0,
 		},
 		{
 			JSONKeys:        []string{"test3"},
-			FistCharsToShow: 0,
+			FirstCharsToShow: 0,
 			LastCharsToShow: 3,
 		},
 		{
 			JSONKeys:        []string{"customer", "email"},
-			FistCharsToShow: 5,
+			FirstCharsToShow: 5,
 			LastCharsToShow: 3,
 			CharsToIgnore:   []rune{'@'},
 		},
 		{
 			JSONKeys:        []string{"shipping", "phone", "number"},
-			FistCharsToShow: 2,
+			FirstCharsToShow: 2,
 			LastCharsToShow: 1,
 		},
 	}
