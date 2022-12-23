@@ -15,6 +15,7 @@ const (
 	partnerRequestsFileName = "partner_requests.{{env}}.log"
 	requestsFileName        = "requests.{{env}}.log"
 	defaultReplacement      = "[Filtered by Wego]"
+	defaultMaskChar         = "*"
 
 	logTypeUltronex       logType = "ultronEx"
 	logTypePartnerRequest logType = "partnerRequest"

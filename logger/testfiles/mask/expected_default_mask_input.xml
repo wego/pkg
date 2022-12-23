@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+	xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+	<soap:Header>
+		<ConfermaUserStateHeader xmlns="http://cpapi.conferma.com/">
+			<AgentID>****</AgentID>
+			<ClientID>45**</ClientID>
+			<BookerID>**90</BookerID>
+			<Email>aar******@***o.com</Email>
+			<Phone>+659****114</Phone>
+		</ConfermaUserStateHeader>
+		<wsa:Action>http://cpapi.conferma.com/GetCardResponse</wsa:Action>
+		<wsa:MessageID>urn:uuid:c26698d4-c4b7-4c25-a5a4-38c7346a10ae</wsa:MessageID>
+		<wsa:RelatesTo>urn:uuid:cf80673f-a253-4c33-abf4-7ff84473b4fe</wsa:RelatesTo>
+		<wsa:To>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</wsa:To>
+		<wsse:Security>
+			<wsu:Timestamp wsu:Id="Timestamp-8979a216-b4be-4eeb-a423-db4569d492bc">
+				<wsu:Created>2021-06-24T12:17:17Z</wsu:Created>
+				<wsu:Expires>2021-06-24T12:22:17Z</wsu:Expires>
+			</wsu:Timestamp>
+		</wsse:Security>
+	</soap:Header>
+	<soap:Body>
+		<GetCardResponse xmlns="http://cpapi.conferma.com/">
+			<GetCardResult Type="General" DeploymentID="11181707" CardPoolName="Wego">
+				<General>
+					<Name>WGML-0019</Name>
+					<ConsumerReference>d9x0xzzyzg</ConsumerReference>
+					<Amount Value="625.79" Currency="USD" />
+					<PaymentRange StartDate="2021-12-02T00:00:00" EndDate="2021-12-05T00:00:00" />
+					<Email>aar****************@**********werty</Email>
+					<Phone>+639********789</Phone>
+				</General>
+				<Card>
+					<Name>Wego</Name>
+					<Number>4111******005845</Number>
+					<Type>VI</Type>
+					<ExpiryDate Month="5" Year="2023" />
+					<CVV />
+					<Provider ID="52" Name="Ixaris" />
+				</Card>
+				<Identifiers />
+			</GetCardResult>
+		</GetCardResponse>
+	</soap:Body>
+</soap:Envelope>
