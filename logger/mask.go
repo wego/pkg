@@ -54,7 +54,7 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 	}
 }
 
-// MaskJSON replaces value of key paths from the input JSON with replacement or defaultReplacement when replacement is empty
+// MaskJSON mask parts of the json key paths value from the input json with replacement
 //
 // Example:
 //
