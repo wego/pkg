@@ -37,41 +37,60 @@ func Test_MaskXML_Ok(t *testing.T) {
 	assert := assert.New(t)
 	maskData := []logger.MaskData{
 		{
-			XMLTag:          "Number",
+			XMLTag:           "Test1",
 			FirstCharsToShow: 4,
-			LastCharsToShow: 6,
+			LastCharsToShow:  6,
 		},
 		{
-			XMLTag:          "Email",
+			XMLTag:           "Number",
+			FirstCharsToShow: 4,
+			LastCharsToShow:  6,
+		},
+		{
+			XMLTag:           "Email",
 			FirstCharsToShow: 3,
-			LastCharsToShow: 5,
-			CharsToIgnore:   []rune{'@'},
+			LastCharsToShow:  5,
+			CharsToIgnore:    []rune{'@'},
 		},
 		{
-			XMLTag:          "SomethingThatDoesNotExists",
+			XMLTag:           "SomethingThatDoesNotExists",
 			FirstCharsToShow: 2,
-			LastCharsToShow: 6,
+			LastCharsToShow:  6,
 		},
 		{
-			XMLTag:          "AgentID",
+			XMLTag:           "AgentID",
 			FirstCharsToShow: 0,
-			LastCharsToShow: 0,
+			LastCharsToShow:  0,
 		},
 		{
-			XMLTag:          "ClientID",
+			XMLTag:           "ClientID",
 			FirstCharsToShow: 2,
-			LastCharsToShow: 0,
+			LastCharsToShow:  0,
 		},
 		{
-			XMLTag:          "BookerID",
+			XMLTag:           "BookerID",
 			FirstCharsToShow: 0,
-			LastCharsToShow: 2,
+			LastCharsToShow:  2,
 		},
 		{
-			XMLTag:          "Phone",
+			XMLTag:           "Phone",
 			FirstCharsToShow: 4,
-			LastCharsToShow: 3,
-			CharsToIgnore:   []rune{'$'},
+			LastCharsToShow:  3,
+			CharsToIgnore:    []rune{'$'},
+		},
+		{
+			XMLTag:           "UserID1",
+			FirstCharsToShow: 5,
+			LastCharsToShow:  6,
+			CharsToIgnore:    []rune{'@'},
+			RestrictionType:  logger.MaskRestrictionTypeEmail,
+		},
+		{
+			XMLTag:           "UserID2",
+			FirstCharsToShow: 5,
+			LastCharsToShow:  6,
+			CharsToIgnore:    []rune{'@'},
+			RestrictionType:  logger.MaskRestrictionTypeEmail,
 		},
 	}
 	input, err := parseXMLToString("mask_input.xml")
@@ -135,20 +154,20 @@ func Test_MaskJSON_DoNothing_WhenKeysNotFound(t *testing.T) {
 		{
 			maskData: []logger.MaskData{
 				{
-					JSONKeys:        []string{"yo"},
+					JSONKeys:         []string{"yo"},
 					FirstCharsToShow: 4,
-					LastCharsToShow: 6,
+					LastCharsToShow:  6,
 				},
 				{
-					JSONKeys:        []string{"source", "billing_address", "whatsup"},
+					JSONKeys:         []string{"source", "billing_address", "whatsup"},
 					FirstCharsToShow: 3,
-					LastCharsToShow: 5,
-					CharsToIgnore:   []rune{'@'},
+					LastCharsToShow:  5,
+					CharsToIgnore:    []rune{'@'},
 				},
 				{
-					JSONKeys:        []string{"3ds", "hi"},
+					JSONKeys:         []string{"3ds", "hi"},
 					FirstCharsToShow: 2,
-					LastCharsToShow: 6,
+					LastCharsToShow:  6,
 				},
 			},
 		},
@@ -167,46 +186,64 @@ func Test_MaskJSON_DoNothing_WhenKeysNotFound(t *testing.T) {
 func Test_MaskJSON_Ok(t *testing.T) {
 	maskData := []logger.MaskData{
 		{
-			JSONKeys:        []string{"source", "phone", "number"},
+			JSONKeys:         []string{"source", "phone", "number"},
 			FirstCharsToShow: 2,
-			LastCharsToShow: 4,
+			LastCharsToShow:  4,
 		},
 		{
-			JSONKeys:        []string{"yo"},
+			JSONKeys:         []string{"yo"},
 			FirstCharsToShow: 4,
-			LastCharsToShow: 6,
+			LastCharsToShow:  6,
 		},
 		{
-			JSONKeys:        []string{"destination", "phone", "number"},
+			JSONKeys:         []string{"destination", "phone", "number"},
 			FirstCharsToShow: 2,
-			LastCharsToShow: 4,
-			CharsToIgnore:   []rune{'+'},
+			LastCharsToShow:  4,
+			CharsToIgnore:    []rune{'+'},
 		},
 		{
-			JSONKeys:        []string{"test1"},
+			JSONKeys:         []string{"test1"},
 			FirstCharsToShow: 0,
-			LastCharsToShow: 0,
+			LastCharsToShow:  0,
 		},
 		{
-			JSONKeys:        []string{"test2"},
+			JSONKeys:         []string{"test2"},
 			FirstCharsToShow: 2,
-			LastCharsToShow: 0,
+			LastCharsToShow:  0,
 		},
 		{
-			JSONKeys:        []string{"test3"},
+			JSONKeys:         []string{"test3"},
 			FirstCharsToShow: 0,
-			LastCharsToShow: 3,
+			LastCharsToShow:  3,
 		},
 		{
-			JSONKeys:        []string{"customer", "email"},
+			JSONKeys:         []string{"test4"},
+			FirstCharsToShow: 3,
+			LastCharsToShow:  3,
+		},
+		{
+			JSONKeys:         []string{"customer", "email"},
 			FirstCharsToShow: 5,
-			LastCharsToShow: 3,
-			CharsToIgnore:   []rune{'@'},
+			LastCharsToShow:  3,
+			CharsToIgnore:    []rune{'@'},
 		},
 		{
-			JSONKeys:        []string{"shipping", "phone", "number"},
+			JSONKeys:         []string{"shipping", "phone", "number"},
 			FirstCharsToShow: 2,
-			LastCharsToShow: 1,
+			LastCharsToShow:  1,
+		},
+		{
+			JSONKeys:         []string{"risk", "userId1"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  7,
+			CharsToIgnore:    []rune{'@'},
+		},
+		{
+			JSONKeys:         []string{"risk", "userId2"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  7,
+			RestrictionType:  logger.MaskRestrictionTypeEmail,
+			CharsToIgnore:    []rune{'@'},
 		},
 	}
 

@@ -7,11 +7,14 @@
 	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
 	<soap:Header>
 		<ConfermaUserStateHeader xmlns="http://cpapi.conferma.com/">
+			<Test1>999988</Test1>
 			<AgentID>||||</AgentID>
 			<ClientID>45||</ClientID>
 			<BookerID>||90</BookerID>
 			<Email>aar||||||@|||o.com</Email>
 			<Phone>+659||||114</Phone>
+			<UserID1>aaron||||@||go.com</UserID1>
+			<UserID2>888abc123</UserID2>
 		</ConfermaUserStateHeader>
 		<wsa:Action>http://cpapi.conferma.com/GetCardResponse</wsa:Action>
 		<wsa:MessageID>urn:uuid:c26698d4-c4b7-4c25-a5a4-38c7346a10ae</wsa:MessageID>

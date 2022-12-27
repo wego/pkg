@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"net/mail"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
@@ -9,13 +10,22 @@ import (
 	"github.com/wego/pkg/errors"
 )
 
+// MaskRestrictionType the type of text to mask, will only mask if text is of the specified type
+type MaskRestrictionType string
+
+const (
+	// MaskRestrictionTypeEmail will only mask email text
+	MaskRestrictionTypeEmail MaskRestrictionType = "email"
+)
+
 // MaskData the data as well as the information on how to mask the data
 type MaskData struct {
 	FirstCharsToShow int
-	LastCharsToShow int
-	CharsToIgnore   []rune
-	XMLTag          string
-	JSONKeys        []string
+	LastCharsToShow  int
+	RestrictionType  MaskRestrictionType
+	CharsToIgnore    []rune
+	XMLTag           string
+	JSONKeys         []string
 }
 
 // MaskXML masks parts of the inner text of tags from the input XML with replacement
@@ -164,7 +174,8 @@ func maskCharOrDefault(maskChar string) string {
 }
 
 func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
-	if toMask.FirstCharsToShow < 0 || toMask.LastCharsToShow < 0 || valueToReplace == "" {
+	negativeCharsToShow := toMask.FirstCharsToShow < 0 || toMask.LastCharsToShow < 0
+	if negativeCharsToShow || !willMask(valueToReplace, toMask.RestrictionType) {
 		return valueToReplace
 	}
 
@@ -193,4 +204,18 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	maskedVal := valueToReplace[:toMask.FirstCharsToShow] + replacement + valueToReplace[lastIndexToShowStart:]
 
 	return maskedVal
+}
+
+func willMask(valueToReplace string, restrictionType MaskRestrictionType) bool {
+	if restrictionType == "" || valueToReplace == "" {
+		return true
+	}
+
+	switch restrictionType {
+	case MaskRestrictionTypeEmail:
+		_, err := mail.ParseAddress(valueToReplace)
+		return err == nil
+	}
+
+	return true
 }

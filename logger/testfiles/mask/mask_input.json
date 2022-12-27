@@ -2,6 +2,7 @@
 		"test1": "12345",
 		"test2": "12345",
 		"test3": "12345",
+		"test4": "12345",
 		"id": "pay_mbabizu24mvu3mela5njyhpit4",
 		"requested_on": "2019-08-24T14:15:22Z",
 		"source": {
@@ -54,7 +55,9 @@
 		  "exemption": "low_value"
 		},
 		"risk": {
-		  "flagged": true
+		  "flagged": true,
+			"userId1": "wego.com",
+			"userId2": "aaron@wego.com"
 		},
 		"customer": {
 		  "id": "cus_y3oqhf46pyzuxjbcn2giaqnb44",
