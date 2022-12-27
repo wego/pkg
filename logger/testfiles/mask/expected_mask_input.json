@@ -1,0 +1,119 @@
+{
+		"test1": "|||||",
+		"test2": "12|||",
+		"test3": "||345",
+		"test4": "12345",
+		"id": "pay_mbabizu24mvu3mela5njyhpit4",
+		"requested_on": "2019-08-24T14:15:22Z",
+		"source": {
+		  "type": "card",
+		  "id": "src_nwd3m4in3hkuddfpjsaevunhdy",
+		  "billing_address": {
+			"address_line1": "Checkout.com",
+			"address_line2": "90 Tottenham Court Road",
+			"city": "London",
+			"state": "London",
+			"zip": 123,
+			"country": "GB"
+		  },
+		  "phone": {
+			"country_code": "+1",
+			"number": "41||||2671"
+		  }
+		},
+		"destination": {
+		  "type": "card",
+		  "id": "src_wmlfc3zyhqzehihu7giusaaawu",
+		  "billing_address": {
+			"address_line1": "Checkout.com",
+			"address_line2": "90 Tottenham Court Road",
+			"city": "London",
+			"state": "London",
+			"zip": "W1T 4TJ",
+			"country": "GB"
+		  },
+		  "phone": {
+			"country_code": "+1",
+			"number": "41||||2671"
+		  }
+		},
+		"amount": 6540,
+		"currency": "USD",
+		"payment_type": "Recurring",
+		"reference": "ORD-5023-4E89",
+		"description": "Set of 3 masks",
+		"approved": true,
+		"status": "Authorized",
+		"3ds": {
+		  "downgraded": false,
+		  "enrolled": "Y",
+		  "signature_valid": "Y",
+		  "authentication_response": "Y",
+		  "cryptogram": "hv8mUFzPzRZoCAAAAAEQBDMAAAA=",
+		  "xid": "MDAwMDAwMDAwMDAwMDAwMzIyNzY=",
+		  "version": "2.1.0",
+		  "exemption": "low_value"
+		},
+		"risk": {
+		  "flagged": true,
+			"userId1": "wego.com",
+			"userId2": "aa|||@|ego.com"
+		},
+		"customer": {
+		  "id": "cus_y3oqhf46pyzuxjbcn2giaqnb44",
+		  "email": "test_||||||||||@|||||com",
+		  "name": "Jack Napier"
+		},
+		"billing_descriptor": {
+		  "name": "SUPERHEROES.COM",
+		  "city": "GOTHAM"
+		},
+		"shipping": {
+		  "address": {
+			"address_line1": "Checkout.com",
+			"address_line2": "90 Tottenham Court Road",
+			"city": "London",
+			"state": "London",
+			"zip": "W1T 4TJ",
+			"country": "GB"
+		  },
+		  "phone": {
+			"country_code": "+1",
+			"number": "41|||||||1"
+		  }
+		},
+		"payment_ip": "90.197.169.245",
+		"recipient": {
+		  "dob": "1985-05-15",
+		  "account_number": "5555554444",
+		  "zip": "W1T",
+		  "first_name": "John",
+		  "last_name": "Jones",
+		  "country": "GB"
+		},
+		"metadata": {
+		  "coupon_code": "NY2018",
+		  "partner_id": 123989
+		},
+		"eci": "06",
+		"scheme_id": "488341541494658",
+		"actions": [
+		  {
+			"id": "act_y3oqhf46pyzuxjbcn2giaqnb44",
+			"type": "Authorization",
+			"response_code": "10000",
+			"response_summary": "Approved"
+		  }
+		],
+		"_links": {
+		  "self": {
+			"href": "https://api.checkout.com/payments/pay_y3oqhf46pyzuxjbcn2giaqnb44"
+		  },
+		  "actions": {
+			"href": "https://api.checkout.com/payments/pay_y3oqhf46pyzuxjbcn2giaqnb44/actions"
+		  },
+		  "refund": {
+			"href": "https://api.checkout.com/payments/pay_y3oqhf46pyzuxjbcn2giaqnb44/refund"
+		  }
+		}
+}
