@@ -16,20 +16,24 @@ import (
 
 var (
 	jwkCache  *jwk.Cache
-	jwkURL    string
+	jwksURL   string
 	jwtHeader string
 )
 
-// Init initializes the package with a JWK URL, a JWT header name & refresh interval for the JWK cache
+// Init initializes the package with
+//
+//   - JWKS URL for getting JWKS. Format: https://www.rfc-editor.org/rfc/rfc7517#section-5)
+//   - JWT header name for reading the JWT token from
+//   - refresh interval for reloading the JWK cache
 func Init(url, headerName string, refreshInterval time.Duration) error {
-	jwkURL = url
+	jwksURL = url
 	jwtHeader = headerName
 
 	ctx := context.Background()
 	jwkCache = jwk.NewCache(ctx)
 
-	jwkCache.Register(jwkURL, jwk.WithMinRefreshInterval(refreshInterval))
-	if _, err := jwkCache.Refresh(ctx, jwkURL); err != nil {
+	jwkCache.Register(jwksURL, jwk.WithMinRefreshInterval(refreshInterval))
+	if _, err := jwkCache.Refresh(ctx, jwksURL); err != nil {
 		return err
 	}
 	return nil
@@ -39,7 +43,7 @@ func Init(url, headerName string, refreshInterval time.Duration) error {
 //
 // Make sure you call Init before can use this.
 func GetJWTToken(req *http.Request) (jwt.Token, error) {
-	if jwkCache == nil || jwkURL == "" || jwtHeader == "" {
+	if jwkCache == nil || jwksURL == "" || jwtHeader == "" {
 		return nil, errors.New(errors.Unauthorized, "jwk cache has not been initialized")
 	}
 
@@ -50,7 +54,7 @@ func GetJWTToken(req *http.Request) (jwt.Token, error) {
 
 	token, err := jwt.Parse(
 		[]byte(strings.TrimPrefix(authHeader, header.BearerPrefix)),
-		jwt.WithKeySet(jwk.NewCachedSet(jwkCache, jwkURL)),
+		jwt.WithKeySet(jwk.NewCachedSet(jwkCache, jwksURL)),
 	)
 	if err != nil {
 		return nil, errors.New(errors.Unauthorized, fmt.Sprintf("invalid jwt token: %s", err))
