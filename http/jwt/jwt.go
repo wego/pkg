@@ -1,4 +1,5 @@
-package auth
+// Package jwt handles some business related to JWT token.
+package jwt
 
 import (
 	"context"
@@ -35,7 +36,8 @@ func Init(url, headerName string, refreshInterval time.Duration) error {
 }
 
 // GetJWTToken verify and return jwt token from http request, only accept bearer header.
-// You need to call Init before can use this.
+//
+// Make sure you call Init before can use this.
 func GetJWTToken(req *http.Request) (jwt.Token, error) {
 	if jwkCache == nil || jwkURL == "" || jwtHeader == "" {
 		return nil, errors.New(errors.Unauthorized, "jwk cache has not been initialized")
