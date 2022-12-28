@@ -16,6 +16,20 @@ git config core.hookspath .githooks
 sudo chmod +x .githooks/*
 ```
 
+# Tag a new version
+
+After merge your PR into `main` branch, run this
+
+```
+./auto_version
+```
+
+If it's your first time, you might need to run this first
+
+```
+chmod +x auto_version
+```
+
 ---
 
 References:

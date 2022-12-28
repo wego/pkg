@@ -15,6 +15,7 @@ const (
 const (
 	APIKey    = "ApiKey"
 	RequestID = "X-Request-ID"
+	WegoAuth  = "Wego-Authorization"
 )
 
 // header values
