@@ -164,7 +164,7 @@ func ContainsNoneValues[M ~map[K]V, K, V comparable](m M, vs []V) bool {
 // Keys returns the keys of the map
 func Keys[M ~map[K]V, K comparable, V any](m M) []K {
 	vs := make([]K, 0)
-	for k, _ := range m {
+	for k := range m {
 		vs = append(vs, k)
 	}
 	return vs
