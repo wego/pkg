@@ -97,3 +97,84 @@ func Equal[T comparable](s1 []T, s2 []T) bool {
 
 	return true
 }
+
+// ContainsKeys checks whether all items in the slice are in the map
+func ContainsKeys[M ~map[K]V, K comparable, V any](m M, ks []K) bool {
+	for _, v := range ks {
+		if _, ok := m[v]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// ContainsValues checks whether all items in the slice are in the map values
+func ContainsValues[M ~map[K]V, K, V comparable](m M, vs []V) bool {
+	values := Values(m)
+	for _, v := range vs {
+		if !Contains(values, v) {
+			return false
+		}
+	}
+	return true
+}
+
+// ContainsAnyKeys checks whether any item in the slice is in the map
+func ContainsAnyKeys[M ~map[K]V, K comparable, V any](m M, ks []K) bool {
+	for _, v := range ks {
+		if _, ok := m[v]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// ContainsAnyValues checks whether any item in the slice is in the map values
+func ContainsAnyValues[M ~map[K]V, K comparable, V comparable](m M, vs []V) bool {
+	values := Values(m)
+	for _, v := range vs {
+		if Contains(values, v) {
+			return true
+		}
+	}
+	return false
+}
+
+// ContainsNoneKeys checks whether none of the items in the slice is in the map
+func ContainsNoneKeys[M ~map[K]V, K comparable, V any](m M, ks []K) bool {
+	for _, v := range ks {
+		if _, ok := m[v]; ok {
+			return false
+		}
+	}
+	return true
+}
+
+// ContainsNoneValues checks whether none of the items in the slice is in the map values
+func ContainsNoneValues[M ~map[K]V, K, V comparable](m M, vs []V) bool {
+	values := Values(m)
+	for _, v := range vs {
+		if Contains(values, v) {
+			return false
+		}
+	}
+	return true
+}
+
+// Keys returns the keys of the map
+func Keys[M ~map[K]V, K comparable, V any](m M) []K {
+	vs := make([]K, 0)
+	for k, _ := range m {
+		vs = append(vs, k)
+	}
+	return vs
+}
+
+// Values returns all values in the map
+func Values[M ~map[K]V, K comparable, V any](m M) []V {
+	vs := make([]V, 0, len(m))
+	for _, v := range m {
+		vs = append(vs, v)
+	}
+	return vs
+}
