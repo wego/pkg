@@ -318,7 +318,7 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
 		})
 	}
 
@@ -344,7 +344,7 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
 		})
 	}
 
@@ -370,7 +370,7 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
 		})
 	}
 
@@ -416,7 +416,7 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
 		})
 	}
 }
@@ -607,7 +607,7 @@ func Test_Contains(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.True(collection.Equal(test.keys, collection.Keys(test.m)))
+			assertions.True(collection.Equals(test.keys, collection.Keys(test.m)))
 		})
 	}
 
@@ -625,7 +625,7 @@ func Test_Contains(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.True(collection.Equal(test.keys, collection.Keys(test.m)))
+			assertions.True(collection.Equals(test.keys, collection.Keys(test.m)))
 		})
 	}
 
@@ -644,7 +644,7 @@ func Test_Contains(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.True(collection.Equal(test.vals, collection.Values(test.m)))
+			assertions.True(collection.Equals(test.vals, collection.Values(test.m)))
 		})
 	}
 
@@ -662,7 +662,7 @@ func Test_Contains(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.True(collection.Equal(test.vals, collection.Values(test.m)))
+			assertions.True(collection.Equals(test.vals, collection.Values(test.m)))
 		})
 	}
 }

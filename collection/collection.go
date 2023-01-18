@@ -78,8 +78,8 @@ func MapI[T any](vs []T, f func(T) interface{}) []interface{} {
 	return vsm
 }
 
-// Equal checks whether 2 slices have the same items
-func Equal[T comparable](s1 []T, s2 []T) bool {
+// Equals checks whether 2 slices are equal
+func Equals[T comparable](s1 []T, s2 []T) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
