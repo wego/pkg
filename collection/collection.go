@@ -39,7 +39,7 @@ func Any[T comparable](vs []T, f func(T) bool) bool {
 }
 
 // All returns true if all the elements in the slice satisfy the predicate f
-func All[T comparable](vs []T, f func(T) bool) bool {
+func All[T any](vs []T, f func(T) bool) bool {
 	for _, v := range vs {
 		if !f(v) {
 			return false
@@ -49,7 +49,7 @@ func All[T comparable](vs []T, f func(T) bool) bool {
 }
 
 // Filter returns a new slice containing all in the slice that satisfy the predicate f
-func Filter[T comparable](vs []T, f func(T) bool) []T {
+func Filter[T any](vs []T, f func(T) bool) []T {
 	vsf := make([]T, 0)
 	for _, v := range vs {
 		if f(v) {
