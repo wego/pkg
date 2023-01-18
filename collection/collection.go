@@ -142,8 +142,8 @@ func ContainsAnyValues[M ~map[K]V, K comparable, V comparable](m M, vs []V) bool
 
 // ContainsNoneKeys checks whether none of the items in the slice is in the map
 func ContainsNoneKeys[M ~map[K]V, K comparable, V any](m M, ks []K) bool {
-	for _, v := range ks {
-		if _, ok := m[v]; ok {
+	for _, k := range ks {
+		if _, ok := m[k]; ok {
 			return false
 		}
 	}
