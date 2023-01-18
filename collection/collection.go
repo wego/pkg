@@ -100,8 +100,8 @@ func Equal[T comparable](s1 []T, s2 []T) bool {
 
 // ContainsKeys checks whether all items in the slice are in the map
 func ContainsKeys[M ~map[K]V, K comparable, V any](m M, ks []K) bool {
-	for _, v := range ks {
-		if _, ok := m[v]; !ok {
+	for _, k := range ks {
+		if _, ok := m[k]; !ok {
 			return false
 		}
 	}
