@@ -318,7 +318,7 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
 		})
 	}
 
@@ -344,7 +344,7 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
 		})
 	}
 
@@ -370,7 +370,7 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
 		})
 	}
 
@@ -416,7 +416,253 @@ func Test_Equal(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
-			assertions.Equal(test.want, collection.Equal(test.a, test.b))
+			assertions.Equal(test.want, collection.Equals(test.a, test.b))
+		})
+	}
+}
+
+func Test_Contains(t *testing.T) {
+	type testStruct[K, V comparable] struct {
+		name string
+		m    map[K]V
+		keys []K
+		vals []V
+		want bool
+	}
+
+	// ContainsKeys
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "ContainsKeys - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "b"},
+			want: true,
+		},
+		{
+			name: "ContainsKeys - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "d"},
+			want: false,
+		},
+		{
+			name: "ContainsKeys - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "b", "d"},
+			want: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.Equal(test.want, collection.ContainsKeys(test.m, test.keys))
+		})
+	}
+
+	// ContainsAnyKeys
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "ContainsAnyKeys - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "b"},
+			want: true,
+		},
+		{
+			name: "ContainsAnyKeys - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "d"},
+			want: true,
+		},
+		{
+			name: "ContainsAnyKeys - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"d", "e"},
+			want: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.Equal(test.want, collection.ContainsAnyKeys(test.m, test.keys))
+		})
+	}
+
+	// ContainsNoneKeys
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "ContainsNoneKeys - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "b"},
+			want: false,
+		},
+		{
+			name: "ContainsNoneKeys - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "d"},
+			want: false,
+		},
+		{
+			name: "ContainsNoneKeys - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"d", "e"},
+			want: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.Equal(test.want, collection.ContainsNoneKeys(test.m, test.keys))
+		})
+	}
+
+	// ContainsValues
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "ContainsValues - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "b"},
+			want: true,
+		},
+		{
+			name: "ContainsValues - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "d"},
+			want: false,
+		},
+		{
+			name: "ContainsValues - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "b", "d"},
+			want: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.Equal(test.want, collection.ContainsValues(test.m, test.vals))
+		})
+	}
+
+	// ContainsAnyValues
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "ContainsAnyValues - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "b"},
+			want: true,
+		},
+		{
+			name: "ContainsAnyValues - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "d"},
+			want: true,
+		},
+		{
+			name: "ContainsAnyValues - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"d", "e"},
+			want: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.Equal(test.want, collection.ContainsAnyValues(test.m, test.vals))
+		})
+	}
+
+	// ContainsNoneValues
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "ContainsNoneValues - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "b"},
+			want: false,
+		},
+		{
+			name: "ContainsNoneValues - not contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "d"},
+			want: false,
+		},
+		{
+			name: "ContainsNoneValues - contains",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"d", "e"},
+			want: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.Equal(test.want, collection.ContainsNoneValues(test.m, test.vals))
+		})
+	}
+
+	// Keys
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "Keys - empty",
+			m:    map[string]string{},
+			keys: []string{},
+		},
+		{
+			name: "Keys - not empty",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			keys: []string{"a", "b", "c"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.True(collection.Equals(test.keys, collection.Keys(test.m)))
+		})
+	}
+
+	for _, test := range []testStruct[int, string]{
+		{
+			name: "Keys - empty",
+			m:    map[int]string{},
+			keys: []int{},
+		},
+		{
+			name: "Keys - not empty",
+			m:    map[int]string{1: "a", 2: "b", 3: "c"},
+			keys: []int{1, 2, 3},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.True(collection.Equals(test.keys, collection.Keys(test.m)))
+		})
+	}
+
+	// Values
+	for _, test := range []testStruct[string, string]{
+		{
+			name: "Values - empty",
+			m:    map[string]string{},
+			vals: []string{},
+		},
+		{
+			name: "Values - not empty",
+			m:    map[string]string{"a": "a", "b": "b", "c": "c"},
+			vals: []string{"a", "b", "c"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.True(collection.Equals(test.vals, collection.Values(test.m)))
+		})
+	}
+
+	for _, test := range []testStruct[string, float64]{
+		{
+			name: "Values - empty",
+			m:    map[string]float64{},
+			vals: []float64{},
+		},
+		{
+			name: "Values - not empty",
+			m:    map[string]float64{"a": 1.1, "b": 2.2, "c": 3.3},
+			vals: []float64{1.1, 2.2, 3.3},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+			assertions.True(collection.Equals(test.vals, collection.Values(test.m)))
 		})
 	}
 }
