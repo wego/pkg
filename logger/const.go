@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 )
 
@@ -23,6 +25,8 @@ const (
 
 	contextKeyRequest     contextKey = "request"
 	contextKeyRequestType contextKey = "requestType"
+
+	slackPostingMsgLimitTime = time.Second
 )
 
 var (

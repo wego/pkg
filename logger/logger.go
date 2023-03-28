@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 	"github.com/wego/pkg/errors"
@@ -50,26 +51,27 @@ func RequestFromContext(ctx context.Context) (req *Request) {
 }
 
 // LogUltronEx logs a msg to UltronEx local file
-func LogUltronEx(msg *UltronExMsg) {
+func LogUltronEx(msg UltronExMsg) {
 	logger := loggers[logTypeUltronex]
-	if logger != nil && msg != nil {
+	if logger != nil && msg != (UltronExMsg{}) {
+		time.Sleep(slackPostingMsgLimitTime)
 		// UltronEx require the key as `msg`
 		logger.Info("", zap.Object("msg", msg))
 	}
 }
 
 // LogPartnerRequest logs a partner request to local file
-func LogPartnerRequest(log *Request) {
+func LogPartnerRequest(log Request) {
 	logger := loggers[logTypePartnerRequest]
-	if logger != nil && log != nil && len(log.Type) > 0 {
+	if logger != nil && len(log.Type) > 0 {
 		logger.Info("", log.fields()...)
 	}
 }
 
 // LogRequest logs a request to local file
-func LogRequest(log *Request) {
+func LogRequest(log Request) {
 	logger := loggers[logTypeRequest]
-	if logger != nil && log != nil && len(log.Type) > 0 {
+	if logger != nil && len(log.Type) > 0 {
 		logger.Info("", log.fields()...)
 	}
 }
