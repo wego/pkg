@@ -1,3 +1,3 @@
-module github.com/wego/pkg/common
+module github.com/wego/pkg/datetime
 
 go 1.18
