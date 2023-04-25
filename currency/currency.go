@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/bojanz/currency"
 )
 
 var iso4217Currencies = map[string]bool{
@@ -45,7 +47,7 @@ var iso4217Currencies = map[string]bool{
 	"YER": true, "ZAR": true, "ZMW": true, "ZWL": true,
 }
 
-//  https://www.checkout.com/docs/resources/calculating-the-value
+// https://www.checkout.com/docs/resources/calculating-the-value
 const defaultCurrencyFactor float64 = 100
 
 var currencyFactors = map[string]float64{
@@ -110,6 +112,22 @@ func FromMinorUnit(currencyCode string, minorUnitAmount uint64) (amount float64,
 // IsISO4217 check a currency code is an ISO 4217 currency code
 func IsISO4217(code string) bool {
 	return iso4217Currencies[strings.ToUpper(strings.TrimSpace(code))]
+}
+
+// Format formats a currency amount in given locale. Empty or invalid locale will be fallback to "en".
+func Format(amount float64, currencyCode string, locale string) (string, error) {
+	if locale == "" {
+		locale = "en"
+	}
+
+	amt, err := currency.NewAmount(fmt.Sprint(amount), currencyCode)
+	if err != nil {
+		return "", err
+	}
+	loc := currency.NewLocale(locale)
+	formatter := currency.NewFormatter(loc)
+	formatter.MaxDigits = uint8(math.Log10(getCurrencyFactor(currencyCode)))
+	return formatter.Format(amt), nil
 }
 
 func getCurrencyFactor(currency string) (factor float64) {

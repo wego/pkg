@@ -159,3 +159,79 @@ func Test_FromMinorUnit_ZeroAmount(t *testing.T) {
 	assert.NoError(err)
 	assert.Zero(rs)
 }
+
+func Test_Format(t *testing.T) {
+	for n, tc := range map[string]struct {
+		amount       float64
+		currencyCode string
+		locale       string
+		want         string
+		wantErr      bool
+	}{
+		"Invalid currency": {
+			amount:       2048.172,
+			currencyCode: "SG",
+			locale:       "en",
+			want:         "",
+			wantErr:      true,
+		},
+		"Empty locale should be fallback to en locale": {
+			amount:       2048.179,
+			currencyCode: "USD",
+			want:         "$2,048.18",
+		},
+		"Invalid locale should be fallback en locale": {
+			amount:       2048.179,
+			currencyCode: "USD",
+			locale:       "qwertyuiop",
+			want:         "$2,048.18",
+		},
+		"USD en_US": {
+			amount:       2048.123,
+			currencyCode: "USD",
+			locale:       "en_US",
+			want:         "$2,048.12",
+		},
+		"EUR en": {
+			amount:       2048.125,
+			currencyCode: "EUR",
+			locale:       "en",
+			want:         "€2,048.13",
+		},
+		"JPY jp": {
+			amount:       2048.445,
+			currencyCode: "JPY",
+			locale:       "en",
+			want:         "¥2,048",
+		},
+		"VND vi": {
+			amount:       2048.584,
+			currencyCode: "VND",
+			locale:       "vi",
+			want:         "2.049\u00a0₫",
+		},
+		"KWD en": {
+			amount:       2048.2023,
+			currencyCode: "KWD",
+			locale:       "en",
+			want:         "KWD\u00a02,048.202",
+		},
+		"BHD en": {
+			amount:       2048.4555,
+			currencyCode: "BHD",
+			locale:       "en",
+			want:         "BHD\u00a02,048.456",
+		},
+	} {
+		t.Run(n, func(tt *testing.T) {
+			got, err := currency.Format(tc.amount, tc.currencyCode, tc.locale)
+			if tc.wantErr {
+				assert.Error(tt, err)
+				assert.Empty(tt, got)
+			} else {
+				assert.NoError(tt, err)
+				assert.Equal(tt, tc.want, got)
+			}
+		})
+	}
+}
