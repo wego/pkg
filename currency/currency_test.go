@@ -175,12 +175,12 @@ func Test_Format(t *testing.T) {
 			want:         "",
 			wantErr:      true,
 		},
-		"Empty locale returns empty string": {
+		"Empty locale should be fallback to en locale": {
 			amount:       2048.179,
 			currencyCode: "USD",
-			locale:       "",
+			want:         "$2,048.18",
 		},
-		"Invalid locale returns in en locale": {
+		"Invalid locale should be fallback en locale": {
 			amount:       2048.179,
 			currencyCode: "USD",
 			locale:       "qwertyuiop",

@@ -114,8 +114,12 @@ func IsISO4217(code string) bool {
 	return iso4217Currencies[strings.ToUpper(strings.TrimSpace(code))]
 }
 
-// Format formats a currency amount in given locale
+// Format formats a currency amount in given locale. Empty or invalid locale will be fallback to "en".
 func Format(amount float64, currencyCode string, locale string) (string, error) {
+	if locale == "" {
+		locale = "en"
+	}
+
 	amt, err := currency.NewAmount(fmt.Sprint(amount), currencyCode)
 	if err != nil {
 		return "", err
