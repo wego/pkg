@@ -6,13 +6,17 @@ import (
 	"time"
 )
 
+const (
+	nullString = "null"
+)
+
 // EpochTime represents time from string epoch format in milliseconds
 type EpochTime time.Time
 
 // UnmarshalJSON Parses the json string epoch time to time.Time
 func (e *EpochTime) UnmarshalJSON(b []byte) (err error) {
 	s := strings.Trim(string(b), "\"")
-	if s == "null" {
+	if strings.ToLower(s) == nullString {
 		return
 	}
 	epoch, err := strconv.ParseInt(s, 10, 64)
@@ -29,7 +33,7 @@ type EpochTimeSeconds time.Time
 // UnmarshalJSON Parses the json string epoch time to time.Time
 func (e *EpochTimeSeconds) UnmarshalJSON(b []byte) (err error) {
 	s := strings.Trim(string(b), "\"")
-	if s == "null" {
+	if strings.ToLower(s) == nullString {
 		return
 	}
 	epoch, err := strconv.ParseInt(s, 10, 64)
