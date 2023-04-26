@@ -12,6 +12,9 @@ type EpochTime time.Time
 // UnmarshalJSON Parses the json string epoch time to time.Time
 func (e *EpochTime) UnmarshalJSON(b []byte) (err error) {
 	s := strings.Trim(string(b), "\"")
+	if s == "null" {
+		return
+	}
 	epoch, err := strconv.ParseInt(s, 10, 64)
 	convertedTime := time.UnixMilli(epoch)
 
@@ -26,6 +29,9 @@ type EpochTimeSeconds time.Time
 // UnmarshalJSON Parses the json string epoch time to time.Time
 func (e *EpochTimeSeconds) UnmarshalJSON(b []byte) (err error) {
 	s := strings.Trim(string(b), "\"")
+	if s == "null" {
+		return
+	}
 	epoch, err := strconv.ParseInt(s, 10, 64)
 	convertedTime := time.Unix(epoch, 0)
 
