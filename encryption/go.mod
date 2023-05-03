@@ -18,7 +18,7 @@ require (
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/wego/pkg/common v0.1.12 // indirect
-	golang.org/x/sys v0.0.0-20220222200937-f2425489ef4c // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gorm.io/gorm v1.23.1 // indirect
 )
