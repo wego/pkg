@@ -33,12 +33,12 @@ func GenerateKey(curve elliptic.Curve) (*PrivateKey, error) {
 
 // EncryptToBase64 encrypts data to ciphertext in base64 form using receiver public key
 func EncryptToBase64(data []byte, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
-	bytes, err := Encrypt(data, pub, ecdh, kdf)
+	encryptedBytes, err := Encrypt(data, pub, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(bytes), nil
+	return base64.StdEncoding.EncodeToString(encryptedBytes), nil
 }
 
 // EncryptStringToBase64 encrypts plaintext to ciphertext in base64 form using receiver public key
@@ -48,12 +48,12 @@ func EncryptStringToBase64(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF)
 
 // EncryptToHex encrypts data to ciphertext in hex form using receiver public key
 func EncryptToHex(data []byte, pub *PublicKey, ecdh ECDH, kdf KDF) (string, error) {
-	bytes, err := Encrypt(data, pub, ecdh, kdf)
+	encryptedBytes, err := Encrypt(data, pub, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
 
-	return hex.EncodeToString(bytes), nil
+	return hex.EncodeToString(encryptedBytes), nil
 }
 
 // EncryptStringToHex encrypts plaintext to ciphertext in hex form using receiver public key
@@ -73,12 +73,12 @@ func DecryptBase64(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]b
 
 // DecryptBase64String decrypts ciphertext in base64 form to plaintext by receiver private key
 func DecryptBase64String(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
-	bytes, err := DecryptBase64(ciphertext, priv, ecdh, kdf)
+	decryptedBytes, err := DecryptBase64(ciphertext, priv, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
 
-	return string(bytes), nil
+	return string(decryptedBytes), nil
 }
 
 // DecryptHex decrypts ciphertext in hex form to raw data([]byte) by receiver private key
@@ -93,12 +93,12 @@ func DecryptHex(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte
 
 // DecryptHexString decrypts ciphertext in hex form to plaintext by receiver private key
 func DecryptHexString(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) (string, error) {
-	bytes, err := DecryptHex(ciphertext, priv, ecdh, kdf)
+	decryptedBytes, err := DecryptHex(ciphertext, priv, ecdh, kdf)
 	if err != nil {
 		return "", err
 	}
 
-	return string(bytes), nil
+	return string(decryptedBytes), nil
 }
 
 // Encrypt encrypts data using receiver public key
@@ -131,8 +131,8 @@ func Encrypt(data []byte, pub *PublicKey, ecdh ECDH, kdf KDF) ([]byte, error) {
 	}
 
 	var out bytes.Buffer
-	out.Write(priv.Pub.Bytes())
-	out.Write(encrypted)
+	_, _ = out.Write(priv.Pub.Bytes())
+	_, _ = out.Write(encrypted)
 	return out.Bytes(), nil
 }
 

@@ -1,0 +1,65 @@
+# When set to false, ignores files with "GENERATED" header, similar to golint
+ignoreGeneratedHeader = true
+
+# Sets the default severity to "warning"
+severity = "warning"
+
+# Sets the default failure confidence. This means that linting errors
+# with less than 0.8 confidence will be ignored.
+confidence = 0.8
+
+# Sets the error code for failures with severity "error"
+errorCode = 1
+
+# Sets the error code for failures with severity "warning"
+warningCode = 1
+
+# selected rules listed in order per https://github.com/mgechev/revive#available-rules
+[rule.context-keys-type]
+[rule.time-naming]
+[rule.var-declaration]
+[rule.unexported-return]
+# [rule.errorf]
+[rule.blank-imports]
+[rule.context-as-argument]
+[rule.dot-imports]
+[rule.error-return]
+[rule.error-strings]
+[rule.error-naming]
+[rule.exported]
+[rule.if-return]
+[rule.increment-decrement]
+[rule.var-naming]
+# [rule.package-comments]
+[rule.range]
+[rule.receiver-naming]
+[rule.indent-error-flow]
+[rule.superfluous-else]
+[rule.modifies-parameter]
+[rule.confusing-results]
+# [rule.deep-exit]
+[rule.unused-parameter]
+[rule.unreachable-code]
+# [rule.flag-parameter]
+# [rule.unnecessary-stmt]
+[rule.struct-tag]
+[rule.modifies-value-receiver]
+[rule.constant-logical-expr]
+[rule.bool-literal-in-expr]
+# [rule.redefines-builtin-id]
+[rule.range-val-in-closure]
+# [rule.range-val-address]
+[rule.waitgroup-by-value]
+[rule.atomic]
+# [rule.empty-lines]
+[rule.call-to-gc]
+[rule.duplicated-imports]
+# [rule.unused-receiver]
+[rule.unhandled-error]
+[rule.string-of-int]
+[rule.early-return]
+[rule.unconditional-recursion]
+[rule.identical-branches]
+[rule.defer]
+# [rule.unexported-naming]
+[rule.useless-break]

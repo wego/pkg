@@ -43,9 +43,9 @@ const (
 )
 
 var (
-	mutexes        = make([]sync.Mutex, concurrent)
-	rands          = make([]rand.Source, concurrent)
-	index   uint32 = 0
+	mutexes = make([]sync.Mutex, concurrent)
+	rands   = make([]rand.Source, concurrent)
+	index   uint32
 
 	optionMapping = map[int]string{
 		Numbers:                           numbers,

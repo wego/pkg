@@ -2,8 +2,6 @@ package sql
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -140,7 +138,6 @@ func (s *TestSuite) CleanUp() {
 	err = s.dbConn.Transaction(func(tx *gorm.DB) error {
 		for _, table := range tables {
 			query := `TRUNCATE ` + pq.QuoteIdentifier(table) + ` RESTART IDENTITY CASCADE`
-			fmt.Println(query)
 			if err := tx.Exec(query).Error; err != nil {
 				log.Fatal(err)
 			}
@@ -154,7 +151,7 @@ func (s *TestSuite) CleanUp() {
 
 	// insert data seed test data for next test suite
 	seedSQLPath := resolveExternalPath(s.dbDataSeedFilePath)
-	seedSQL, err := ioutil.ReadFile(filepath.Clean(seedSQLPath))
+	seedSQL, err := os.ReadFile(filepath.Clean(seedSQLPath))
 	if err != nil {
 		log.Fatal(err)
 	}

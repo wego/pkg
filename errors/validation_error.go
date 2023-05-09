@@ -27,15 +27,15 @@ func (e FieldError) String() string {
 		field = e.Field()
 	}
 
-	sb.WriteString("validation failed on field '" + field + "'")
-	sb.WriteString(", condition: " + e.ActualTag())
+	_, _ = sb.WriteString("validation failed on field '" + field + "'")
+	_, _ = sb.WriteString(", condition: " + e.ActualTag())
 
 	if e.Param() != "" {
-		sb.WriteString("=" + e.Param() + "")
+		_, _ = sb.WriteString("=" + e.Param() + "")
 	}
 
 	if e.Value() != nil && e.Value() != "" {
-		sb.WriteString(fmt.Sprintf(", actual: %v", e.Value()))
+		_, _ = sb.WriteString(fmt.Sprintf(", actual: %v", e.Value()))
 	}
 
 	return sb.String()

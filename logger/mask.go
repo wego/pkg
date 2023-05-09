@@ -68,50 +68,50 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 //
 // Example:
 //
-// 		input = `
-// 		{
-// 			"first": "first value",
-// 			"second": {
-// 				"first": "1st of second",
-// 				"second": "second@wego.com",
-// 				"third": {
-// 					"first": "1st of second third",
-// 					"second": "2nd of second third",
-// 					"third": "3rd of second third",
-// 				}
-// 			}
-// 		}`
-// 		maskData := []logger.MaskData{
-//			{
-//				JSONKey:         []string{"first"},
-//				FistCharsToShow: 3,
-//				LastCharsToShow: 6,
-//			},
-//			{
-//				JSONKey:         []string{"second", "second"},
-//				FistCharsToShow: 2,
-//				LastCharsToShow: 3,
-//				CharsToIgnore:   []rune{'@'},
-//			},
-//			{
-//				JSONKey:         []string{"second", "third", "first"},
-//				FistCharsToShow: 3,
-//				LastCharsToShow: 1,
-//			},
-//		}
-//		MaskJSON(input, "!", maskData) will return
-//		{
-//			"first": "fir!! value",
-//			"second": {
-//				"first": "1st of second",
-//				"second": "se!!!!@!!!!!com",
-//				"third": {
-//					"first": "1st!!!!!!!!!!!!!!!d",
-//					"second": "2nd of second third",
-//					"third": "3rd of second third",
-//				}
+//	input = `
+//	{
+//		"first": "first value",
+//		"second": {
+//			"first": "1st of second",
+//			"second": "second@wego.com",
+//			"third": {
+//				"first": "1st of second third",
+//				"second": "2nd of second third",
+//				"third": "3rd of second third",
 //			}
 //		}
+//	}`
+//	maskData := []logger.MaskData{
+//		{
+//			JSONKey:         []string{"first"},
+//			FistCharsToShow: 3,
+//			LastCharsToShow: 6,
+//		},
+//		{
+//			JSONKey:         []string{"second", "second"},
+//			FistCharsToShow: 2,
+//			LastCharsToShow: 3,
+//			CharsToIgnore:   []rune{'@'},
+//		},
+//		{
+//			JSONKey:         []string{"second", "third", "first"},
+//			FistCharsToShow: 3,
+//			LastCharsToShow: 1,
+//		},
+//	}
+//	MaskJSON(input, "!", maskData) will return
+//	{
+//		"first": "fir!! value",
+//		"second": {
+//			"first": "1st of second",
+//			"second": "se!!!!@!!!!!com",
+//			"third": {
+//				"first": "1st!!!!!!!!!!!!!!!d",
+//				"second": "2nd of second third",
+//				"third": "3rd of second third",
+//			}
+//		}
+//	}
 func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 	maskChar = maskCharOrDefault(maskChar)
 
@@ -194,9 +194,9 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	for _, c := range valToMask {
 		// do not mask characters that should be ignored like '@'
 		if collection.Contains(toMask.CharsToIgnore, c) {
-			sb.WriteRune(c)
+			_, _ = sb.WriteRune(c)
 		} else {
-			sb.WriteString(maskChar)
+			_, _ = sb.WriteString(maskChar)
 		}
 	}
 

@@ -274,7 +274,7 @@ func Test_NewIDInParallel(t *testing.T) {
 
 		}
 		elapsed := time.Since(start)
-		fmt.Printf("%v IDs generaged, tooks %v s\n", numID, elapsed)
+		_, _ = fmt.Printf("%v IDs generaged, tooks %v s\n", numID, elapsed)
 	}
 	wg := sync.WaitGroup{}
 	start := time.Now()
@@ -286,7 +286,7 @@ func Test_NewIDInParallel(t *testing.T) {
 	}
 	wg.Wait()
 	elapsed := time.Since(start)
-	fmt.Printf("%v IDs generaged, tooks %v, speed: %v IDs/sec\n", numID*numGenerator,
+	_, _ = fmt.Printf("%v IDs generaged, tooks %v, speed: %v IDs/sec\n", numID*numGenerator,
 		elapsed, float64(numID*numGenerator)/elapsed.Seconds())
 
 	set := make(map[uint64]int)
