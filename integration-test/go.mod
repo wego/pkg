@@ -8,7 +8,7 @@ require (
 	github.com/spf13/viper v1.13.0
 	github.com/wego/pkg/database/postgres v0.1.11
 	github.com/wego/pkg/errors v0.1.14
-	gorm.io/gorm v1.23.10
+	gorm.io/gorm v1.25.1
 )
 
 require (
@@ -56,8 +56,8 @@ require (
 	github.com/wego/pkg/common v0.1.12 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/text v0.3.8 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
