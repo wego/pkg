@@ -7,9 +7,10 @@ import (
 )
 
 // A Snowflake ID is composed of
-//     39 bits for time in units of 10 msec (about 174 years)
-//     16 bits for a node ID
-//      9 bits for a sequence number
+//
+//	39 bits for time in units of 10 msec (about 174 years)
+//	16 bits for a node ID
+//	 9 bits for a sequence number
 const (
 	timestampBits = 39 // nodeBits holds the number of bits to use for timestamp (in units of 10 msec)
 	nodeBits      = 16 // nodeBits holds the number of bits to use for Node
@@ -93,9 +94,12 @@ func Decompose(id uint64) ID {
 
 // SequenceGenerator the snowflake sequence generator.
 // When use the snowflake algorithm to generate unique ID, make sure:
-//   The sequence-number generated in the same 10 milliseconds of the same node is unique.
+//
+//	The sequence-number generated in the same 10 milliseconds of the same node is unique.
+//
 // Based on this, we create this interface provides following Generator:
-//   AtomicGenerator : base sync/atomic (by default).
+//
+//	AtomicGenerator : base sync/atomic (by default).
 type SequenceGenerator func(current int64) (uint16, error)
 
 // NodeIDProvider the snowflake Node Generator provider.
@@ -103,9 +107,10 @@ type NodeIDProvider func() (uint16, error)
 
 // setEpoch set the start time for snowflake algorithm.
 // It will panic when:
-//   * t IsZero
-//   * t > current millisecond
-//   * current millisecond - t > 2^39( * 10ms).
+//   - t IsZero
+//   - t > current millisecond
+//   - current millisecond - t > 2^39( * 10ms).
+//
 // NOTE: This function is thread-unsafe, call before init
 func (g *Generator) setEpoch(epoch time.Time) (err error) {
 	const op errors.Op = "snowflakeGenerator.setEpoch"
@@ -168,10 +173,7 @@ func (g *Generator) setNodeIDProvider(nodeIDProvider NodeIDProvider) (err error)
 // Decompose returns a map of snowflake id parts.
 func (g *Generator) Decompose(sid uint64) (id ID) {
 	timestamp := sid >> timeShift
-	// FIXME:
-	// after updating to go 1.17 can be replaced with
-	// id.Timestamp = time.UnixMilli(g.Epoch.UnixMilli() + int64(timestamp*timeUnit))
-	id.Timestamp = unixMilli(g.epoch() + int64(timestamp*timeUnit))
+	id.Timestamp = time.UnixMilli(g.Epoch.UnixMilli() + int64(timestamp*timeUnit))
 	id.Sequence = uint16(sid & maskSequence)
 	id.NodeID = uint16(sid & maskNodeID >> nodeShift)
 	return
@@ -217,16 +219,6 @@ func (g *Generator) currentTimestamp() (current int64, err error) {
 	return
 }
 
-// epoch returns Epoch as a Unix time, the number of milliseconds elapsed since
-// January 1, 1970, UTC. The result is undefined if the Unix time in
-// milliseconds cannot be represented by an int64 (a date more than 292 million
-// years before or after 1970). The result does not depend on the
-// location associated with t.
-// Copied from time.Time.UnixMilli
-func (g *Generator) epoch() int64 {
-	return g.Epoch.Unix()*1e3 + int64(g.Epoch.Nanosecond())/1e6
-}
-
 func (g *Generator) currentTimeSlot() int64 {
 	return since(g.Epoch)
 }
@@ -263,11 +255,4 @@ func (g *Generator) init(settings Settings) (err error) {
 		return
 	}
 	return
-}
-
-// unixMilli returns the local Time corresponding to the given Unix time,
-// msec milliseconds since January 1, 1970, UTC.
-// Copied from Go1.17 time.UnixMilli
-func unixMilli(ms int64) time.Time {
-	return time.Unix(ms/1e3, (ms%1e3)*1e6)
 }

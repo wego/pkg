@@ -12,28 +12,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
-          go-version: 1.18.6
+          go-version: ^1.19
 
       - name: Set up tools
         run: |
-          sudo apt update && sudo apt -y upgrade
-          sudo apt install -y build-essential bc
+          sudo apt update && sudo apt install -y build-essential bc
 
-      - name: Install golint
+      - name: Install revive
         run: |
-          go install golang.org/x/lint/golint@latest
+          go install github.com/mgechev/revive@latest
 
       - name: Style Check
         run: |
+          revive_config=$(realpath revive.toml)
           for pkg in $(find . -name 'go.sum' -exec dirname {} \; | sort -u); do
             pushd "$pkg" > /dev/null 2>&1 || exit 255
             go vet ./... || exit 255
-            golint -set_exit_status ./... || exit 255
+            revive -formatter friendly -config $revive_config ./... || exit 255
             popd > /dev/null 2>&1 || exit 255
           done
 

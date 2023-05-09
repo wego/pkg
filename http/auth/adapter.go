@@ -76,7 +76,7 @@ func (a *adapter) LoadPolicy(model model.Model) error {
 }
 
 // SavePolicy saves all policy rules to the storage.
-func (a *adapter) SavePolicy(model model.Model) error {
+func (a *adapter) SavePolicy(_ model.Model) error {
 	return errors.New("not implemented")
 }
 

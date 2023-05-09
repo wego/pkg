@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+function error() {
+    echo -e "\033[1;31m${*}\033[0m"
+    exit 1
+}
+
 echo checking coding styles and running unit test
 
 num_of_pros=4
@@ -15,10 +20,15 @@ case $dist in
       ;;
 esac
 
-for pkg in $(find . -name 'go.sum' -exec dirname {} \; | sort -u); do
+root=$(git rev-parse --show-toplevel 2> /dev/null)
+[ -z "$root" ] && error "Not a git repository"
+revive_config="$root/revive.toml"
+[ ! -f "$revive_config" ] && error "revive config not found"
+
+for pkg in $(find "$root" -name 'go.sum' -exec dirname {} \; | sort -u); do
     pushd "$pkg" > /dev/null 2>&1 || exit 255
     go vet ./... || exit 255
-    golint -set_exit_status ./... || exit 255
+    revive -formatter friendly -config "$revive_config" || exit 255
     go test ./... -race -cover -p "$num_of_pros"
     popd > /dev/null 2>&1 || exit 255
 done

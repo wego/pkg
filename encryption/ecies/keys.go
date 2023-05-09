@@ -22,9 +22,9 @@ func defaultEncryptECDH(sender *PrivateKey, receiver *PublicKey) []byte {
 	p := receiver.ScalarMult(sender)
 
 	var key bytes.Buffer
-	key.Write(p.X.Bytes())
-	key.Write(receiver.Bytes())
-	key.Write(p.Y.Bytes())
+	_, _ = key.Write(p.X.Bytes())
+	_, _ = key.Write(receiver.Bytes())
+	_, _ = key.Write(p.Y.Bytes())
 
 	return key.Bytes()
 }
@@ -33,9 +33,9 @@ func defaultDecryptECDH(receiver *PrivateKey, sender *PublicKey) []byte {
 	p := sender.ScalarMult(receiver)
 
 	var key bytes.Buffer
-	key.Write(p.X.Bytes())
-	key.Write(receiver.Pub.Bytes())
-	key.Write(p.Y.Bytes())
+	_, _ = key.Write(p.X.Bytes())
+	_, _ = key.Write(receiver.Pub.Bytes())
+	_, _ = key.Write(p.Y.Bytes())
 
 	return key.Bytes()
 }
