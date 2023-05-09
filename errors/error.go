@@ -115,5 +115,10 @@ func WrapGORMError(op Op, err error) error {
 	if goErrors.Is(err, gorm.ErrRecordNotFound) {
 		return New(op, NotFound, err)
 	}
+
+	if goErrors.Is(err, gorm.ErrDuplicatedKey) {
+		return New(op, Conflict, err)
+	}
+
 	return New(op, err)
 }
