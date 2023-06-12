@@ -6,9 +6,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// New returns a new gin engine with custom validators
+// New returns a new gin engine with custom validators， used to replace gin.New()
 func New() *gin.Engine {
 	e := gin.New()
+	registerValidator()
+	return e
+}
+
+// Default returns a new gin engine with custom validators， used to replace gin.Default()
+func Default() *gin.Engine {
+	e := gin.Default()
+	registerValidator()
+	return e
+}
+
+func registerValidator() {
 	for key, value := range fieldValidators {
 		if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 			_ = v.RegisterValidation(key, value)
@@ -19,5 +31,4 @@ func New() *gin.Engine {
 			v.RegisterStructValidation(value, key)
 		}
 	}
-	return e
 }
