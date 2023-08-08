@@ -7,23 +7,27 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/wego/pkg/common"
+	"github.com/wego/pkg/env"
 )
 
 // CaptureError captures an error to sentry & set level as error
 func CaptureError(ctx context.Context, err error) {
-	hub := getHub(ctx)
-	hub.WithScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelError)
-		enrichScope(ctx, scope, err)
-		hub.CaptureException(err)
-	})
+	capture(ctx, err, sentry.LevelError)
 }
 
 // CaptureWarning captures an error to sentry & set level as warning
 func CaptureWarning(ctx context.Context, err error) {
+	capture(ctx, err, sentry.LevelWarning)
+}
+
+func capture(ctx context.Context, err error, level sentry.Level) {
+	if !env.IsProduction() && !env.IsStaging() {
+		return
+	}
+
 	hub := getHub(ctx)
 	hub.WithScope(func(scope *sentry.Scope) {
-		scope.SetLevel(sentry.LevelWarning)
+		scope.SetLevel(level)
 		enrichScope(ctx, scope, err)
 		hub.CaptureException(err)
 	})
