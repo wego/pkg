@@ -87,7 +87,7 @@ func ToMinorUnit(currencyCode string, amount float64) (minorUnitAmount uint64, e
 	}
 	switch {
 	case amount > 0:
-		factor := getCurrencyFactor(currencyCode)
+		factor := GetCurrencyFactor(currencyCode)
 		minorUnitAmount = uint64(math.Round(amount * factor))
 	case amount < 0:
 		err = fmt.Errorf("invalid amount: %f", amount)
@@ -102,7 +102,7 @@ func FromMinorUnit(currencyCode string, minorUnitAmount uint64) (amount float64,
 	}
 
 	if minorUnitAmount > 0 {
-		factor := getCurrencyFactor(currencyCode)
+		factor := GetCurrencyFactor(currencyCode)
 		amount = float64(minorUnitAmount) / factor
 		amount = math.Round(amount*factor) / factor
 	}
@@ -126,11 +126,12 @@ func Format(amount float64, currencyCode string, locale string) (string, error) 
 	}
 	loc := currency.NewLocale(locale)
 	formatter := currency.NewFormatter(loc)
-	formatter.MaxDigits = uint8(math.Log10(getCurrencyFactor(currencyCode)))
+	formatter.MaxDigits = uint8(math.Log10(GetCurrencyFactor(currencyCode)))
 	return formatter.Format(amt), nil
 }
 
-func getCurrencyFactor(currency string) (factor float64) {
+// GetCurrencyFactor returns the currency factor
+func GetCurrencyFactor(currency string) (factor float64) {
 	factor, ok := currencyFactors[strings.ToUpper(currency)]
 	if !ok {
 		factor = defaultCurrencyFactor
