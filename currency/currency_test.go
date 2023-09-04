@@ -235,3 +235,27 @@ func Test_Format(t *testing.T) {
 		})
 	}
 }
+
+func Test_GetCurrencyFactor(t *testing.T) {
+	assert := assert.New(t)
+
+	factorOf100 := []string{"AED", "USD", "PHP", "qwerty", "1234", "SAR"}
+	factorOf1000 := []string{"BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND"}
+	factorOfOne := []string{"BIF", "CLF", "DJF", "GNF", "ISK", "JPY", "KMF",
+		"KRW", "PYG", "RWF", "UGX", "VUV", "VND", "XAF", "XOF", "XPF"}
+
+	for _, cur := range factorOf100 {
+		factor := currency.GetCurrencyFactor(cur)
+		assert.Equal(100.0, factor)
+	}
+
+	for _, cur := range factorOf1000 {
+		factor := currency.GetCurrencyFactor(cur)
+		assert.Equal(1000.0, factor)
+	}
+
+	for _, cur := range factorOfOne {
+		factor := currency.GetCurrencyFactor(cur)
+		assert.Equal(1.0, factor)
+	}
+}
