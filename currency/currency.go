@@ -148,7 +148,7 @@ func GetCurrencyFactor(currency string) (factor float64) {
 	return
 }
 
-// decimalPlaces returns the number of decimalPlaces after the decimal point
+// decimalPlaces returns the number of digits after the decimal point
 func decimalPlaces(currencyCode string) uint8 {
 	return uint8(math.Log10(GetCurrencyFactor(currencyCode)))
 }
