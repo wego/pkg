@@ -1,3 +1,4 @@
+// Package currency provides functions to convert & format currency amount.
 package currency
 
 import (
@@ -114,7 +115,8 @@ func IsISO4217(code string) bool {
 	return iso4217Currencies[strings.ToUpper(strings.TrimSpace(code))]
 }
 
-// Format formats a currency amount in given locale. Empty or invalid locale will be fallback to "en".
+// Format formats a currency amount for display purpose in given locale.
+// Empty or invalid locale will fallback to "en".
 func Format(amount float64, currencyCode string, locale string) (string, error) {
 	if locale == "" {
 		locale = "en"
@@ -126,8 +128,15 @@ func Format(amount float64, currencyCode string, locale string) (string, error) 
 	}
 	loc := currency.NewLocale(locale)
 	formatter := currency.NewFormatter(loc)
-	formatter.MaxDigits = uint8(math.Log10(GetCurrencyFactor(currencyCode)))
+	formatter.MaxDigits = decimalPlaces(currencyCode)
 	return formatter.Format(amt), nil
+}
+
+// FormatAmount formats a currency amount without the currency symbol & grouping separator
+func FormatAmount(amount float64, currencyCode string) string {
+	d := decimalPlaces(currencyCode)
+	f := fmt.Sprintf("%%.%df", d)
+	return fmt.Sprintf(f, amount)
 }
 
 // GetCurrencyFactor returns the currency factor
@@ -137,4 +146,9 @@ func GetCurrencyFactor(currency string) (factor float64) {
 		factor = defaultCurrencyFactor
 	}
 	return
+}
+
+// decimalPlaces returns the number of digits after the decimal point
+func decimalPlaces(currencyCode string) uint8 {
+	return uint8(math.Log10(GetCurrencyFactor(currencyCode)))
 }
