@@ -236,6 +236,55 @@ func Test_Format(t *testing.T) {
 	}
 }
 
+func Test_FormatAmount(t *testing.T) {
+	for n, tc := range map[string]struct {
+		currencyCode string
+		amount       float64
+		want         string
+	}{
+		"Invalid currency": {
+			currencyCode: "SG",
+			amount:       2048.172,
+			want:         "2048.17",
+		},
+		"SGD": {
+			currencyCode: "SGD",
+			amount:       252.2048,
+			want:         "252.20",
+		},
+		"USD round up": {
+			currencyCode: "USD",
+			amount:       2048.1758,
+			want:         "2048.18",
+		},
+		"BHD": {
+			currencyCode: "BHD",
+			amount:       2048.256432,
+			want:         "2048.256",
+		},
+		"KWD round up": {
+			currencyCode: "KWD",
+			amount:       267.251678,
+			want:         "267.252",
+		},
+		"JPY": {
+			currencyCode: "JPY",
+			amount:       272500.423,
+			want:         "272500",
+		},
+		"VND round up": {
+			currencyCode: "VND",
+			amount:       262500000.523,
+			want:         "262500001",
+		},
+	} {
+		t.Run(n, func(tt *testing.T) {
+			got := currency.FormatAmount(tc.amount, tc.currencyCode)
+			assert.Equal(tt, tc.want, got)
+		})
+	}
+}
+
 func Test_GetCurrencyFactor(t *testing.T) {
 	assert := assert.New(t)
 
