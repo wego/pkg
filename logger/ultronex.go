@@ -14,11 +14,10 @@ type UltronExMsg struct {
 
 // MarshalLogObject marshal UltronExMsg to zap log object
 // The struct need to implement this, so we can log it with zap.Object
-func (m UltronExMsg) MarshalLogObject(enc zapcore.ObjectEncoder) error {
-	title := "\n>" + m.Title + "\n"
-	payload := "```" + m.Payload + "```"
-
-	enc.AddString("channel", m.Channel)
-	enc.AddString("text", m.Text+title+payload)
+func (um UltronExMsg) MarshalLogObject(enc zapcore.ObjectEncoder) error {
+	enc.AddString("channel", um.Channel)
+	enc.AddString("text", um.Text)
+	enc.AddString("payload", um.Payload)
+	enc.AddString("title", um.Title)
 	return nil
 }
