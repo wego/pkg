@@ -35,7 +35,7 @@ func capture(ctx context.Context, err error, level sentry.Level) {
 
 func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 	errorCode := fmt.Sprint(Code(err))
-	scope.SetTag("error_code", errorCode)
+	scope.SetTag(SentryErrorCode, errorCode)
 	fingerprint := []string{errorCode, err.Error()}
 
 	e, ok := err.(*Error)
@@ -50,7 +50,7 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 
 		// extra is not searchable in sentry
 		ops := ops(e)
-		scope.SetExtra("operations", ops)
+		scope.SetExtra(SentryOperations, ops)
 		for _, o := range ops {
 			fingerprint = append(fingerprint, string(o))
 		}
@@ -60,8 +60,14 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 			scope.SetExtra(k, v)
 		}
 	}
-	scope.SetFingerprint(fingerprint)
 
+	reqID, ok := ctx.Value(SentryRequestID).(string)
+	if ok {
+		scope.SetTag(SentryRequestID, reqID)
+		fingerprint = append(fingerprint, reqID)
+	}
+
+	scope.SetFingerprint(fingerprint)
 }
 
 func getHub(ctx context.Context) (hub *sentry.Hub) {
