@@ -37,6 +37,13 @@ const (
 	NotImplemented  Kind = -3 // NotImplemented The requested action/resource is not implemented
 )
 
+// sentry keys
+const (
+	SentryErrorCode  = "error_code"
+	SentryOperations = "operations"
+	SentryRequestID  = "request_id"
+)
+
 var (
 	// ErrNotSupported the requested action/resource is not supported
 	ErrNotSupported = New(NotSupported, "not supported")
