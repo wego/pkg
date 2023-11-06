@@ -2,9 +2,10 @@ package logger
 
 import (
 	"encoding/json"
-	"github.com/wego/pkg/common"
 	"strings"
 	"time"
+
+	"github.com/wego/pkg/common"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -111,7 +112,11 @@ func (r *Request) fields() []zapcore.Field {
 func (h Headers) MarshalLogArray(enc zapcore.ArrayEncoder) error {
 	for k, v := range h {
 		if sensitive := sensitiveHeaders[strings.ToLower(k)]; sensitive {
-			v = defaultReplacement
+			if strings.ToLower(k) == sensitiveHeaderAuthorization {
+				v = maskAuthorizationHeader(v)
+			} else {
+				v = defaultReplacement
+			}
 		}
 		err := enc.AppendObject(header{
 			name:  k,
@@ -122,6 +127,18 @@ func (h Headers) MarshalLogArray(enc zapcore.ArrayEncoder) error {
 		}
 	}
 	return nil
+}
+
+func maskAuthorizationHeader(value string) string {
+	firstCharsToShow := 5
+	if strings.HasPrefix(value, authorizationBearer) {
+		firstCharsToShow = len(authorizationBearer) + firstCharsToShow
+	}
+
+	return getMaskedValue(defaultMaskChar, value, MaskData{
+		FirstCharsToShow: firstCharsToShow,
+		LastCharsToShow:  3,
+	})
 }
 
 // MarshalLogObject marshal header to zap log object

@@ -14,6 +14,7 @@ const (
 	ultronExFileName        = "ultronex.{{env}}.log"
 	partnerRequestsFileName = "partner_requests.{{env}}.log"
 	requestsFileName        = "requests.{{env}}.log"
+	authorizationBearer     = "Bearer "
 	defaultReplacement      = "[Filtered by Wego]"
 	defaultMaskChar         = "*"
 
@@ -23,12 +24,14 @@ const (
 
 	contextKeyRequest     contextKey = "request"
 	contextKeyRequestType contextKey = "requestType"
+
+	sensitiveHeaderAuthorization = "authorization"
 )
 
 var (
 	loggers          map[logType]*zap.Logger
 	sensitiveHeaders = map[string]bool{
-		"authorization":   true,
-		"x-forter-siteid": true,
+		sensitiveHeaderAuthorization: true,
+		"x-forter-siteid":            true,
 	}
 )
