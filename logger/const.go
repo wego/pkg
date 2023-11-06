@@ -14,7 +14,6 @@ const (
 	ultronExFileName        = "ultronex.{{env}}.log"
 	partnerRequestsFileName = "partner_requests.{{env}}.log"
 	requestsFileName        = "requests.{{env}}.log"
-	authorizationBearer     = "Bearer "
 	defaultReplacement      = "[Filtered by Wego]"
 	defaultMaskChar         = "*"
 
