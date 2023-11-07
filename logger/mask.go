@@ -26,6 +26,7 @@ type MaskData struct {
 	CharsToIgnore    []rune
 	XMLTag           string
 	JSONKeys         []string
+	UseMaskChar      bool
 }
 
 // MaskXML masks parts of the inner text of tags from the input XML with replacement
@@ -187,6 +188,10 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	repeatTimes := valueToReplaceLen - totalCharsToShow
 	if repeatTimes <= 0 {
 		return valueToReplace
+	}
+
+	if toMask.UseMaskChar {
+		return valueToReplace[:toMask.FirstCharsToShow] + maskChar + valueToReplace[lastIndexToShowStart:]
 	}
 
 	valToMask := valueToReplace[toMask.FirstCharsToShow:lastIndexToShowStart]

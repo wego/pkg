@@ -135,9 +135,10 @@ func maskAuthorizationHeader(value string) string {
 		firstCharsToShow = len(authType) + firstCharsToShow
 	}
 
-	return getMaskedValue(defaultMaskChar, value, MaskData{
+	return getMaskedValue("***", value, MaskData{
 		FirstCharsToShow: firstCharsToShow,
 		LastCharsToShow:  3,
+		UseMaskChar:      true,
 	})
 }
 
