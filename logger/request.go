@@ -140,9 +140,9 @@ func maskAuthorizationHeader(value string) string {
 
 	if authType, credentials, found := strings.Cut(value, " "); found {
 		return authType + " " + getMaskedValue(maskChar, credentials, maskData)
-	} else {
-		return getMaskedValue(maskChar, value, maskData)
 	}
+
+	return getMaskedValue(maskChar, value, maskData)
 }
 
 // MarshalLogObject marshal header to zap log object
