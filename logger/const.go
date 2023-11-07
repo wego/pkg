@@ -25,12 +25,13 @@ const (
 	contextKeyRequestType contextKey = "requestType"
 
 	sensitiveHeaderAuthorization = "authorization"
+	sensitiveHeaderXForterSiteID = "x-forter-siteid"
 )
 
 var (
 	loggers          map[logType]*zap.Logger
 	sensitiveHeaders = map[string]bool{
 		sensitiveHeaderAuthorization: true,
-		"x-forter-siteid":            true,
+		sensitiveHeaderXForterSiteID: true,
 	}
 )
