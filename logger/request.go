@@ -130,16 +130,19 @@ func (h Headers) MarshalLogArray(enc zapcore.ArrayEncoder) error {
 }
 
 func maskAuthorizationHeader(value string) string {
-	firstCharsToShow := 5
-	if authType, _, found := strings.Cut(value, " "); found {
-		firstCharsToShow = len(authType+" ") + firstCharsToShow
-	}
-
-	return getMaskedValue("***", value, MaskData{
-		FirstCharsToShow: firstCharsToShow,
+	maskChar := "***"
+	maskData := MaskData{
+		FirstCharsToShow: 2,
 		LastCharsToShow:  3,
 		UseMaskChar:      true,
-	})
+		prefixesToSkip:   []string{"pk_", "pk_test_", "sk_", "sk_test_"},
+	}
+
+	if authType, credentials, found := strings.Cut(value, " "); found {
+		return authType + " " + getMaskedValue(maskChar, credentials, maskData)
+	} else {
+		return getMaskedValue(maskChar, value, maskData)
+	}
 }
 
 // MarshalLogObject marshal header to zap log object

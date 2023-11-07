@@ -27,6 +27,7 @@ type MaskData struct {
 	XMLTag           string
 	JSONKeys         []string
 	UseMaskChar      bool
+	prefixesToSkip   []string
 }
 
 // MaskXML masks parts of the inner text of tags from the input XML with replacement
@@ -180,7 +181,14 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 		return valueToReplace
 	}
 
-	totalCharsToShow := toMask.FirstCharsToShow + toMask.LastCharsToShow
+	firstCharsToShow := toMask.FirstCharsToShow
+	for _, prefix := range toMask.prefixesToSkip {
+		if strings.HasPrefix(valueToReplace, prefix) {
+			firstCharsToShow = len(prefix) + toMask.FirstCharsToShow
+		}
+	}
+
+	totalCharsToShow := firstCharsToShow + toMask.LastCharsToShow
 	valueToReplaceLen := len(valueToReplace)
 	lastIndexToShowStart := valueToReplaceLen - toMask.LastCharsToShow
 
@@ -191,10 +199,10 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	}
 
 	if toMask.UseMaskChar {
-		return valueToReplace[:toMask.FirstCharsToShow] + maskChar + valueToReplace[lastIndexToShowStart:]
+		return valueToReplace[:firstCharsToShow] + maskChar + valueToReplace[lastIndexToShowStart:]
 	}
 
-	valToMask := valueToReplace[toMask.FirstCharsToShow:lastIndexToShowStart]
+	valToMask := valueToReplace[firstCharsToShow:lastIndexToShowStart]
 	var sb strings.Builder
 	for _, c := range valToMask {
 		// do not mask characters that should be ignored like '@'
@@ -206,7 +214,7 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	}
 
 	replacement := sb.String()
-	maskedVal := valueToReplace[:toMask.FirstCharsToShow] + replacement + valueToReplace[lastIndexToShowStart:]
+	maskedVal := valueToReplace[:firstCharsToShow] + replacement + valueToReplace[lastIndexToShowStart:]
 
 	return maskedVal
 }
