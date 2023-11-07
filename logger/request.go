@@ -132,7 +132,7 @@ func (h Headers) MarshalLogArray(enc zapcore.ArrayEncoder) error {
 func maskAuthorizationHeader(value string) string {
 	firstCharsToShow := 5
 	if authType, _, found := strings.Cut(value, " "); found {
-		firstCharsToShow = len(authType) + firstCharsToShow
+		firstCharsToShow = len(authType+" ") + firstCharsToShow
 	}
 
 	return getMaskedValue("***", value, MaskData{
