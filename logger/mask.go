@@ -26,7 +26,7 @@ type MaskData struct {
 	CharsToIgnore    []rune
 	XMLTag           string
 	JSONKeys         []string
-	UseMaskChar      bool
+	KeepSameLength   bool
 	prefixesToSkip   []string
 }
 
@@ -199,7 +199,7 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 		return valueToReplace
 	}
 
-	if toMask.UseMaskChar {
+	if !toMask.KeepSameLength {
 		return valueToReplace[:firstCharsToShow] + maskChar + valueToReplace[lastIndexToShowStart:]
 	}
 

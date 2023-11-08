@@ -134,7 +134,7 @@ func maskAuthorizationHeader(value string) string {
 	maskData := MaskData{
 		FirstCharsToShow: 2,
 		LastCharsToShow:  3,
-		UseMaskChar:      true,
+		KeepSameLength:   false,
 		prefixesToSkip:   []string{"pk_test_", "pk_", "sk_test_", "sk_"},
 	}
 
