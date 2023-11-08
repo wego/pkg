@@ -88,17 +88,20 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 //			JSONKey:         []string{"first"},
 //			FistCharsToShow: 3,
 //			LastCharsToShow: 6,
+//			KeepSameLength: true,
 //		},
 //		{
 //			JSONKey:         []string{"second", "second"},
 //			FistCharsToShow: 2,
 //			LastCharsToShow: 3,
 //			CharsToIgnore:   []rune{'@'},
+//			KeepSameLength: true,
 //		},
 //		{
 //			JSONKey:         []string{"second", "third", "first"},
 //			FistCharsToShow: 3,
 //			LastCharsToShow: 1,
+//			KeepSameLength: true,
 //		},
 //	}
 //	MaskJSON(input, "!", maskData) will return
