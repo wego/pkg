@@ -26,6 +26,8 @@ type MaskData struct {
 	CharsToIgnore    []rune
 	XMLTag           string
 	JSONKeys         []string
+	KeepSameLength   bool
+	prefixesToSkip   []string
 }
 
 // MaskXML masks parts of the inner text of tags from the input XML with replacement
@@ -86,17 +88,20 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 //			JSONKey:         []string{"first"},
 //			FistCharsToShow: 3,
 //			LastCharsToShow: 6,
+//			KeepSameLength: true,
 //		},
 //		{
 //			JSONKey:         []string{"second", "second"},
 //			FistCharsToShow: 2,
 //			LastCharsToShow: 3,
 //			CharsToIgnore:   []rune{'@'},
+//			KeepSameLength: true,
 //		},
 //		{
 //			JSONKey:         []string{"second", "third", "first"},
 //			FistCharsToShow: 3,
 //			LastCharsToShow: 1,
+//			KeepSameLength: true,
 //		},
 //	}
 //	MaskJSON(input, "!", maskData) will return
@@ -179,7 +184,15 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 		return valueToReplace
 	}
 
-	totalCharsToShow := toMask.FirstCharsToShow + toMask.LastCharsToShow
+	firstCharsToShow := toMask.FirstCharsToShow
+	for _, prefix := range toMask.prefixesToSkip {
+		if strings.HasPrefix(valueToReplace, prefix) {
+			firstCharsToShow = len(prefix) + toMask.FirstCharsToShow
+			break
+		}
+	}
+
+	totalCharsToShow := firstCharsToShow + toMask.LastCharsToShow
 	valueToReplaceLen := len(valueToReplace)
 	lastIndexToShowStart := valueToReplaceLen - toMask.LastCharsToShow
 
@@ -189,7 +202,11 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 		return valueToReplace
 	}
 
-	valToMask := valueToReplace[toMask.FirstCharsToShow:lastIndexToShowStart]
+	if !toMask.KeepSameLength {
+		return valueToReplace[:firstCharsToShow] + maskChar + valueToReplace[lastIndexToShowStart:]
+	}
+
+	valToMask := valueToReplace[firstCharsToShow:lastIndexToShowStart]
 	var sb strings.Builder
 	for _, c := range valToMask {
 		// do not mask characters that should be ignored like '@'
@@ -201,7 +218,7 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	}
 
 	replacement := sb.String()
-	maskedVal := valueToReplace[:toMask.FirstCharsToShow] + replacement + valueToReplace[lastIndexToShowStart:]
+	maskedVal := valueToReplace[:firstCharsToShow] + replacement + valueToReplace[lastIndexToShowStart:]
 
 	return maskedVal
 }
