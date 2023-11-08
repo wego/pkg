@@ -185,6 +185,7 @@ func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
 	for _, prefix := range toMask.prefixesToSkip {
 		if strings.HasPrefix(valueToReplace, prefix) {
 			firstCharsToShow = len(prefix) + toMask.FirstCharsToShow
+			break
 		}
 	}
 

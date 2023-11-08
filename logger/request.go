@@ -135,7 +135,7 @@ func maskAuthorizationHeader(value string) string {
 		FirstCharsToShow: 2,
 		LastCharsToShow:  3,
 		UseMaskChar:      true,
-		prefixesToSkip:   []string{"pk_", "pk_test_", "sk_", "sk_test_"},
+		prefixesToSkip:   []string{"pk_test_", "pk_", "sk_test_", "sk_"},
 	}
 
 	if authType, credentials, found := strings.Cut(value, " "); found {
