@@ -17,14 +17,16 @@ const (
 	grandchildErrMsg = "grandchild error message"
 )
 
+type testContextKey string
+
 func TestNew_NestedContext_ParentContext(t *testing.T) {
 	assert := assert.New(t)
 	ctx0 := context.Background()
 
-	ctx1 := context.WithValue(ctx0, "keyNotStored1", "valueNotStored1")
+	ctx1 := context.WithValue(ctx0, testContextKey("keyNotStored1"), "valueNotStored1")
 	ctx1 = common.SetBasics(ctx1, common.Basics{"key1": "value1"})
 
-	ctx2 := context.WithValue(ctx1, "keyNotStored2", "valueNotStored2")
+	ctx2 := context.WithValue(ctx1, testContextKey("keyNotStored2"), "valueNotStored2")
 	ctx2 = common.SetBasics(ctx2, common.Basics{"key1": "value1-replaced"})
 	ctx2 = common.SetExtras(ctx2, common.Extras{"key2": "value2"})
 
@@ -62,11 +64,11 @@ func TestNew_NestedContext_ChildsOwnContext(t *testing.T) {
 	assert := assert.New(t)
 
 	// Child setting their own `context.Background()`
-	ctx1 := context.WithValue(context.Background(), "keyNotStored1", "valueNotStored1")
+	ctx1 := context.WithValue(context.Background(), testContextKey("keyNotStored1"), "valueNotStored1")
 	ctx1 = common.SetBasics(ctx1, common.Basics{"key1": "value1"})
 
 	// Child setting their own `context.Background()`
-	ctx2 := context.WithValue(context.Background(), "keyNotStored2", "valueNotStored2")
+	ctx2 := context.WithValue(context.Background(), testContextKey("keyNotStored2"), "valueNotStored2")
 	ctx2 = common.SetBasics(ctx2, common.Basics{"key1": "value1-replaced"})
 	ctx2 = common.SetExtras(ctx2, common.Extras{"key2": "value2"})
 
