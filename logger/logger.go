@@ -80,19 +80,19 @@ func Init() error {
 
 	uLog, err := initLogger(ultronExFileName)
 	if err != nil {
-		return errors.New("cannot init UltronEx logger", err)
+		return errors.New(nil, "cannot init UltronEx logger", err)
 	}
 	loggers[logTypeUltronex] = uLog
 
 	prLog, err := initLogger(partnerRequestsFileName)
 	if err != nil {
-		return errors.New("cannot init partner request logger", err)
+		return errors.New(nil, "cannot init partner request logger", err)
 	}
 	loggers[logTypePartnerRequest] = prLog
 
 	rLog, err := initLogger(requestsFileName)
 	if err != nil {
-		return errors.New("cannot init request logger", err)
+		return errors.New(nil, "cannot init request logger", err)
 	}
 	loggers[logTypeRequest] = rLog
 	return nil

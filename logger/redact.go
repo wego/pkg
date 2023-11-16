@@ -15,7 +15,7 @@ func RedactXML(xml, replacement string, tags []string) string {
 	}
 	doc, err := xmlquery.Parse(strings.NewReader(xml))
 	if err != nil {
-		return errors.New("invalid XML input", err).Error()
+		return errors.New(nil, "invalid XML input", err).Error()
 	}
 	text := findTextMulti(doc, tags)
 	out := xml

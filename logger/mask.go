@@ -36,7 +36,7 @@ func MaskXML(xml, maskChar string, toMasks []MaskData) string {
 
 	doc, err := xmlquery.Parse(strings.NewReader(xml))
 	if err != nil {
-		return errors.New("invalid XML input", err).Error()
+		return errors.New(nil, "invalid XML input", err).Error()
 	}
 	out := findTagAndMaskMulti(doc, maskChar, toMasks)
 

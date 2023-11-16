@@ -133,7 +133,7 @@ func parseXMLToString(xmlFileName string) (string, error) {
 
 	doc, err := xmlquery.Parse(bytes.NewReader(file))
 	if err != nil {
-		return "", errors.New("invalid XML input", err)
+		return "", errors.New(nil, "invalid XML input", err)
 	}
 
 	return doc.OutputXML(true), nil
