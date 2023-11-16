@@ -1,9 +1,10 @@
 package snowflake
 
 import (
-	"github.com/wego/pkg/errors"
 	"sync"
 	"time"
+
+	"github.com/wego/pkg/errors"
 )
 
 // A Snowflake ID is composed of
@@ -117,18 +118,18 @@ func (g *Generator) setEpoch(epoch time.Time) (err error) {
 	epoch = epoch.UTC()
 
 	if epoch.IsZero() {
-		err = errors.New(op, "Epoch cannot be a zero value")
+		err = errors.New(nil, op, "Epoch cannot be a zero value")
 		return
 	}
 
 	if epoch.After(time.Now()) {
-		err = errors.New(op, "Epoch cannot be in the future")
+		err = errors.New(nil, op, "Epoch cannot be in the future")
 		return
 	}
 
 	// Because s must after now, so the `df` not < 0.
 	if since(epoch) > maxTimestamp {
-		err = errors.New(op, "The maximum life cycle of the snowflake algorithm is 179 years(2^39-10ms)")
+		err = errors.New(nil, op, "The maximum life cycle of the snowflake algorithm is 179 years(2^39-10ms)")
 		return
 	}
 	g.epochGuard.Do(func() {
@@ -141,7 +142,7 @@ func (g *Generator) setEpoch(epoch time.Time) (err error) {
 func (g *Generator) setSequenceGenerator(sequenceGenerator SequenceGenerator) (err error) {
 	const op errors.Op = "snowflakeGenerator.setSequenceGenerator"
 	if sequenceGenerator == nil {
-		err = errors.New(op, "SequenceGenerator cannot be nil")
+		err = errors.New(nil, op, "SequenceGenerator cannot be nil")
 		return
 	}
 	g.generatorGuard.Do(func() {
@@ -154,7 +155,7 @@ func (g *Generator) setSequenceGenerator(sequenceGenerator SequenceGenerator) (e
 func (g *Generator) setNodeIDProvider(nodeIDProvider NodeIDProvider) (err error) {
 	const op errors.Op = "snowflakeGenerator.setNodeIDProvider"
 	if nodeIDProvider == nil {
-		err = errors.New(op, "NodeIDProvider cannot be nil")
+		err = errors.New(nil, op, "NodeIDProvider cannot be nil")
 		return
 	}
 	g.nodeIDProviderGuard.Do(func() {
@@ -162,7 +163,7 @@ func (g *Generator) setNodeIDProvider(nodeIDProvider NodeIDProvider) (err error)
 		var nodeID uint16
 		nodeID, err = g.NodeIDProvider()
 		if err != nil {
-			err = errors.New(op, "error generating nodeID", err)
+			err = errors.New(nil, op, "error generating nodeID", err)
 			return
 		}
 		g.nodeID = nodeID
@@ -212,9 +213,9 @@ func (g *Generator) currentTimestamp() (current int64, err error) {
 	const op errors.Op = "snowflakeGenerator.currentTimestamp"
 	current = g.currentTimeSlot()
 	if current < 0 {
-		err = errors.New(op, "current time can not be negative, please make sure the epoch is not in the future")
+		err = errors.New(nil, op, "current time can not be negative, please make sure the epoch is not in the future")
 	} else if current > maxTimestamp {
-		err = errors.New(op, "timestamp exceeds max time(2^39-1 * 10ms), please check the epoch settings")
+		err = errors.New(nil, op, "timestamp exceeds max time(2^39-1 * 10ms), please check the epoch settings")
 	}
 	return
 }
