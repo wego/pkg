@@ -6,7 +6,7 @@ require (
 	github.com/stretchr/testify v1.8.3
 	github.com/wego/pkg/common v0.1.12
 	github.com/wego/pkg/errors v0.1.20-0.20231116081215-a6e785744345
-	github.com/wego/pkg/host v0.1.8
+	github.com/wego/pkg/host v0.1.11-0.20231116084345-80b5b7d6c11a
 )
 
 require (
