@@ -44,12 +44,12 @@ func Init(url, headerName string, refreshInterval time.Duration) error {
 // Make sure you call Init before can use this.
 func GetJWTToken(req *http.Request) (jwt.Token, error) {
 	if jwkCache == nil || jwksURL == "" || jwtHeader == "" {
-		return nil, errors.New(errors.Unauthorized, "jwk cache has not been initialized")
+		return nil, errors.New(nil, errors.Unauthorized, "jwk cache has not been initialized")
 	}
 
 	authHeader := req.Header.Get(jwtHeader)
 	if !strings.HasPrefix(authHeader, header.BearerPrefix) {
-		return nil, errors.New(errors.Unauthorized, fmt.Sprintf("invalid %s header", jwtHeader))
+		return nil, errors.New(nil, errors.Unauthorized, fmt.Sprintf("invalid %s header", jwtHeader))
 	}
 
 	token, err := jwt.Parse(
@@ -57,7 +57,7 @@ func GetJWTToken(req *http.Request) (jwt.Token, error) {
 		jwt.WithKeySet(jwk.NewCachedSet(jwkCache, jwksURL)),
 	)
 	if err != nil {
-		return nil, errors.New(errors.Unauthorized, fmt.Sprintf("invalid jwt token: %s", err))
+		return nil, errors.New(nil, errors.Unauthorized, fmt.Sprintf("invalid jwt token: %s", err))
 	}
 
 	return token, err
