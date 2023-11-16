@@ -1,8 +1,9 @@
 package host
 
 import (
-	"github.com/wego/pkg/errors"
 	"net"
+
+	"github.com/wego/pkg/errors"
 )
 
 // PrivateIPv4 get current host private IP v4 address
@@ -24,7 +25,7 @@ func PrivateIPv4() (net.IP, error) {
 			return ip.To4(), nil
 		}
 	}
-	return nil, errors.New(op, "no private ip address")
+	return nil, errors.New(nil, op, "no private ip address")
 }
 
 // isPrivateIPv4 check if an ip address private
