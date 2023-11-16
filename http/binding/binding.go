@@ -41,7 +41,7 @@ func BindQuery(c *gin.Context, ctxKey string, request interface{}) (err error) {
 
 	// try to bind from request & set to context if ok
 	if err = c.ShouldBindQuery(request); err != nil {
-		err = errors.New(errors.BadRequest, err)
+		err = errors.New(nil, errors.BadRequest, err)
 		return
 	}
 	c.Set(ctxKey, request)
@@ -57,7 +57,7 @@ func BindChangeRequest(c *gin.Context, ctxKey string, request audit.IChangeReque
 
 	// try to bind from request & set to context if ok
 	if err = c.ShouldBindJSON(request); err != nil {
-		err = errors.New(errors.BadRequest, err)
+		err = errors.New(nil, errors.BadRequest, err)
 		return
 	}
 	var id uint
@@ -75,7 +75,7 @@ func BindURIUint(c *gin.Context, uri string) (val uint, err error) {
 	var uintVal uint64
 	uintVal, err = strconv.ParseUint(uintParam, 10, 64)
 	if err != nil || uintVal == 0 {
-		err = errors.New(errors.BadRequest, fmt.Sprintf("invalid %s [%s]", uri, uintParam))
+		err = errors.New(nil, errors.BadRequest, fmt.Sprintf("invalid %s [%s]", uri, uintParam))
 		return
 	}
 	val = uint(uintVal)
@@ -94,7 +94,7 @@ func BindURI(c *gin.Context, ctxKey string, request interface{}) (err error) {
 		return nil
 	}
 	if err = c.ShouldBindUri(request); err != nil {
-		return errors.New(errors.BadRequest, err)
+		return errors.New(nil, errors.BadRequest, err)
 	}
 	c.Set(ctxKey, request)
 	return
@@ -115,7 +115,7 @@ func fromContext(c *gin.Context, ctxKey string, value interface{}) bool {
 // bindJSON tries to bind JSON object from request body & set to context if ok
 func bindJSON(c *gin.Context, ctxKey string, request interface{}) (err error) {
 	if err = c.ShouldBindJSON(request); err != nil {
-		return errors.New(errors.BadRequest, err)
+		return errors.New(nil, errors.BadRequest, err)
 	}
 	c.Set(ctxKey, request)
 	return
