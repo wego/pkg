@@ -12,14 +12,15 @@ import (
 // Uint2String converts a number to a string using characters from chars.
 //
 // Validation:
-//  - `length` must > 0
-//  - length of `chars` must >= 10
-//  - `paddingChars` must not be empty
-//  - `chars` & `paddingChars` must not overlap
+//   - `length` must > 0
+//   - length of `chars` must >= 10
+//   - `paddingChars` must not be empty
+//   - `chars` & `paddingChars` must not overlap
+//
 // If length of the result < required length, the result will be left padded with random characters from `paddingChars`.
 func Uint2String(number uint64, chars, paddingChars string, length int) (s string, err error) {
 	if length < 1 {
-		return s, errors.New("invalid input: length <= 0")
+		return s, errors.New(nil, "invalid input: length <= 0")
 	}
 	err = verifyInputChars(chars, paddingChars)
 	if err != nil {
@@ -47,9 +48,10 @@ func Uint2String(number uint64, chars, paddingChars string, length int) (s strin
 }
 
 // String2Uint is the revert of Uint2String
-//  It returns negative result in 2 cases:
-//  - s contains character not exist in chars
-//  - the result is bigger than max int64 (integer overflow happen)
+//
+//	It returns negative result in 2 cases:
+//	- s contains character not exist in chars
+//	- the result is bigger than max int64 (integer overflow happen)
 func String2Uint(s string, chars, paddingChars string) (n uint64, err error) {
 	err = verifyInputChars(chars, paddingChars)
 	if err != nil {
@@ -81,7 +83,7 @@ func IDToRef(id uint, prefix string, length int, refChars, refPaddingChars strin
 	ref, err := Uint2String(
 		uint64(id), refChars, refPaddingChars, length-len(prefix))
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("error generating ref for id [%d] with prefix [%s] and length [%d]", id, prefix, length), err)
+		return "", errors.New(nil, fmt.Sprintf("error generating ref for id [%d] with prefix [%s] and length [%d]", id, prefix, length), err)
 	}
 	return prefix + ref, nil
 }
@@ -92,7 +94,7 @@ func RefToID(ref, prefix string, refChars, refPaddingChars string) (uint64, erro
 
 	n, err := String2Uint(ref, refChars, refPaddingChars)
 	if err != nil {
-		return uint64(0), errors.New(fmt.Sprintf("can not convert ref [%s] with prefix [%s] back to id", ref, prefix), err)
+		return uint64(0), errors.New(nil, fmt.Sprintf("can not convert ref [%s] with prefix [%s] back to id", ref, prefix), err)
 	}
 	return n, nil
 }
@@ -103,7 +105,7 @@ func verifyInputChars(chars, paddingChars string) error {
 	}
 
 	if paddingChars == "" {
-		return errors.New("invalid input: empty paddingChars")
+		return errors.New(nil, "invalid input: empty paddingChars")
 	}
 
 	for _, c := range chars {
