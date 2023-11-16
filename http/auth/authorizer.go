@@ -31,7 +31,7 @@ func NewAuthorizer(conf string, db *gorm.DB, userHandler func(r *http.Request) (
 	adapter := newAdapter(db)
 	e, err := casbin.NewEnforcer(conf, adapter)
 	if err != nil {
-		return nil, errors.New("can not create a Casbin Enforcer", err)
+		return nil, errors.New(nil, "can not create a Casbin Enforcer", err)
 	}
 
 	return &Authorizer{
@@ -71,7 +71,7 @@ func (a *Authorizer) checkPermission(r *http.Request) error {
 	}
 
 	if !allowed {
-		return errors.New(errors.Forbidden, fmt.Sprintf("user %s is not allow to %s on %s", user, mappingAction(method), path))
+		return errors.New(nil, errors.Forbidden, fmt.Sprintf("user %s is not allow to %s on %s", user, mappingAction(method), path))
 	}
 
 	return nil
