@@ -8,9 +8,10 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"github.com/wego/pkg/errors"
 	"math/big"
 	"os"
+
+	"github.com/wego/pkg/errors"
 )
 
 // PrivateKey ...
@@ -43,7 +44,7 @@ func PrivateKeyFromBytes(b []byte, curve elliptic.Curve) *PrivateKey {
 func PrivateKeyFromBase64(base64Key string, curve elliptic.Curve) (*PrivateKey, error) {
 	b, e := base64.StdEncoding.DecodeString(base64Key)
 	if e != nil {
-		return nil, errors.New("error decoding base64Key", e)
+		return nil, errors.New(nil, "error decoding base64Key", e)
 	}
 
 	return PrivateKeyFromBytes(b, curve), nil
@@ -53,7 +54,7 @@ func PrivateKeyFromBase64(base64Key string, curve elliptic.Curve) (*PrivateKey, 
 func PrivateKeyFromHex(hexKey string, curve elliptic.Curve) (*PrivateKey, error) {
 	b, e := hex.DecodeString(hexKey)
 	if e != nil {
-		return nil, errors.New("error decoding hexKey", e)
+		return nil, errors.New(nil, "error decoding hexKey", e)
 	}
 
 	return PrivateKeyFromBytes(b, curve), nil
@@ -63,12 +64,12 @@ func PrivateKeyFromHex(hexKey string, curve elliptic.Curve) (*PrivateKey, error)
 func PrivateKeyFromPEMBytes(bytes []byte) (*PrivateKey, error) {
 	block, _ := pem.Decode(bytes)
 	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
+		return nil, errors.New(nil, "failed to parse PEM block containing the key")
 	}
 
 	priv, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to parse DER encoded private key: %s", hex.EncodeToString(bytes)), err)
+		return nil, errors.New(nil, fmt.Sprintf("failed to parse DER encoded private key: %s", hex.EncodeToString(bytes)), err)
 	}
 
 	return &PrivateKey{
@@ -92,7 +93,7 @@ func PrivateKeyFromPEMString(str string) (*PrivateKey, error) {
 func PrivateKeyFromPEMFile(file string) (*PrivateKey, error) {
 	bytes, err := os.ReadFile(file)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to read pem file: %s", file), err)
+		return nil, errors.New(nil, fmt.Sprintf("failed to read pem file: %s", file), err)
 	}
 
 	return PrivateKeyFromPEMBytes(bytes)

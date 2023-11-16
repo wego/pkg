@@ -44,7 +44,7 @@ func defaultKDF(secret []byte) ([]byte, error) {
 	key := make([]byte, aes.KeyLength)
 	kdf := hkdf.New(sha256.New, secret, nil, nil)
 	if _, err := io.ReadFull(kdf, key); err != nil {
-		return nil, errors.New("cannot read secret from HKDF reader", err)
+		return nil, errors.New(nil, "cannot read secret from HKDF reader", err)
 	}
 
 	return key, nil

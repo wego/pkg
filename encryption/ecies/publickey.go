@@ -48,7 +48,7 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 func PublicKeyFromBase64(base64Key string, curve elliptic.Curve) (*PublicKey, error) {
 	b, e := base64.StdEncoding.DecodeString(base64Key)
 	if e != nil {
-		return nil, errors.New("error decoding base64Key: %w", e)
+		return nil, errors.New(nil, "error decoding base64Key: %w", e)
 	}
 
 	return PublicKeyFromBytes(b, curve)
@@ -58,7 +58,7 @@ func PublicKeyFromBase64(base64Key string, curve elliptic.Curve) (*PublicKey, er
 func PublicKeyFromHex(hexKey string, curve elliptic.Curve) (*PublicKey, error) {
 	b, e := hex.DecodeString(hexKey)
 	if e != nil {
-		return nil, errors.New("error decoding hexKey: %w", e)
+		return nil, errors.New(nil, "error decoding hexKey: %w", e)
 	}
 
 	return PublicKeyFromBytes(b, curve)
@@ -83,12 +83,12 @@ func PublicKeyFromPEMString(pemString string) (*PublicKey, error) {
 func PublicKeyFromPEMBytes(bytes []byte) (*PublicKey, error) {
 	block, _ := pem.Decode(bytes)
 	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
+		return nil, errors.New(nil, "failed to parse PEM block containing the key")
 	}
 
 	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to parse DER encoded public key: %s", hex.EncodeToString(bytes)), err)
+		return nil, errors.New(nil, fmt.Sprintf("failed to parse DER encoded public key: %s", hex.EncodeToString(bytes)), err)
 	}
 
 	switch pub.(type) {
@@ -101,7 +101,7 @@ func PublicKeyFromPEMBytes(bytes []byte) (*PublicKey, error) {
 			},
 		}, nil
 	default:
-		return nil, errors.New(fmt.Sprintf("not a EC public key: %T", pub))
+		return nil, errors.New(nil, fmt.Sprintf("not a EC public key: %T", pub))
 	}
 }
 

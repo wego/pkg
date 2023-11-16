@@ -65,7 +65,7 @@ func EncryptStringToHex(plaintext string, pub *PublicKey, ecdh ECDH, kdf KDF) (s
 func DecryptBase64(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
-		return nil, errors.New(encryption.MsgInvalidBase64String, err)
+		return nil, errors.New(nil, encryption.MsgInvalidBase64String, err)
 	}
 
 	return Decrypt(data, priv, ecdh, kdf)
@@ -85,7 +85,7 @@ func DecryptBase64String(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF
 func DecryptHex(ciphertext string, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte, error) {
 	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return nil, errors.New(encryption.MsgInvalidHexString, err)
+		return nil, errors.New(nil, encryption.MsgInvalidHexString, err)
 	}
 
 	return Decrypt(data, priv, ecdh, kdf)
@@ -149,7 +149,7 @@ func Decrypt(data []byte, priv *PrivateKey, ecdh ECDH, kdf KDF) ([]byte, error) 
 	// check if the ciphertext is long enough
 	pubKeySize := publicKeySize(keySize(priv.Pub.curve))
 	if len(data) <= pubKeySize {
-		return nil, errors.New(encryption.MsgCiphertextTooShort)
+		return nil, errors.New(nil, encryption.MsgCiphertextTooShort)
 	}
 
 	// parse the public key

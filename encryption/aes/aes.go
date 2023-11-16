@@ -40,7 +40,7 @@ func EncryptStringToHex(plaintext, key string) (string, error) {
 func DecryptHex(ciphertext, key string) ([]byte, error) {
 	data, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return nil, errors.New(encryption.MsgInvalidHexString, err)
+		return nil, errors.New(nil, encryption.MsgInvalidHexString, err)
 	}
 
 	return Decrypt(data, []byte(key))
@@ -75,7 +75,7 @@ func EncryptStringToBase64(plaintext, key string) (string, error) {
 func DecryptBase64(ciphertext, key string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
-		return nil, errors.New(encryption.MsgInvalidBase64String, err)
+		return nil, errors.New(nil, encryption.MsgInvalidBase64String, err)
 	}
 
 	return Decrypt(data, []byte(key))
@@ -133,7 +133,7 @@ func Decrypt(data, key []byte) ([]byte, error) {
 	}
 
 	if len(data) < gcm.NonceSize() {
-		return nil, errors.New(encryption.MsgCiphertextTooShort)
+		return nil, errors.New(nil, encryption.MsgCiphertextTooShort)
 	}
 
 	return gcm.Open(nil,
