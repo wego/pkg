@@ -2,13 +2,14 @@ package rand
 
 import (
 	"fmt"
-	"github.com/wego/pkg/errors"
 	"math"
 	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
+
+	"github.com/wego/pkg/errors"
 )
 
 // options to generate random string
@@ -178,7 +179,7 @@ func StringWithOption(randomLength, option int, prefix, suffix string) string {
 func CheckOption(option, length, numbers int) error {
 	seedLength, ok := optionMappingLen[option]
 	if !ok {
-		return errors.New(errors.Unprocessable, fmt.Sprintf("invalid option: %d", option))
+		return errors.New(nil, errors.Unprocessable, fmt.Sprintf("invalid option: %d", option))
 	}
 
 	// calculate the minimum length of the random string based on the code and option we choose
@@ -194,7 +195,7 @@ func CheckOption(option, length, numbers int) error {
 		min = 1
 	}
 	if length < min {
-		return errors.New(errors.Unprocessable,
+		return errors.New(nil, errors.Unprocessable,
 			fmt.Sprintf("can not generate %v %v codes with length %v, minimal length should be %v",
 				numbers, optionNamesMapping[option], length, min))
 
