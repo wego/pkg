@@ -1,11 +1,12 @@
 package collection_test
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/wego/pkg/collection"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/wego/pkg/collection"
 )
 
 func Test_Dedup(t *testing.T) {
@@ -663,6 +664,84 @@ func Test_Contains(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			assertions := assert.New(t)
 			assertions.True(collection.Equals(test.vals, collection.Values(test.m)))
+		})
+	}
+}
+
+func TestCopy(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		dst      map[string]any
+		src      map[string]any
+		expected map[string]any
+	}{
+		{
+			name: "maps with different keys",
+			dst: map[string]any{
+				"a": "a",
+			},
+			src: map[string]any{
+				"b": "b",
+			},
+			expected: map[string]any{
+				"a": "a",
+				"b": "b",
+			},
+		},
+		{
+			name: "maps with same keys",
+			dst: map[string]any{
+				"a": "a",
+			},
+			src: map[string]any{
+				"a": "b",
+			},
+			expected: map[string]any{
+				"a": "b",
+			},
+		},
+		{
+			name: "dst map with no keys",
+			dst:  map[string]any{},
+			src: map[string]any{
+				"a": "a",
+			},
+			expected: map[string]any{
+				"a": "a",
+			},
+		},
+		{
+			name: "src map with no keys",
+			dst: map[string]any{
+				"a": "a",
+			},
+			src: map[string]any{},
+			expected: map[string]any{
+				"a": "a",
+			},
+		},
+		{
+			name: "nil dst map",
+			dst:  nil,
+			src: map[string]any{
+				"a": "a",
+			},
+			expected: nil,
+		},
+		{
+			name: "nil src map",
+			dst: map[string]any{
+				"a": "a",
+			},
+			src: nil,
+			expected: map[string]any{
+				"a": "a",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			collection.Copy(test.dst, test.src)
+			assert.Equal(t, test.expected, test.dst)
 		})
 	}
 }
