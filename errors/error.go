@@ -2,11 +2,11 @@ package errors
 
 import (
 	"context"
-	"maps"
 	"net/http"
 
 	goErrors "errors"
 
+	"github.com/wego/pkg/collection"
 	"github.com/wego/pkg/common"
 	"gorm.io/gorm"
 )
@@ -168,7 +168,7 @@ func (e *Error) propagateContexts() {
 			basics = common.Basics{}
 		}
 
-		maps.Copy(basics, subBasics)
+		collection.Copy(basics, subBasics)
 		e.ctx[ctxBasics] = basics
 	}
 
@@ -179,7 +179,7 @@ func (e *Error) propagateContexts() {
 			extras = common.Extras{}
 		}
 
-		maps.Copy(extras, subExtras)
+		collection.Copy(extras, subExtras)
 		e.ctx[ctxExtras] = extras
 	}
 
