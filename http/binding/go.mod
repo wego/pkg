@@ -7,7 +7,7 @@ require (
 	github.com/stretchr/testify v1.8.3
 	github.com/wego/pkg/audit v0.1.2
 	github.com/wego/pkg/common v0.1.13
-	github.com/wego/pkg/errors v0.1.20-0.20231116081215-a6e785744345
+	github.com/wego/pkg/errors v0.2.0
 )
 
 require (
@@ -44,6 +44,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.9 // indirect
+	github.com/wego/pkg/collection v0.1.10 // indirect
 	github.com/wego/pkg/env v0.1.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.9.0 // indirect

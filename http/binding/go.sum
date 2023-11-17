@@ -226,12 +226,14 @@ github.com/ugorji/go/codec v1.2.9 h1:rmenucSohSTiyL09Y+l2OCk+FrMxGMzho2+tjr5ticU
 github.com/ugorji/go/codec v1.2.9/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
 github.com/wego/pkg/audit v0.1.2 h1:V/HoFkh9kLjJgInjii73pmjS2FSOyy7dr02l/35eaps=
 github.com/wego/pkg/audit v0.1.2/go.mod h1:qusZW/4CdMrlPJP8GjjzQmyFu3XKMDDEuPA8Pc0Ecm0=
+github.com/wego/pkg/collection v0.1.10 h1:DNhxePXdvHUKzI5lG3TLYBEyDsimEMZCXil8V3+Cwss=
+github.com/wego/pkg/collection v0.1.10/go.mod h1:hdWZoMhAO2auAXU0Bxzb27ABKtFXat1KSPcG/fhAMsE=
 github.com/wego/pkg/common v0.1.13 h1:qM2fR6yWMd4ETq//ZldKlGyKiqe7VJ0X5y9cNoCnrwY=
 github.com/wego/pkg/common v0.1.13/go.mod h1:nbYCetESXxrdHVJDQOBq3OJryixDSM5BzBhq3VCt5h4=
 github.com/wego/pkg/env v0.1.0 h1:4sQnBbHOu4JhHwewQslp2mzx8j0vMRdC+J/V+k/t/Dg=
 github.com/wego/pkg/env v0.1.0/go.mod h1:qYMTfxmctEhnfJF3VHjGGkFKyIlIW6AzOTUARx2yfXE=
-github.com/wego/pkg/errors v0.1.20-0.20231116081215-a6e785744345 h1:cwoCulzuhRRF6FNGofvc8lyxmUkpL6JbT55aPL0g108=
-github.com/wego/pkg/errors v0.1.20-0.20231116081215-a6e785744345/go.mod h1:CW9sWAvkdmvx2+XWk9pKOAwD8R0lPfVBgFFiBJIEzjI=
+github.com/wego/pkg/errors v0.2.0 h1:oNxfP/XfwwBH7JmMaVTDRcuT3aVA4asBIfTMYQ2ddzI=
+github.com/wego/pkg/errors v0.2.0/go.mod h1:/phveTcytZ2V6QnNR172e6MZ3Pvgizb0mYX5zwESv0w=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

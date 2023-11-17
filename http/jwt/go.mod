@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/lestrrat-go/jwx/v2 v2.0.8
-	github.com/wego/pkg/errors v0.1.20-0.20231116081215-a6e785744345
+	github.com/wego/pkg/errors v0.2.0
 	github.com/wego/pkg/http/header v0.1.1
 )
 
@@ -36,6 +36,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.16.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
+	github.com/wego/pkg/collection v0.1.10 // indirect
 	github.com/wego/pkg/common v0.1.12 // indirect
 	github.com/wego/pkg/env v0.1.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect

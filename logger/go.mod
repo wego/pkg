@@ -7,9 +7,9 @@ require (
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/valyala/fastjson v1.6.4
-	github.com/wego/pkg/collection v0.1.9
+	github.com/wego/pkg/collection v0.1.10
 	github.com/wego/pkg/common v0.1.16
-	github.com/wego/pkg/errors v0.1.20-0.20231116081215-a6e785744345
+	github.com/wego/pkg/errors v0.2.0
 	go.uber.org/zap v1.26.0
 )
 

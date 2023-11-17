@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/casbin/casbin/v2 v2.47.2
 	github.com/gin-gonic/gin v1.9.0
-	github.com/wego/pkg/errors v0.1.20-0.20231116081215-a6e785744345
+	github.com/wego/pkg/errors v0.2.0
 	gorm.io/gorm v1.25.1
 )
 
@@ -42,6 +42,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.9 // indirect
+	github.com/wego/pkg/collection v0.1.10 // indirect
 	github.com/wego/pkg/common v0.1.12 // indirect
 	github.com/wego/pkg/env v0.1.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
