@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/wego/pkg/common"
 	"github.com/wego/pkg/env"
 )
 
@@ -40,8 +39,7 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 
 	e, ok := err.(*Error)
 	if ok {
-		basics := common.GetBasics(ctx)
-		for key, value := range basics {
+		for key, value := range e.basics() {
 			if tag, err := json.Marshal(value); err == nil {
 				scope.SetTag(key, string(tag))
 				fingerprint = append(fingerprint, key)
@@ -55,8 +53,7 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 			fingerprint = append(fingerprint, string(o))
 		}
 
-		extras := common.GetExtras(ctx)
-		for k, v := range extras {
+		for k, v := range e.extras() {
 			scope.SetExtra(k, v)
 		}
 	}

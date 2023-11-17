@@ -178,3 +178,13 @@ func Values[M ~map[K]V, K comparable, V any](m M) []V {
 	}
 	return vs
 }
+
+// Copy copies the key-value pairs. When key is already in the dst map, it will be overwritten.
+func Copy[M ~map[K]V, K comparable, V any](dst M, src M) {
+	if dst == nil || src == nil {
+		return
+	}
+	for k, v := range src {
+		dst[k] = v
+	}
+}
