@@ -1,10 +1,13 @@
 package errors
 
 import (
+	"context"
 	"net/http"
 
 	goErrors "errors"
 
+	"github.com/wego/pkg/collection"
+	"github.com/wego/pkg/common"
 	"gorm.io/gorm"
 )
 
@@ -20,6 +23,7 @@ type Error struct {
 	Kind Kind
 	Err  error
 	msg  string
+	ctx  map[string]any
 }
 
 // error kinds
@@ -37,6 +41,11 @@ const (
 	NotImplemented  Kind = -3 // NotImplemented The requested action/resource is not implemented
 )
 
+const (
+	ctxBasics = "basics"
+	ctxExtras = "extras"
+)
+
 // sentry keys
 const (
 	SentryErrorCode  = "error_code"
@@ -46,14 +55,27 @@ const (
 
 var (
 	// ErrNotSupported the requested action/resource is not supported
-	ErrNotSupported = New(NotSupported, "not supported")
+	ErrNotSupported = New(nil, NotSupported, "not supported")
 	// ErrNotImplemented the requested action/resource is not implemented
-	ErrNotImplemented = New(NotImplemented, "not implemented")
+	ErrNotImplemented = New(nil, NotImplemented, "not implemented")
 )
 
 // New construct a new error, default having kind Unexpected
-func New(args ...interface{}) error {
-	e := &Error{}
+func New(ctx context.Context, args ...interface{}) error {
+	e := &Error{
+		ctx: map[string]any{},
+	}
+
+	basics := common.GetBasics(ctx)
+	if basics != nil {
+		e.ctx[ctxBasics] = basics
+	}
+
+	extras := common.GetExtras(ctx)
+	if extras != nil {
+		e.ctx[ctxExtras] = extras
+	}
+
 	for _, arg := range args {
 		switch arg := arg.(type) {
 		case int:
@@ -64,6 +86,7 @@ func New(args ...interface{}) error {
 			e.Kind = arg
 		case error:
 			e.Err = arg
+			e.propagateContexts()
 		case string:
 			e.msg = arg
 		}
@@ -120,12 +143,55 @@ func ops(e *Error) []Op {
 // WrapGORMError wraps an GORM error into our error such as adding errors.Kind
 func WrapGORMError(op Op, err error) error {
 	if goErrors.Is(err, gorm.ErrRecordNotFound) {
-		return New(op, NotFound, err)
+		return New(nil, op, NotFound, err)
 	}
 
 	if goErrors.Is(err, gorm.ErrDuplicatedKey) {
-		return New(op, Conflict, err)
+		return New(nil, op, Conflict, err)
 	}
 
-	return New(op, err)
+	return New(nil, op, err)
+}
+
+// propagateContexts combines the "basics" and "extras" contexts from the child error into the parent, so that the
+// key-values propagate upwards to the top level error.
+func (e *Error) propagateContexts() {
+	subErr, ok := e.Err.(*Error)
+	if !ok {
+		return
+	}
+
+	subBasics, _ := subErr.ctx[ctxBasics].(common.Basics)
+	if subBasics != nil {
+		basics, basicsOK := e.ctx[ctxBasics].(common.Basics)
+		if !basicsOK {
+			basics = common.Basics{}
+		}
+
+		collection.Copy(basics, subBasics)
+		e.ctx[ctxBasics] = basics
+	}
+
+	subExtras, _ := subErr.ctx[ctxExtras].(common.Extras)
+	if subExtras != nil {
+		extras, extrasOK := e.ctx[ctxExtras].(common.Extras)
+		if !extrasOK {
+			extras = common.Extras{}
+		}
+
+		collection.Copy(extras, subExtras)
+		e.ctx[ctxExtras] = extras
+	}
+
+	subErr.ctx = nil
+}
+
+func (e *Error) basics() common.Basics {
+	basics, _ := e.ctx[ctxBasics].(common.Basics)
+	return basics
+}
+
+func (e *Error) extras() common.Extras {
+	extras, _ := e.ctx[ctxExtras].(common.Extras)
+	return extras
 }
