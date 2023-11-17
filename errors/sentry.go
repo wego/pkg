@@ -39,7 +39,7 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 
 	e, ok := err.(*Error)
 	if ok {
-		for key, value := range e.getBasics() {
+		for key, value := range e.basics() {
 			if tag, err := json.Marshal(value); err == nil {
 				scope.SetTag(key, string(tag))
 				fingerprint = append(fingerprint, key)
@@ -53,7 +53,7 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 			fingerprint = append(fingerprint, string(o))
 		}
 
-		for k, v := range e.getExtras() {
+		for k, v := range e.extras() {
 			scope.SetExtra(k, v)
 		}
 	}

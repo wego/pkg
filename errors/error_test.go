@@ -129,7 +129,7 @@ func TestNew_NestedContext_NilChildContext(t *testing.T) {
 	assert.Equal(wantErr, gotErr)
 }
 
-func Test_getBasics(t *testing.T) {
+func Test_basics(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
 
@@ -147,10 +147,10 @@ func Test_getBasics(t *testing.T) {
 		"key1": "value1",
 		"key2": "value2",
 	}
-	assert.Equal(wantBasics, e.getBasics())
+	assert.Equal(wantBasics, e.basics())
 }
 
-func Test_getExtras(t *testing.T) {
+func Test_extras(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
 
@@ -168,5 +168,5 @@ func Test_getExtras(t *testing.T) {
 		"key2": "value2",
 		"key3": "value3",
 	}
-	assert.Equal(wantExtras, e.getExtras())
+	assert.Equal(wantExtras, e.extras())
 }

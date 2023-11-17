@@ -186,12 +186,12 @@ func (e *Error) propagateContexts() {
 	subErr.ctx = nil
 }
 
-func (e *Error) getBasics() common.Basics {
+func (e *Error) basics() common.Basics {
 	basics, _ := e.ctx[ctxBasics].(common.Basics)
 	return basics
 }
 
-func (e *Error) getExtras() common.Extras {
+func (e *Error) extras() common.Extras {
 	extras, _ := e.ctx[ctxExtras].(common.Extras)
 	return extras
 }
