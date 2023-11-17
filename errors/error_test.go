@@ -102,6 +102,33 @@ func TestNew_NestedContext_ChildsOwnContext(t *testing.T) {
 	assert.Equal(wantErr, gotErr)
 }
 
+func TestNew_NestedContext_NilChildContext(t *testing.T) {
+	assert := assert.New(t)
+
+	ctx0 := context.Background()
+	ctx0 = common.SetBasics(ctx0, common.Basics{"key1": "value1"})
+
+	childErr1 := New(nil, Op(childOp), BadRequest, childErrMsg)
+	gotErr := New(ctx0, Op(parentOp), parentErrMsg, childErr1)
+
+	wantErr := &Error{
+		Op:  parentOp,
+		msg: parentErrMsg,
+		Err: &Error{
+			Op:   childOp,
+			Kind: BadRequest,
+			msg:  childErrMsg,
+		},
+		ctx: map[string]any{
+			"basics": common.Basics{
+				"key1": "value1",
+			},
+		},
+	}
+
+	assert.Equal(wantErr, gotErr)
+}
+
 func Test_getBasics(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
