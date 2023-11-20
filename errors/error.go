@@ -92,16 +92,14 @@ func (e *Error) WithContext(ctx context.Context) *Error {
 
 	basics := common.GetBasics(ctx)
 	if basics != nil {
-		currentBasics, _ := e.ctx[ctxBasics].(common.Basics)
-		collection.Copy(basics, currentBasics)
-		e.ctx[ctxBasics] = basics
+		collection.Copy(basics, e.basics())
+		e.setBasics(basics)
 	}
 
 	extras := common.GetExtras(ctx)
 	if extras != nil {
-		currentExtras, _ := e.ctx[ctxExtras].(common.Extras)
-		collection.Copy(extras, currentExtras)
-		e.ctx[ctxExtras] = extras
+		collection.Copy(extras, e.extras())
+		e.setExtras(extras)
 	}
 
 	return e
@@ -174,31 +172,31 @@ func (e *Error) propagateContexts() {
 		return
 	}
 
-	subBasics, _ := subErr.ctx[ctxBasics].(common.Basics)
-	subExtras, _ := subErr.ctx[ctxExtras].(common.Extras)
+	subBasics := subErr.basics()
+	subExtras := subErr.extras()
 	// Only create context if there is at least one context to propagate.
 	if (subBasics != nil || subExtras != nil) && e.ctx == nil {
 		e.ctx = map[string]any{}
 	}
 
 	if subBasics != nil {
-		basics, basicsOK := e.ctx[ctxBasics].(common.Basics)
-		if !basicsOK {
+		basics := e.basics()
+		if basics == nil {
 			basics = common.Basics{}
 		}
 
 		collection.Copy(basics, subBasics)
-		e.ctx[ctxBasics] = basics
+		e.setBasics(basics)
 	}
 
 	if subExtras != nil {
-		extras, extrasOK := e.ctx[ctxExtras].(common.Extras)
-		if !extrasOK {
+		extras := e.extras()
+		if extras == nil {
 			extras = common.Extras{}
 		}
 
 		collection.Copy(extras, subExtras)
-		e.ctx[ctxExtras] = extras
+		e.setExtras(extras)
 	}
 
 	subErr.ctx = nil
@@ -209,7 +207,15 @@ func (e *Error) basics() common.Basics {
 	return basics
 }
 
+func (e *Error) setBasics(basics common.Basics) {
+	e.ctx[ctxBasics] = basics
+}
+
 func (e *Error) extras() common.Extras {
 	extras, _ := e.ctx[ctxExtras].(common.Extras)
 	return extras
+}
+
+func (e *Error) setExtras(extras common.Extras) {
+	e.ctx[ctxExtras] = extras
 }
