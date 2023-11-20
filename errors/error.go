@@ -55,26 +55,14 @@ const (
 
 var (
 	// ErrNotSupported the requested action/resource is not supported
-	ErrNotSupported = New(nil, NotSupported, "not supported")
+	ErrNotSupported = New(NotSupported, "not supported")
 	// ErrNotImplemented the requested action/resource is not implemented
-	ErrNotImplemented = New(nil, NotImplemented, "not implemented")
+	ErrNotImplemented = New(NotImplemented, "not implemented")
 )
 
 // New construct a new error, default having kind Unexpected
-func New(ctx context.Context, args ...interface{}) error {
-	e := &Error{
-		ctx: map[string]any{},
-	}
-
-	basics := common.GetBasics(ctx)
-	if basics != nil {
-		e.ctx[ctxBasics] = basics
-	}
-
-	extras := common.GetExtras(ctx)
-	if extras != nil {
-		e.ctx[ctxExtras] = extras
-	}
+func New(args ...interface{}) *Error {
+	e := &Error{}
 
 	for _, arg := range args {
 		switch arg := arg.(type) {
@@ -91,6 +79,31 @@ func New(ctx context.Context, args ...interface{}) error {
 			e.msg = arg
 		}
 	}
+	return e
+}
+
+// WithContext sets the context of the error. However, it does not override the existing context if it has already been
+// set. In the cases where there is a child node, the child node's context would have already been propagated to the
+// current context.
+func (e *Error) WithContext(ctx context.Context) *Error {
+	if e.ctx == nil {
+		e.ctx = map[string]any{}
+	}
+
+	basics := common.GetBasics(ctx)
+	if basics != nil {
+		currentBasics, _ := e.ctx[ctxBasics].(common.Basics)
+		collection.Copy(basics, currentBasics)
+		e.ctx[ctxBasics] = basics
+	}
+
+	extras := common.GetExtras(ctx)
+	if extras != nil {
+		currentExtras, _ := e.ctx[ctxExtras].(common.Extras)
+		collection.Copy(extras, currentExtras)
+		e.ctx[ctxExtras] = extras
+	}
+
 	return e
 }
 
@@ -141,20 +154,20 @@ func ops(e *Error) []Op {
 }
 
 // WrapGORMError wraps an GORM error into our error such as adding errors.Kind
-func WrapGORMError(op Op, err error) error {
+func WrapGORMError(op Op, err error) *Error {
 	if goErrors.Is(err, gorm.ErrRecordNotFound) {
-		return New(nil, op, NotFound, err)
+		return New(op, NotFound, err)
 	}
 
 	if goErrors.Is(err, gorm.ErrDuplicatedKey) {
-		return New(nil, op, Conflict, err)
+		return New(op, Conflict, err)
 	}
 
-	return New(nil, op, err)
+	return New(op, err)
 }
 
 // propagateContexts combines the "basics" and "extras" contexts from the child error into the parent, so that the
-// key-values propagate upwards to the top level error.
+// key-values propagate upwards to the top-level error.
 func (e *Error) propagateContexts() {
 	subErr, ok := e.Err.(*Error)
 	if !ok {
@@ -162,6 +175,12 @@ func (e *Error) propagateContexts() {
 	}
 
 	subBasics, _ := subErr.ctx[ctxBasics].(common.Basics)
+	subExtras, _ := subErr.ctx[ctxExtras].(common.Extras)
+	// Only create context if there is at least one context to propagate.
+	if (subBasics != nil || subExtras != nil) && e.ctx == nil {
+		e.ctx = map[string]any{}
+	}
+
 	if subBasics != nil {
 		basics, basicsOK := e.ctx[ctxBasics].(common.Basics)
 		if !basicsOK {
@@ -172,7 +191,6 @@ func (e *Error) propagateContexts() {
 		e.ctx[ctxBasics] = basics
 	}
 
-	subExtras, _ := subErr.ctx[ctxExtras].(common.Extras)
 	if subExtras != nil {
 		extras, extrasOK := e.ctx[ctxExtras].(common.Extras)
 		if !extrasOK {
