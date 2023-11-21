@@ -174,30 +174,30 @@ func (e *Error) propagateContexts() {
 
 	subBasics := subErr.basics()
 	subExtras := subErr.extras()
+	// If there are no contexts to propagate, return early to avoid race conditions in goroutines when trying to
+	// read/write.
+	if subBasics == nil && subExtras == nil {
+		return
+	}
+
 	// Only create context if there is at least one context to propagate.
-	if (subBasics != nil || subExtras != nil) && e.ctx == nil {
+	if e.ctx == nil {
 		e.ctx = map[string]any{}
 	}
 
-	if subBasics != nil {
-		basics := e.basics()
-		if basics == nil {
-			basics = common.Basics{}
-		}
-
-		collection.Copy(basics, subBasics)
-		e.setBasics(basics)
+	basics := e.basics()
+	if basics == nil {
+		basics = common.Basics{}
 	}
+	collection.Copy(basics, subBasics)
+	e.setBasics(basics)
 
-	if subExtras != nil {
-		extras := e.extras()
-		if extras == nil {
-			extras = common.Extras{}
-		}
-
-		collection.Copy(extras, subExtras)
-		e.setExtras(extras)
+	extras := e.extras()
+	if extras == nil {
+		extras = common.Extras{}
 	}
+	collection.Copy(extras, subExtras)
+	e.setExtras(extras)
 
 	subErr.ctx = nil
 }

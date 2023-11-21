@@ -2,6 +2,7 @@ package errors
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,35 @@ const (
 )
 
 type testContextKey string
+
+func TestNew(t *testing.T) {
+	childErr := New(Op(childOp), BadRequest, childErrMsg)
+
+	// Test for data race condition when trying to `e.propagateContexts()`.
+	var wg sync.WaitGroup
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			err := New(Op(parentOp), parentErrMsg, childErr)
+			wantErr := &Error{
+				Op:  parentOp,
+				msg: parentErrMsg,
+				Err: &Error{
+					Op:   childOp,
+					Kind: BadRequest,
+					msg:  childErrMsg,
+				},
+			}
+
+			assert.Equal(t, wantErr, err)
+		}()
+	}
+
+	wg.Wait()
+}
 
 func TestNew_NestedContext_ParentContext(t *testing.T) {
 	assert := assert.New(t)
