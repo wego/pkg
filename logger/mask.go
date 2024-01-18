@@ -140,16 +140,42 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 				}
 			}
 		case l > 1:
-			if exist := root.Exists(toMask.JSONKeys...); exist {
-				// get the parent obj then replace the value
-				v := root.Get(toMask.JSONKeys[:l-1]...)
+			exist := root.Exists(toMask.JSONKeys...)
 
-				// currently do not support masking for non-string values
-				value := getJSONValue(v.Get(toMask.JSONKeys[l-1]))
-				if value != "" {
-					maskedVal := getMaskedValue(maskChar, value, toMask)
-					replacement := fastjson.MustParse(`"` + maskedVal + `"`)
-					v.Set(toMask.JSONKeys[l-1], replacement)
+			arrIdx := collection.IndexOf(toMask.JSONKeys, "[]")
+			if arrIdx > 0 {
+				exist = len(root.GetArray(toMask.JSONKeys[:arrIdx]...)) > 0
+			}
+
+			if exist {
+				if arrIdx > 0 {
+					// parent obj that is an array
+					values := root.GetArray(toMask.JSONKeys[:arrIdx]...)
+
+					for _, v := range values {
+						// Handle nested objects
+						nestedObj := v.Get(toMask.JSONKeys[arrIdx+1])
+						if nestedObj != nil {
+							value := getJSONValue(nestedObj.Get(toMask.JSONKeys[arrIdx+2:]...))
+							if value != "" {
+								maskedVal := getMaskedValue(maskChar, value, toMask)
+								replacement := fastjson.MustParse(`"` + maskedVal + `"`)
+								k := toMask.JSONKeys[arrIdx+2:]
+								nestedObj.Set(k[0], replacement)
+							}
+						}
+					}
+				} else {
+					// get the parent obj then replace the value
+					v := root.Get(toMask.JSONKeys[:l-1]...)
+
+					// currently do not support masking for non-string values
+					value := getJSONValue(v.Get(toMask.JSONKeys[l-1]))
+					if value != "" {
+						maskedVal := getMaskedValue(maskChar, value, toMask)
+						replacement := fastjson.MustParse(`"` + maskedVal + `"`)
+						v.Set(toMask.JSONKeys[l-1], replacement)
+					}
 				}
 			}
 		}
