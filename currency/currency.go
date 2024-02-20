@@ -152,3 +152,19 @@ func GetCurrencyFactor(currency string) (factor float64) {
 func decimalPlaces(currencyCode string) uint8 {
 	return uint8(math.Log10(GetCurrencyFactor(currencyCode)))
 }
+
+// Round round half up the amount to the currency factor's decimal places
+func Round(currencyCode string, amount float64) (roundedAmount float64, err error) {
+	if !IsISO4217(currencyCode) {
+		return 0, fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
+	}
+	switch {
+	case amount > 0:
+		factor := GetCurrencyFactor(currencyCode)
+		minorUnitAmount := math.Round(amount * factor)
+		roundedAmount = minorUnitAmount / factor
+	case amount < 0:
+		err = fmt.Errorf("invalid amount: %f", amount)
+	}
+	return
+}
