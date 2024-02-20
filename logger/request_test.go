@@ -54,10 +54,9 @@ func Test_maskAuthorizationHeader(t *testing.T) {
 		},
 	}
 
-	assert := assert.New(t)
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
 			got := maskAuthorizationHeader(tc.value)
 
 			assert.Equal(tc.want, got)

@@ -308,3 +308,112 @@ func Test_GetCurrencyFactor(t *testing.T) {
 		assert.Equal(1.0, factor)
 	}
 }
+
+func Test_Round_InvalidCurrency(t *testing.T) {
+	assert := assert.New(t)
+
+	rs, err := currency.Round("", 2512)
+	assert.Error(err)
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assert.Zero(rs)
+
+	rs, err = currency.Round("sg", 2512)
+	assert.Error(err)
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assert.Zero(rs)
+
+	rs, err = currency.Round(" ", 2512)
+	assert.Error(err)
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assert.Zero(rs)
+
+	rs, err = currency.Round("      ", 2512)
+	assert.Error(err)
+	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assert.Zero(rs)
+}
+
+func Test_Round_InvalidAmount(t *testing.T) {
+	assert := assert.New(t)
+
+	rs, err := currency.Round("USD", -0.0001)
+	assert.Error(err)
+	assert.Contains(err.Error(), "invalid amount")
+	assert.Zero(rs)
+
+	rs, err = currency.Round("SGd", -0.0001)
+	assert.Error(err)
+	assert.Contains(err.Error(), "invalid amount")
+	assert.Zero(rs)
+}
+
+func Test_Round_ZeroAmount(t *testing.T) {
+	assert := assert.New(t)
+
+	rs, err := currency.Round("USD", 0)
+	assert.NoError(err)
+	assert.Zero(rs)
+
+	rs, err = currency.Round("VND", 0)
+	assert.NoError(err)
+	assert.Zero(rs)
+
+	rs, err = currency.Round("KWD", 0)
+	assert.NoError(err)
+	assert.Zero(rs)
+}
+
+func Test_Round_OK(t *testing.T) {
+	for _, testcase := range []struct {
+		name          string
+		currency      string
+		amount        float64
+		roundedAmount float64
+	}{
+		{
+			name:          "factor of 1, rounded-down",
+			currency:      "JPY",
+			amount:        100.1234567,
+			roundedAmount: 100,
+		},
+		{
+			name:          "factor of 1, rounded-up",
+			currency:      "JPY",
+			amount:        100.98765,
+			roundedAmount: 101,
+		},
+		{
+			name:          "factor of 100, rounded-down",
+			currency:      "AED",
+			amount:        100.1234567,
+			roundedAmount: 100.12,
+		},
+		{
+			name:          "factor of 100, rounded-up",
+			currency:      "AED",
+			amount:        100.1256789,
+			roundedAmount: 100.13,
+		},
+		{
+			name:          "factor of 1000, rounded-down",
+			currency:      "BHD",
+			amount:        100.1234567,
+			roundedAmount: 100.123,
+		},
+		{
+			name:          "factor of 1000, rounded-up",
+			currency:      "BHD",
+			amount:        100.1236789,
+			roundedAmount: 100.124,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			res, err := currency.Round(testcase.currency, testcase.amount)
+			assert.NoError(err)
+
+			assert.Equal(testcase.roundedAmount, res)
+		})
+	}
+}

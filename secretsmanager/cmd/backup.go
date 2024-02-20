@@ -17,7 +17,7 @@ func BackupCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "backup",
 		Short: "Backup secret on AWS Secrets Manager",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			flag.Parse()
 
 			secretID, _ := cmd.Flags().GetString("secret-id")
