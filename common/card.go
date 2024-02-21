@@ -13,9 +13,8 @@ func ValidateCardNumber(number string) bool {
 	// Gets the Card number length
 	numberLen := len(number)
 
-	// For numbers that is lower than 13 and
-	// bigger than 19, must return as false
-	if numberLen < 13 || numberLen > 19 {
+	// For numbers that is lower than 8 and bigger than 19, must return as false
+	if numberLen < 8 || numberLen > 19 {
 		return false
 	}
 

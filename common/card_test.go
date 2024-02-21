@@ -28,6 +28,9 @@ func Test_ValidateCardNumber(t *testing.T) {
 	assert.True(common.ValidateCardNumber("4111111111111111"))
 	assert.True(common.ValidateCardNumber("4012888888881881"))
 	assert.True(common.ValidateCardNumber("4222222222222"))
+	assert.True(common.ValidateCardNumber("35283589"))
+	assert.False(common.ValidateCardNumber("1234567"))
+	assert.False(common.ValidateCardNumber("-4222222222222"))
 	assert.False(common.ValidateCardNumber("1234567812345678"))
 }
 
