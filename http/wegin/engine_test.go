@@ -2,18 +2,28 @@ package wegin_test
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/suite"
-	"github.com/wego/pkg/http/wegin"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/suite"
+	"github.com/wego/pkg/http/wegin"
 )
 
 type testStruct struct {
 	Reference        string  `json:"reference" binding:"required,alphanum_with_underscore_or_dash"`
 	ReferencePointer *string `json:"reference_pointer" binding:"required,alphanum_with_underscore_or_dash"`
+}
+
+type parentStruct struct {
+	Type  string       `json:"type" binding:"required,oneof=Cashback Discount GiftCard"`
+	Child *childStruct `json:"child" binding:"required,dive"`
+}
+
+type childStruct struct {
+	Type string `json:"type" binding:"required,oneof=Percentage FlatValue,flatvalue_if_gc_campaign"`
 }
 
 func testHandler(c *gin.Context) {
@@ -25,8 +35,18 @@ func testHandler(c *gin.Context) {
 	}
 }
 
+func flatValueGcCampaignHandler(c *gin.Context) {
+	var p parentStruct
+	if err := c.ShouldBindJSON(&p); err == nil {
+		c.JSON(http.StatusOK, p)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+}
+
 var (
-	testEndpoint = "/test"
+	testEndpoint                    = "/test"
+	testFlatValueGcCampaignEndpoint = "/test_flat_value_gc_campaign"
 )
 
 type EngineSuite struct {
@@ -43,6 +63,7 @@ func (s *EngineSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 	s.router = wegin.New()
 	s.router.POST(testEndpoint, testHandler)
+	s.router.POST(testFlatValueGcCampaignEndpoint, flatValueGcCampaignHandler)
 }
 
 func (s *EngineSuite) Test_AlphaNumWithUnderscoreOrDash() {
@@ -149,6 +170,66 @@ func (s *EngineSuite) Test_AlphaNumWithUnderscoreOrDash() {
 			for _, body := range testCase.expectedBodies {
 				s.Contains(r.Body.String(), body)
 			}
+		})
+	}
+}
+
+func (s *EngineSuite) Test_FlatValueIfGcCampaign() {
+	for _, testCase := range []struct {
+		name           string
+		body           string
+		expectedStatus int
+		expectedBodies []string
+	}{
+		{
+			name:           "discount",
+			body:           `{"type":"Discount","child":{"type":"Percentage"}}`,
+			expectedStatus: http.StatusOK,
+			expectedBodies: []string{
+				`"type":"Discount"`,
+			},
+		},
+		{
+			name:           "discount",
+			body:           `{"type":"Discount","child":{"type":"FlatValue"}}`,
+			expectedStatus: http.StatusOK,
+			expectedBodies: []string{
+				`"type":"Discount"`,
+			},
+		},
+		{
+			name:           "cashback",
+			body:           `{"type":"Cashback","child":{"type":"Percentage"}}`,
+			expectedStatus: http.StatusOK,
+			expectedBodies: []string{
+				`"type":"Cashback"`,
+			},
+		},
+		{
+			name:           "giftcard",
+			body:           `{"type":"GiftCard","child":{"type":"FlatValue"}}`,
+			expectedStatus: http.StatusOK,
+			expectedBodies: []string{
+				`"type":"GiftCard"`,
+			},
+		},
+		{
+			name:           "giftcard with percentage should fail",
+			body:           `{"type":"GiftCard","child":{"type":"Percentage"}}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBodies: []string{
+				`"type":"GiftCard"`,
+			},
+		},
+	} {
+		s.Run(testCase.name, func() {
+			req, err := http.NewRequest(http.MethodPost, testFlatValueGcCampaignEndpoint, strings.NewReader(testCase.body))
+			s.NoError(err)
+
+			r := httptest.NewRecorder()
+			s.router.ServeHTTP(r, req)
+
+			s.Equal(testCase.expectedStatus, r.Code)
 		})
 	}
 }
