@@ -17,15 +17,6 @@ type testStruct struct {
 	ReferencePointer *string `json:"reference_pointer" binding:"required,alphanum_with_underscore_or_dash"`
 }
 
-type parentStruct struct {
-	Type  string       `json:"type" binding:"required,oneof=Cashback Discount GiftCard"`
-	Child *childStruct `json:"child" binding:"required,dive"`
-}
-
-type childStruct struct {
-	Type string `json:"type" binding:"required,oneof=Percentage FlatValue,flatvalue_if_gc_campaign"`
-}
-
 func testHandler(c *gin.Context) {
 	var b testStruct
 	if err := c.ShouldBindJSON(&b); err == nil {
@@ -35,7 +26,7 @@ func testHandler(c *gin.Context) {
 	}
 }
 
-func flatValueGcCampaignHandler(c *gin.Context) {
+func valueIfHandler(c *gin.Context) {
 	var p parentStruct
 	if err := c.ShouldBindJSON(&p); err == nil {
 		c.JSON(http.StatusOK, p)
@@ -45,8 +36,8 @@ func flatValueGcCampaignHandler(c *gin.Context) {
 }
 
 var (
-	testEndpoint                    = "/test"
-	testFlatValueGcCampaignEndpoint = "/test_flat_value_gc_campaign"
+	testEndpoint        = "/test"
+	testValueIfEndpoint = "/test_value_if"
 )
 
 type EngineSuite struct {
@@ -63,7 +54,7 @@ func (s *EngineSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 	s.router = wegin.New()
 	s.router.POST(testEndpoint, testHandler)
-	s.router.POST(testFlatValueGcCampaignEndpoint, flatValueGcCampaignHandler)
+	s.router.POST(testValueIfEndpoint, valueIfHandler)
 }
 
 func (s *EngineSuite) Test_AlphaNumWithUnderscoreOrDash() {
@@ -174,7 +165,26 @@ func (s *EngineSuite) Test_AlphaNumWithUnderscoreOrDash() {
 	}
 }
 
-func (s *EngineSuite) Test_FlatValueIfGcCampaign() {
+type parentStruct struct {
+	Type  string       `json:"type" binding:"required,oneof=AA BB"`
+	Child *childStruct `json:"child" binding:"required,dive"`
+}
+
+type childStruct struct {
+	Type   string             `json:"type" binding:"required,oneof=aa bb"`
+	Child  *grandChildStruct  `json:"child"`
+	Child2 *grandChildStruct2 `json:"child2"`
+}
+
+type grandChildStruct struct {
+	Name string `json:"name" binding:"oneof=AAaa11 BBbb22,value_if=root.Type AA > AAaa11"`
+}
+
+type grandChildStruct2 struct {
+	Name string `json:"name" binding:"oneof=AAaa11 BBbb22,value_if=root.Child.Type aa > BBbb22"`
+}
+
+func (s *EngineSuite) Test_ValueIf() {
 	for _, testCase := range []struct {
 		name           string
 		body           string
@@ -182,54 +192,59 @@ func (s *EngineSuite) Test_FlatValueIfGcCampaign() {
 		expectedBodies []string
 	}{
 		{
-			name:           "discount",
-			body:           `{"type":"Discount","child":{"type":"Percentage"}}`,
+			name:           "pass",
+			body:           `{"type":"AA","child":{"type":"aa","child":{"name":"AAaa11"},"child2":{"name":"BBbb22"}}}`,
 			expectedStatus: http.StatusOK,
 			expectedBodies: []string{
-				`"type":"Discount"`,
+				`"type":"AA"`,
+				`"child":{"name":"AAaa11"}`,
+				`"child2":{"name":"BBbb22"}`,
 			},
 		},
 		{
-			name:           "discount",
-			body:           `{"type":"Discount","child":{"type":"FlatValue"}}`,
-			expectedStatus: http.StatusOK,
-			expectedBodies: []string{
-				`"type":"Discount"`,
-			},
-		},
-		{
-			name:           "cashback",
-			body:           `{"type":"Cashback","child":{"type":"Percentage"}}`,
-			expectedStatus: http.StatusOK,
-			expectedBodies: []string{
-				`"type":"Cashback"`,
-			},
-		},
-		{
-			name:           "giftcard",
-			body:           `{"type":"GiftCard","child":{"type":"FlatValue"}}`,
-			expectedStatus: http.StatusOK,
-			expectedBodies: []string{
-				`"type":"GiftCard"`,
-			},
-		},
-		{
-			name:           "giftcard with percentage should fail",
-			body:           `{"type":"GiftCard","child":{"type":"Percentage"}}`,
+			name:           "grandChild fail on wrong root type",
+			body:           `{"type":"BB","child":{"type":"aa","child":{"name":"AAaa11"},"child2":{"name":"BBbb22"}}}`,
 			expectedStatus: http.StatusBadRequest,
 			expectedBodies: []string{
-				`"type":"GiftCard"`,
+				`Key: 'parentStruct.Child.Child.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
+			},
+		},
+		{
+			name:           "grandChild2 fail on wrong root.Child type",
+			body:           `{"type":"AA","child":{"type":"bb","child":{"name":"AAaa11"},"child2":{"name":"BBbb22"}}}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBodies: []string{
+				`Key: 'parentStruct.Child.Child2.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
+			},
+		},
+		{
+			name:           "grandChild fail on wrong value",
+			body:           `{"type":"AA","child":{"type":"bb","child":{"name":"BBbb22"},"child2":{"name":"BBbb22"}}}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBodies: []string{
+				`Key: 'parentStruct.Child.Child2.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
+			},
+		},
+		{
+			name:           "grandChild2 fail on wrong value",
+			body:           `{"type":"AA","child":{"type":"bb","child":{"name":"AAaa11"},"child2":{"name":"AAaa11"}}}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBodies: []string{
+				`Key: 'parentStruct.Child.Child2.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
 			},
 		},
 	} {
 		s.Run(testCase.name, func() {
-			req, err := http.NewRequest(http.MethodPost, testFlatValueGcCampaignEndpoint, strings.NewReader(testCase.body))
+			req, err := http.NewRequest(http.MethodPost, testValueIfEndpoint, strings.NewReader(testCase.body))
 			s.NoError(err)
 
 			r := httptest.NewRecorder()
 			s.router.ServeHTTP(r, req)
 
 			s.Equal(testCase.expectedStatus, r.Code)
+			for _, body := range testCase.expectedBodies {
+				s.Contains(r.Body.String(), body)
+			}
 		})
 	}
 }
