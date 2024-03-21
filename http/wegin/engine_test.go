@@ -177,11 +177,13 @@ type childStruct struct {
 }
 
 type grandChildStruct struct {
-	Name string `json:"name" binding:"oneof=AAaa11 BBbb22,value_if=root.Type AA > AAaa11"`
+	Name string `json:"name" binding:"oneof=AAaa11 BBbb22,value_if=root.Type AA == AAaa11"`
+	Fee  uint32 `json:"fee" binding:"value_if=root.Type AA == 10"`
 }
 
 type grandChildStruct2 struct {
-	Name string `json:"name" binding:"oneof=AAaa11 BBbb22,value_if=root.Child.Type aa > BBbb22"`
+	Name string   `json:"name" binding:"oneof=AAaa11 BBbb22,value_if=root.Child.Type aa == BBbb22"`
+	Rate *float32 `json:"rate" binding:"omitempty,value_if=root.Type AA == 0.2"`
 }
 
 func (s *EngineSuite) Test_ValueIf() {
@@ -193,45 +195,60 @@ func (s *EngineSuite) Test_ValueIf() {
 	}{
 		{
 			name:           "pass",
-			body:           `{"type":"AA","child":{"type":"aa","child":{"name":"AAaa11"},"child2":{"name":"BBbb22"}}}`,
+			body:           `{"type":"AA","child":{"type":"aa","child":{"name":"AAaa11","fee":10},"child2":{"name":"BBbb22","rate":0.2}}}`,
 			expectedStatus: http.StatusOK,
-			expectedBodies: []string{
-				`"type":"AA"`,
-				`"child":{"name":"AAaa11"}`,
-				`"child2":{"name":"BBbb22"}`,
-			},
 		},
 		{
-			name:           "grandChild fail on wrong root type",
-			body:           `{"type":"BB","child":{"type":"aa","child":{"name":"AAaa11"},"child2":{"name":"BBbb22"}}}`,
+			name:           "any value for fee if root.type is not AA should pass",
+			body:           `{"type":"BB","child":{"type":"aa","child":{"name":"AAaa11","fee":20},"child2":{"name":"BBbb22"}}}`,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "root.child.child.name must be AAaa11 if root.type is AA",
+			body:           `{"type":"AA","child":{"type":"aa","child":{"name":"BBbb22","fee":10},"child2":{"name":"BBbb22"}}}`,
 			expectedStatus: http.StatusBadRequest,
 			expectedBodies: []string{
 				`Key: 'parentStruct.Child.Child.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
 			},
 		},
 		{
-			name:           "grandChild2 fail on wrong root.Child type",
-			body:           `{"type":"AA","child":{"type":"bb","child":{"name":"AAaa11"},"child2":{"name":"BBbb22"}}}`,
+			name:           "root.child.child2.name must be BBbb22 if root.child.type is aa",
+			body:           `{"type":"AA","child":{"type":"aa","child":{"name":"AAaa11","fee":10},"child2":{"name":"AAaa11"}}}`,
 			expectedStatus: http.StatusBadRequest,
 			expectedBodies: []string{
 				`Key: 'parentStruct.Child.Child2.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
 			},
 		},
 		{
-			name:           "grandChild fail on wrong value",
-			body:           `{"type":"AA","child":{"type":"bb","child":{"name":"BBbb22"},"child2":{"name":"BBbb22"}}}`,
+			name:           "root.child.child.fee must be 10 if root.type is AA",
+			body:           `{"type":"AA","child":{"type":"aa","child":{"name":"AAaa11","fee":20},"child2":{"name":"BBbb22"}}}`,
 			expectedStatus: http.StatusBadRequest,
 			expectedBodies: []string{
-				`Key: 'parentStruct.Child.Child2.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
+				`Key: 'parentStruct.Child.Child.Fee' Error:Field validation for 'Fee' failed on the 'value_if' tag`,
 			},
 		},
 		{
-			name:           "grandChild2 fail on wrong value",
-			body:           `{"type":"AA","child":{"type":"bb","child":{"name":"AAaa11"},"child2":{"name":"AAaa11"}}}`,
+			name:           "root.child.child.name can be any value if root.Type is not AA",
+			body:           `{"type":"BB","child":{"type":"bb","child":{"name":"BBbb22","fee":10},"child2":{"name":"BBbb22"}}}`,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "root.child.child2.name can be any value if root.child.type is not aa",
+			body:           `{"type":"AA","child":{"type":"bb","child":{"name":"AAaa11","fee":10},"child2":{"name":"AAaa11"}}}`,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "root.child.child2.rate must be 0.2 if root.type is AA",
+			body:           `{"type":"AA","child":{"type":"aa","child":{"name":"AAaa11","fee":10},"child2":{"name":"BBbb22","rate":0.3}}}`,
 			expectedStatus: http.StatusBadRequest,
 			expectedBodies: []string{
-				`Key: 'parentStruct.Child.Child2.Name' Error:Field validation for 'Name' failed on the 'value_if' tag`,
+				`Key: 'parentStruct.Child.Child2.Rate' Error:Field validation for 'Rate' failed on the 'value_if' tag`,
 			},
+		},
+		{
+			name:           "root.child.child2.rate can be any value if root.type is not AA",
+			body:           `{"type":"BB","child":{"type":"bb","child":{"name":"BBbb22","fee":10},"child2":{"name":"BBbb22","rate":0.3}}}`,
+			expectedStatus: http.StatusOK,
 		},
 	} {
 		s.Run(testCase.name, func() {
@@ -242,8 +259,11 @@ func (s *EngineSuite) Test_ValueIf() {
 			s.router.ServeHTTP(r, req)
 
 			s.Equal(testCase.expectedStatus, r.Code)
-			for _, body := range testCase.expectedBodies {
-				s.Contains(r.Body.String(), body)
+
+			if testCase.expectedBodies != nil {
+				for _, body := range testCase.expectedBodies {
+					s.Contains(r.Body.String(), body)
+				}
 			}
 		})
 	}
