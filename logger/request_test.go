@@ -130,10 +130,16 @@ func TestRequest_fields(t *testing.T) {
 
 			if tc.wantLen > staticFieldsCount {
 				// assert basics
-				assert.Equal("paymentRef", fields[0].Key)
-				assert.Equal(`"abc123"`, fields[0].String)
-				assert.Equal("orderRef", fields[1].Key)
-				assert.Equal(`"zxc-456"`, fields[1].String)
+				if fields[0].Key == "paymentRef" {
+					assert.Equal(`"abc123"`, fields[0].String)
+					assert.Equal("orderRef", fields[1].Key)
+					assert.Equal(`"zxc-456"`, fields[1].String)
+				} else {
+					assert.Equal("orderRef", fields[0].Key)
+					assert.Equal(`"zxc-456"`, fields[0].String)
+					assert.Equal(`"paymentRef"`, fields[1].Key)
+					assert.Equal(`"abc123"`, fields[1].String)
+				}
 
 				// assert static fields
 				assert.Equal("GET", fields[2].String)
