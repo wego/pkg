@@ -82,8 +82,18 @@ func (r *Request) GetBasic(key string) interface{} {
 func (r *Request) fields() []zapcore.Field {
 	var fields []zapcore.Field
 	for key, value := range r.Basics {
-		if v, err := json.Marshal(value); err == nil {
-			fields = append(fields, zap.String(key, string(v)))
+		if value == nil {
+			continue
+		}
+
+		v, err := json.Marshal(value)
+		if err != nil {
+			continue
+		}
+
+		val := string(v)
+		if val != `""` {
+			fields = append(fields, zap.String(key, val))
 		}
 	}
 	fields = append(fields, []zapcore.Field{
