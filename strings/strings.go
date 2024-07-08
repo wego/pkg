@@ -14,12 +14,12 @@ func IsBlank(s string) bool {
 	return !IsNotBlank(s)
 }
 
-// IsBlankP returns true if the string length is not zero(excluding whitespaces) and not null
+// IsNotBlankP returns true if the string length is not zero(excluding whitespaces) and not null
 func IsNotBlankP(s *string) bool {
 	return s != nil && IsNotBlank(*s)
 }
 
-// IsBlankP returns true if the string length is not zero(excluding whitespaces)
+// IsNotBlank returns true if the string length is not zero(excluding whitespaces)
 func IsNotBlank(s string) bool {
 	return len(goStr.TrimSpace(s)) > 0
 }
