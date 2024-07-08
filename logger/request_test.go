@@ -137,7 +137,7 @@ func TestRequest_fields(t *testing.T) {
 				} else {
 					assert.Equal("orderRef", fields[0].Key)
 					assert.Equal(`"zxc-456"`, fields[0].String)
-					assert.Equal(`"paymentRef"`, fields[1].Key)
+					assert.Equal("paymentRef", fields[1].Key)
 					assert.Equal(`"abc123"`, fields[1].String)
 				}
 
