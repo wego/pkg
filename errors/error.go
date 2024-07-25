@@ -28,6 +28,7 @@ type Error struct {
 
 // error kinds
 const (
+	NotModified     Kind = http.StatusNotModified
 	BadRequest      Kind = http.StatusBadRequest
 	Conflict        Kind = http.StatusConflict
 	Forbidden       Kind = http.StatusForbidden
@@ -58,6 +59,8 @@ var (
 	ErrNotSupported = New(NotSupported, "not supported")
 	// ErrNotImplemented the requested action/resource is not implemented
 	ErrNotImplemented = New(NotImplemented, "not implemented")
+	// ErrNotModified the requested action/resource is not modified
+	ErrNotModified = New(NotModified, "not modified")
 )
 
 // New construct a new error, default having kind Unexpected
