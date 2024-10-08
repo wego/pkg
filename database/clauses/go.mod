@@ -1,6 +1,6 @@
 module github.com/wego/pkg/database/clauses
 
-go 1.19
+go 1.21
 
 require gorm.io/gorm v1.25.1
 

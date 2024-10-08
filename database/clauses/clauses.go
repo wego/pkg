@@ -6,7 +6,7 @@ import (
 )
 
 // OnConflict adds an ON CONFLICT clause to the query
-func OnConflict(tx *gorm.DB, idx string) {
+func OnConflict(tx *gorm.DB, idx string, idxWhereCondition clause.Expr) {
 	index, ok := tx.Statement.Schema.ParseIndexes()[idx]
 	if !ok || index.Class != "UNIQUE" {
 		return
@@ -18,7 +18,8 @@ func OnConflict(tx *gorm.DB, idx string) {
 	}
 
 	tx.Statement.AddClause(clause.OnConflict{
-		Columns:   cols,
-		UpdateAll: true,
+		Columns:     cols,
+		UpdateAll:   true,
+		TargetWhere: clause.Where{Exprs: []clause.Expression{idxWhereCondition}},
 	})
 }
