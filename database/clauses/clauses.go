@@ -23,7 +23,7 @@ func OnConflict(tx *gorm.DB, idx string, idxWhereCondition *clause.Expr) {
 	}
 
 	if idxWhereCondition != nil {
-		onConflictClause.TargetWhere = clause.Where{Exprs: []clause.Expression{idxWhereCondition}}
+		onConflictClause.TargetWhere = clause.Where{Exprs: []clause.Expression{*idxWhereCondition}}
 	}
 
 	tx.Statement.AddClause(onConflictClause)
