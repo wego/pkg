@@ -16,6 +16,8 @@ type MaskRestrictionType string
 const (
 	// MaskRestrictionTypeEmail will only mask email text
 	MaskRestrictionTypeEmail MaskRestrictionType = "email"
+
+	arrayKey = "[]"
 )
 
 // MaskData the data as well as the information on how to mask the data
@@ -159,10 +161,12 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 		case l > 1:
 			arrIndices := []int{}
 			for i, key := range toMask.JSONKeys {
-				if key == "[]" {
+				if key == arrayKey {
 					arrIndices = append(arrIndices, i)
 				}
 			}
+			// `root.Exists(toMask.JSONKeys...)` will not work when there are array indices (more than 1 "[]"), so we
+			// should also try to set `exist` to `true` if the caller inputs array indices.
 			exist := root.Exists(toMask.JSONKeys...) || len(arrIndices) > 0
 
 			if exist {
@@ -193,7 +197,7 @@ func maskRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask M
 		return
 	}
 
-	if keys[0] == "[]" {
+	if keys[0] == arrayKey {
 		arr := obj.GetArray()
 		for _, item := range arr {
 			maskRecursive(item, keys[1:], maskChar, toMask)
