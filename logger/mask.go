@@ -68,6 +68,8 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 
 // MaskJSON mask parts of the json key paths value from the input json with replacement
 //
+// For nested arrays, use `[]` as the key.
+//
 // Example:
 //
 //	input = `
@@ -79,28 +81,39 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 //			"third": {
 //				"first": "1st of second third",
 //				"second": "2nd of second third",
-//				"third": "3rd of second third",
-//			}
+//				"third": "3rd of second third"
+//			},
+//			"fourth": [
+//				{ "email": { "value": "first@email.com" } },
+//				{ "email": { "value": "second@email.com" } }
+//			]
 //		}
 //	}`
 //	maskData := []logger.MaskData{
 //		{
-//			JSONKey:         []string{"first"},
-//			FistCharsToShow: 3,
+//			JSONKeys:         []string{"first"},
+//			FirstCharsToShow: 3,
 //			LastCharsToShow: 6,
 //			KeepSameLength: true,
 //		},
 //		{
-//			JSONKey:         []string{"second", "second"},
-//			FistCharsToShow: 2,
+//			JSONKeys:         []string{"second", "second"},
+//			FirstCharsToShow: 2,
 //			LastCharsToShow: 3,
 //			CharsToIgnore:   []rune{'@'},
 //			KeepSameLength: true,
 //		},
 //		{
-//			JSONKey:         []string{"second", "third", "first"},
-//			FistCharsToShow: 3,
+//			JSONKeys:         []string{"second", "third", "first"},
+//			FirstCharsToShow: 3,
 //			LastCharsToShow: 1,
+//			KeepSameLength: true,
+//		},
+//		{
+//			JSONKeys:         []string{"second", "fourth", "[]", "email", "value"},
+//			FirstCharsToShow: 1,
+//			LastCharsToShow: 3,
+//			CharsToIgnore:   []rune{'@'},
 //			KeepSameLength: true,
 //		},
 //	}
@@ -114,7 +127,11 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 //				"first": "1st!!!!!!!!!!!!!!!d",
 //				"second": "2nd of second third",
 //				"third": "3rd of second third",
-//			}
+//			},
+//			"fourth": [
+//				{ "email": { "value": "f!!!!!!@!!!!!!com" } },
+//				{ "email": { "value": "s!!!!!!@!!!!!!com" } }
+//			]
 //		}
 //	}
 func MaskJSON(json, maskChar string, toMasks []MaskData) string {

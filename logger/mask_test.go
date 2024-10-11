@@ -3,7 +3,6 @@ package logger_test
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"os"
 	"testing"
 
@@ -243,6 +242,19 @@ func Test_MaskJSON_Ok(t *testing.T) {
 			KeepSameLength:   true,
 		},
 		{
+			JSONKeys:         []string{"test5", "[]", "customer", "name"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  3,
+			KeepSameLength:   false,
+		},
+		{
+			JSONKeys:         []string{"test5", "[]", "customer", "email"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  3,
+			CharsToIgnore:    []rune{'@'},
+			KeepSameLength:   true,
+		},
+		{
 			JSONKeys:         []string{"customer", "email"},
 			FirstCharsToShow: 5,
 			LastCharsToShow:  3,
@@ -308,42 +320,4 @@ func parseJSONToString(jsonFileName string) (string, error) {
 		return "", err
 	}
 	return string(file[:]), nil
-}
-
-func Test_Mask(t *testing.T) {
-	maskData := []logger.MaskData{
-		{
-			FirstCharsToShow: 4,
-			LastCharsToShow:  6,
-			CharsToIgnore:    []rune{'@'},
-			RestrictionType:  logger.MaskRestrictionTypeEmail,
-			JSONKeys:         []string{"data", "userEmails", "[]", "customer", "email"},
-			KeepSameLength:   true,
-		},
-		{
-			FirstCharsToShow: 2,
-			LastCharsToShow:  3,
-			JSONKeys:         []string{"data", "userEmails", "[]", "customer", "name"},
-			KeepSameLength:   true,
-		},
-	}
-
-	input := `
-{
-	"success": true,
-	"message": "success",
-	"status": "ok",
-	"data": {
-		"userHash": "50c3ab73b5cb8c3f00e79fbd3ef338ca",
-		"idHash": "60cf26f7e60fd2a6164a8ee63aa433c0",
-		"userEmails": [
-		{ "customer": { "email": "abc-123@wego.com", "name": "Customer 1" }, "confirmedAt": "2023-11-14T07:00:02.49659Z" },
-		{ "customer": { "email": "abc-45678@wego.com", "name": "Customer 2" }, "confirmedAt": "2023-11-14T07:00:02.49659Z" }
-		]
-	}
-}	
-`
-
-	output := logger.MaskJSON(input, "", maskData)
-	log.Println("output:", output)
 }

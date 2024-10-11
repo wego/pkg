@@ -3,6 +3,20 @@
 		"test2": "12345",
 		"test3": "12345",
 		"test4": "12345",
+		"test5": [
+			{
+				"customer": {
+					"name": "First Customer",
+					"email": "firstemail@wego.com"
+				}
+			},
+			{
+				"customer": {
+					"name": "Second Customer",
+					"email": "secondemail@wego.com"
+				}
+			}
+		],
 		"id": "pay_mbabizu24mvu3mela5njyhpit4",
 		"requested_on": "2019-08-24T14:15:22Z",
 		"source": {
