@@ -113,7 +113,7 @@ func RedactJSON(json, replacement string, keys [][]string) string {
 	return string(out)
 }
 
-func redactRecursive(obj *fastjson.Value, keys []string, r *fastjson.Value) {
+func redactRecursive(obj *fastjson.Value, keys []string, replacementValue *fastjson.Value) {
 	if len(keys) == 0 {
 		return
 	}
@@ -121,17 +121,17 @@ func redactRecursive(obj *fastjson.Value, keys []string, r *fastjson.Value) {
 	if keys[0] == arrayKey {
 		arr := obj.GetArray()
 		for _, item := range arr {
-			redactRecursive(item, keys[1:], r)
+			redactRecursive(item, keys[1:], replacementValue)
 		}
 	} else if len(keys) == 1 {
 		value := getJSONValue(obj.Get(keys[0]))
 		if value != "" {
-			obj.Set(keys[0], r)
+			obj.Set(keys[0], replacementValue)
 		}
 	} else {
 		nestedObj := obj.Get(keys[0])
 		if nestedObj != nil {
-			redactRecursive(nestedObj, keys[1:], r)
+			redactRecursive(nestedObj, keys[1:], replacementValue)
 		}
 	}
 }
