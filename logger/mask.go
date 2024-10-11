@@ -205,7 +205,7 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 }
 
 func maskRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask MaskData) {
-	if len(keys) == 0 {
+	if len(keys) == 0 || obj == nil {
 		return
 	}
 
