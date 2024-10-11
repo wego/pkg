@@ -16,8 +16,6 @@ type MaskRestrictionType string
 const (
 	// MaskRestrictionTypeEmail will only mask email text
 	MaskRestrictionTypeEmail MaskRestrictionType = "email"
-
-	arrayKey = "[]"
 )
 
 // MaskData the data as well as the information on how to mask the data
