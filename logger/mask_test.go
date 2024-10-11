@@ -255,6 +255,12 @@ func Test_MaskJSON_Ok(t *testing.T) {
 			KeepSameLength:   true,
 		},
 		{
+			JSONKeys:         []string{"test6", "[]", "nested", "[]", "value"},
+			FirstCharsToShow: 1,
+			LastCharsToShow:  1,
+			KeepSameLength:   true,
+		},
+		{
 			JSONKeys:         []string{"customer", "email"},
 			FirstCharsToShow: 5,
 			LastCharsToShow:  3,

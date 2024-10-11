@@ -4,8 +4,22 @@
 		"test3": "||345",
 		"test4": "12345",
 		"test5": [
-			{ "customer": {"name": "Fi|mer", "email": "fi||||||||@|||||com" } },
+			{ "customer": { "name": "Fi|mer", "email": "fi||||||||@|||||com" } },
 			{ "customer": { "name": "Se|mer", "email": "se|||||||||@|||||com" } }
+		],
+		"test6": [
+			{ 
+				"nested": [
+					{ "value": "1|||5" },
+					{ "value": "a|||e" }
+				]
+			},
+			{
+				"nested": [
+					{ "value": "5|||1" },
+					{ "value": "e|||a" }
+				]
+			}
 		],
 		"id": "pay_mbabizu24mvu3mela5njyhpit4",
 		"requested_on": "2019-08-24T14:15:22Z",

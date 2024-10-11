@@ -157,31 +157,17 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 				}
 			}
 		case l > 1:
-			exist := root.Exists(toMask.JSONKeys...)
-
-			arrIdx := collection.IndexOf(toMask.JSONKeys, "[]")
-			if arrIdx > 0 {
-				exist = len(root.GetArray(toMask.JSONKeys[:arrIdx]...)) > 0
+			arrIndices := []int{}
+			for i, key := range toMask.JSONKeys {
+				if key == "[]" {
+					arrIndices = append(arrIndices, i)
+				}
 			}
+			exist := root.Exists(toMask.JSONKeys...) || len(arrIndices) > 0
 
 			if exist {
-				if arrIdx > 0 {
-					// parent obj that is an array
-					values := root.GetArray(toMask.JSONKeys[:arrIdx]...)
-
-					for _, v := range values {
-						// Handle nested objects
-						nestedObj := v.Get(toMask.JSONKeys[arrIdx+1])
-						if nestedObj != nil {
-							value := getJSONValue(nestedObj.Get(toMask.JSONKeys[arrIdx+2:]...))
-							if value != "" {
-								maskedVal := getMaskedValue(maskChar, value, toMask)
-								replacement := fastjson.MustParse(`"` + maskedVal + `"`)
-								k := toMask.JSONKeys[arrIdx+2:]
-								nestedObj.Set(k[0], replacement)
-							}
-						}
-					}
+				if len(arrIndices) > 0 {
+					maskRecursive(root, toMask.JSONKeys, maskChar, toMask)
 				} else {
 					// get the parent obj then replace the value
 					v := root.Get(toMask.JSONKeys[:l-1]...)
@@ -200,6 +186,31 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 
 	out := root.MarshalTo([]byte{})
 	return string(out)
+}
+
+func maskRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask MaskData) {
+	if len(keys) == 0 {
+		return
+	}
+
+	if keys[0] == "[]" {
+		arr := obj.GetArray()
+		for _, item := range arr {
+			maskRecursive(item, keys[1:], maskChar, toMask)
+		}
+	} else if len(keys) == 1 {
+		value := getJSONValue(obj.Get(keys[0]))
+		if value != "" {
+			maskedVal := getMaskedValue(maskChar, value, toMask)
+			replacement := fastjson.MustParse(`"` + maskedVal + `"`)
+			obj.Set(keys[0], replacement)
+		}
+	} else {
+		nestedObj := obj.Get(keys[0])
+		if nestedObj != nil {
+			maskRecursive(nestedObj, keys[1:], maskChar, toMask)
+		}
+	}
 }
 
 func getJSONValue(jsonVal *fastjson.Value) string {

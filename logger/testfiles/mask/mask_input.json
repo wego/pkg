@@ -17,6 +17,20 @@
 				}
 			}
 		],
+		"test6": [
+			{
+				"nested": [
+					{ "value": "12345" },
+					{ "value": "abcde" }
+				]
+			},
+			{
+				"nested": [
+					{ "value": "54321" },
+					{ "value": "edcba" }
+				]
+			}
+		],
 		"id": "pay_mbabizu24mvu3mela5njyhpit4",
 		"requested_on": "2019-08-24T14:15:22Z",
 		"source": {
