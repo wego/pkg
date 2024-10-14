@@ -183,7 +183,7 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 
 			if exist {
 				if len(arrIndices) > 0 {
-					maskRecursive(root, toMask.JSONKeys, maskChar, toMask)
+					maskArrayRecursive(root, toMask.JSONKeys, maskChar, toMask)
 				} else {
 					// get the parent obj then replace the value
 					v := root.Get(toMask.JSONKeys[:l-1]...)
@@ -204,7 +204,7 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 	return string(out)
 }
 
-func maskRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask MaskData) {
+func maskArrayRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask MaskData) {
 	if len(keys) == 0 || obj == nil {
 		return
 	}
@@ -212,7 +212,7 @@ func maskRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask M
 	if keys[0] == arrayKey {
 		arr := obj.GetArray()
 		for _, item := range arr {
-			maskRecursive(item, keys[1:], maskChar, toMask)
+			maskArrayRecursive(item, keys[1:], maskChar, toMask)
 		}
 	} else if len(keys) == 1 {
 		value := getJSONValue(obj.Get(keys[0]))
@@ -224,7 +224,7 @@ func maskRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask M
 	} else {
 		nestedObj := obj.Get(keys[0])
 		if nestedObj != nil {
-			maskRecursive(nestedObj, keys[1:], maskChar, toMask)
+			maskArrayRecursive(nestedObj, keys[1:], maskChar, toMask)
 		}
 	}
 }
