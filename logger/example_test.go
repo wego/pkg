@@ -59,3 +59,35 @@ func ExampleMaskJSON() {
 	// Output:
 	// {"first":"fir** value","second":{"first":"1st of second","second":"not-an-email.com","third":{"first":"1st***************d","second":"2nd of second third","third":"3rd of second third"},"fourth":[{"email":{"value":"f****@******com"}},{"email":{"value":"s*****@******com"}}]}}
 }
+
+func ExampleRedactJSON() {
+	keys := [][]string{
+		{"first"},
+		{"second", "second"},
+		{"second", "third", "first"},
+		{"third", "[]", "value"},
+	}
+
+	input := `
+{
+  "first": "first value",
+  "second": {
+    "first": "1st of second",
+    "second": "2nd of second",
+    "third": {
+      "first": "1st of second third",
+      "second": "2nd of second third",
+      "third": "3rd of second third"
+    }
+  },
+  "third": [
+    { "value": "third value" }
+  ]
+}
+`
+
+	output := RedactJSON(input, "Wego", keys)
+	fmt.Println(output)
+	// Output:
+	// {"first":"Wego","second":{"first":"1st of second","second":"Wego","third":{"first":"Wego","second":"2nd of second third","third":"3rd of second third"}},"third":[{"value":"Wego"}]}
+}
