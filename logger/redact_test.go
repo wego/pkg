@@ -627,3 +627,27 @@ func Test_RedactJSON_Ok(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(compactExpectedOutput, compactOutput)
 }
+
+func BenchmarkRedactJSON(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = logger.RedactJSON(jsonInput, "[Filtered by Wego]", [][]string{
+			{"id"},
+			{"source", "billing_address", "zip"},
+			{"3ds", "xid"},
+			{"test1", "[]", "nested", "[]", "value"},
+		})
+	}
+}
+
+func BenchmarkRedactJSONParallel(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = logger.RedactJSON(jsonInput, "[Filtered by Wego]", [][]string{
+				{"id"},
+				{"source", "billing_address", "zip"},
+				{"3ds", "xid"},
+				{"test1", "[]", "nested", "[]", "value"},
+			})
+		}
+	})
+}
