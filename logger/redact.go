@@ -76,41 +76,41 @@ func RedactJSON(json, replacement string, keys [][]string) string {
 	if replacement == "" {
 		replacement = defaultReplacement
 	}
-	r := fastjson.MustParse(`"` + replacement + `"`)
+	replacementValue := fastjson.MustParse(`"` + replacement + `"`)
 	var p fastjson.Parser
 	root, err := p.Parse(json)
 	if err != nil {
 		return err.Error()
 	}
-	for _, k := range keys {
-		l := len(k)
+	for _, toRedact := range keys {
+		l := len(toRedact)
 		switch {
 		case l == 1:
-			if exist := root.Exists(k[0]); exist {
-				root.Set(k[0], r)
+			if exist := root.Exists(toRedact[0]); exist {
+				root.Set(toRedact[0], replacementValue)
 			}
 		case l > 1:
 			arrIndices := []int{}
-			for i, key := range k {
+			for i, key := range toRedact {
 				if key == arrayKey {
 					arrIndices = append(arrIndices, i)
 				}
 			}
 			// `root.Exists(toMask.JSONKeys...)` will not work when there are array indices (more than 1 "[]"), so we
 			// should also try to set `exist` to `true` if the caller inputs array indices.
-			exist := root.Exists(k...) || len(arrIndices) > 0
+			exist := root.Exists(toRedact...) || len(arrIndices) > 0
 
 			if exist {
 				if len(arrIndices) > 0 {
-					redactArrayRecursive(root, k, r)
+					redactArrayRecursive(root, toRedact, replacementValue)
 				} else {
 					// get the parent obj then replace the value
-					v := root.Get(k[:l-1]...)
+					v := root.Get(toRedact[:l-1]...)
 
 					// currently do not support masking for non-string values
-					value := getJSONValue(v.Get(k[l-1]))
+					value := getJSONValue(v.Get(toRedact[l-1]))
 					if value != "" {
-						v.Set(k[l-1], r)
+						v.Set(toRedact[l-1], replacementValue)
 					}
 				}
 			}
