@@ -149,6 +149,20 @@ var (
 		</soap:Body>
 	</soap:Envelope>`
 	jsonInput = `{
+		"test1": [
+			{
+				"nested": [
+					{ "value": "12345" },
+					{ "value": "abcde" }
+				]
+			},
+			{
+				"nested": [
+					{ "value": "54321" },
+					{ "value": "edcba" }
+				]
+			}
+		],
 		"id": "pay_mbabizu24mvu3mela5njyhpit4",
 		"requested_on": "2019-08-24T14:15:22Z",
 		"source": {
@@ -262,6 +276,20 @@ var (
 		}
 	  }`
 	expectedJSONOutput = `{
+		"test1": [
+			{
+				"nested": [
+					{ "value": "Wego" },
+					{ "value": "Wego" }
+				]
+			},
+			{
+				"nested": [
+					{ "value": "Wego" },
+					{ "value": "Wego" }
+				]
+			}
+		],
 		"id": "Wego",
 		"requested_on": "2019-08-24T14:15:22Z",
 		"source": {
@@ -375,6 +403,20 @@ var (
 		}
 	  }`
 	defaultExpectedJSONOutput = `{
+		"test1": [
+			{
+				"nested": [
+					{ "value": "[Filtered by Wego]" },
+					{ "value": "[Filtered by Wego]" }
+				]
+			},
+			{
+				"nested": [
+					{ "value": "[Filtered by Wego]" },
+					{ "value": "[Filtered by Wego]" }
+				]
+			}
+		],
 		"id": "[Filtered by Wego]",
 		"requested_on": "2019-08-24T14:15:22Z",
 		"source": {
@@ -560,14 +602,25 @@ func Test_RedactJSON_Ok(t *testing.T) {
 	assert := assert.New(t)
 	var compactOutput, compactExpectedOutput bytes.Buffer
 
-	output := logger.RedactJSON(jsonInput, "Wego", [][]string{{"id"}, {"source", "billing_address", "zip"}, {"3ds", "xid"}})
+	output := logger.RedactJSON(jsonInput, "Wego", [][]string{
+		{"id"},
+		{"source", "billing_address", "zip"},
+		{"3ds", "xid"},
+		{"test1", "[]", "nested", "[]", "value"},
+	})
+
 	err := json.Compact(&compactOutput, []byte(output))
 	assert.NoError(err)
 	err = json.Compact(&compactExpectedOutput, []byte(expectedJSONOutput))
 	assert.NoError(err)
 	assert.Equal(compactExpectedOutput, compactOutput)
 
-	output = logger.RedactJSON(jsonInput, "", [][]string{{"id"}, {"source", "billing_address", "zip"}, {"3ds", "xid"}})
+	output = logger.RedactJSON(jsonInput, "", [][]string{
+		{"id"},
+		{"source", "billing_address", "zip"},
+		{"3ds", "xid"},
+		{"test1", "[]", "nested", "[]", "value"},
+	})
 	err = json.Compact(&compactOutput, []byte(output))
 	assert.NoError(err)
 	err = json.Compact(&compactExpectedOutput, []byte(defaultExpectedJSONOutput))

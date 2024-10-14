@@ -66,57 +66,88 @@ func findTagAndMask(doc *xmlquery.Node, maskChar string, toMask MaskData) {
 	}
 }
 
-// MaskJSON mask parts of the json key paths value from the input json with replacement
-//
-// Example:
-//
-//	input = `
-//	{
-//		"first": "first value",
-//		"second": {
-//			"first": "1st of second",
-//			"second": "second@wego.com",
-//			"third": {
-//				"first": "1st of second third",
-//				"second": "2nd of second third",
-//				"third": "3rd of second third",
-//			}
-//		}
-//	}`
-//	maskData := []logger.MaskData{
-//		{
-//			JSONKey:         []string{"first"},
-//			FistCharsToShow: 3,
-//			LastCharsToShow: 6,
-//			KeepSameLength: true,
-//		},
-//		{
-//			JSONKey:         []string{"second", "second"},
-//			FistCharsToShow: 2,
-//			LastCharsToShow: 3,
-//			CharsToIgnore:   []rune{'@'},
-//			KeepSameLength: true,
-//		},
-//		{
-//			JSONKey:         []string{"second", "third", "first"},
-//			FistCharsToShow: 3,
-//			LastCharsToShow: 1,
-//			KeepSameLength: true,
-//		},
-//	}
-//	MaskJSON(input, "!", maskData) will return
-//	{
-//		"first": "fir!! value",
-//		"second": {
-//			"first": "1st of second",
-//			"second": "se!!!!@!!!!!com",
-//			"third": {
-//				"first": "1st!!!!!!!!!!!!!!!d",
-//				"second": "2nd of second third",
-//				"third": "3rd of second third",
-//			}
-//		}
-//	}
+/*
+MaskJSON mask parts of the json key paths value from the input json with replacement
+
+For nested arrays, use `[]` as the key.
+
+With the following JSON:
+
+	{
+	  "first": "first value",
+	  "second": {
+	    "first": "1st of second",
+	    "second": "second@wego.com",
+	    "third": {
+	      "first": "1st of second third",
+	      "second": "2nd of second third",
+	      "third": "3rd of second third"
+	    },
+	    "fourth": [
+	      { "email": { "value": "first@email.com" } },
+	      { "email": { "value": "second@email.com" } }
+	    ]
+	  }
+	}
+
+And the following `logger.MaskData`:
+
+	maskData := []logger.MaskData{
+		{
+			JSONKeys:         []string{"first"},
+			FirstCharsToShow: 3,
+			LastCharsToShow: 6,
+			KeepSameLength: true,
+		},
+		{
+			JSONKeys:         []string{"second", "second"},
+			FirstCharsToShow: 2,
+			LastCharsToShow: 3,
+			CharsToIgnore:   []rune{'@'},
+			KeepSameLength: true,
+		},
+		{
+			JSONKeys:         []string{"second", "third", "first"},
+			FirstCharsToShow: 3,
+			LastCharsToShow: 1,
+			KeepSameLength: true,
+		},
+		{
+			JSONKeys:         []string{"second", "fourth", "[]", "email", "value"},
+			FirstCharsToShow: 1,
+			LastCharsToShow: 3,
+			CharsToIgnore:   []rune{'@'},
+			KeepSameLength: true,
+		},
+	}
+
+maskedJSON := MaskJSON(input, "!", maskData) will return:
+
+	{
+	  "first": "fir!! value",
+	  "second": {
+	    "first": "1st of second",
+	    "second": "se!!!!@!!!!!com",
+	    "third": {
+	      "first": "1st!!!!!!!!!!!!!!!d",
+	      "second": "2nd of second third",
+	      "third": "3rd of second third"
+	    },
+	    "fourth": [
+	      {
+	        "email": {
+	          "value": "f!!!!!!@!!!!!!com"
+	        }
+	      },
+	      {
+	        "email": {
+	          "value": "s!!!!!!@!!!!!!com"
+	        }
+	      }
+	    ]
+	  }
+	}
+*/
 func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 	maskChar = maskCharOrDefault(maskChar)
 
@@ -140,16 +171,30 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 				}
 			}
 		case l > 1:
-			if exist := root.Exists(toMask.JSONKeys...); exist {
-				// get the parent obj then replace the value
-				v := root.Get(toMask.JSONKeys[:l-1]...)
+			arrIndices := []int{}
+			for i, key := range toMask.JSONKeys {
+				if key == arrayKey {
+					arrIndices = append(arrIndices, i)
+				}
+			}
+			// `root.Exists(toMask.JSONKeys...)` will not work when there are array indices (more than 1 "[]"), so we
+			// should also try to set `exist` to `true` if the caller inputs array indices.
+			exist := root.Exists(toMask.JSONKeys...) || len(arrIndices) > 0
 
-				// currently do not support masking for non-string values
-				value := getJSONValue(v.Get(toMask.JSONKeys[l-1]))
-				if value != "" {
-					maskedVal := getMaskedValue(maskChar, value, toMask)
-					replacement := fastjson.MustParse(`"` + maskedVal + `"`)
-					v.Set(toMask.JSONKeys[l-1], replacement)
+			if exist {
+				if len(arrIndices) > 0 {
+					maskArrayRecursive(root, toMask.JSONKeys, maskChar, toMask)
+				} else {
+					// get the parent obj then replace the value
+					v := root.Get(toMask.JSONKeys[:l-1]...)
+
+					// currently do not support masking for non-string values
+					value := getJSONValue(v.Get(toMask.JSONKeys[l-1]))
+					if value != "" {
+						maskedVal := getMaskedValue(maskChar, value, toMask)
+						replacement := fastjson.MustParse(`"` + maskedVal + `"`)
+						v.Set(toMask.JSONKeys[l-1], replacement)
+					}
 				}
 			}
 		}
@@ -157,6 +202,31 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 
 	out := root.MarshalTo([]byte{})
 	return string(out)
+}
+
+func maskArrayRecursive(obj *fastjson.Value, keys []string, maskChar string, toMask MaskData) {
+	if len(keys) == 0 || obj == nil {
+		return
+	}
+
+	if keys[0] == arrayKey {
+		arr := obj.GetArray()
+		for _, item := range arr {
+			maskArrayRecursive(item, keys[1:], maskChar, toMask)
+		}
+	} else if len(keys) == 1 {
+		value := getJSONValue(obj.Get(keys[0]))
+		if value != "" {
+			maskedVal := getMaskedValue(maskChar, value, toMask)
+			replacement := fastjson.MustParse(`"` + maskedVal + `"`)
+			obj.Set(keys[0], replacement)
+		}
+	} else {
+		nestedObj := obj.Get(keys[0])
+		if nestedObj != nil {
+			maskArrayRecursive(nestedObj, keys[1:], maskChar, toMask)
+		}
+	}
 }
 
 func getJSONValue(jsonVal *fastjson.Value) string {
