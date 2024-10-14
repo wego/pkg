@@ -122,7 +122,7 @@ func RedactJSON(json, replacement string, keys [][]string) string {
 }
 
 func redactRecursive(obj *fastjson.Value, keys []string, replacementValue *fastjson.Value) {
-	if len(keys) == 0 || obj == nil {
+	if len(keys) == 0 || obj == nil || replacementValue == nil {
 		return
 	}
 
