@@ -151,7 +151,7 @@ func TestRequest_fields(t *testing.T) {
 				assert.Equal(int64(200), fields[8].Integer)
 				assert.Equal(Headers{}, fields[9].Interface)
 				assert.Equal("response-body", fields[10].String)
-				assert.Equal(requestedAt.Format(time.RFC3339), fields[11].String)
+				assert.Equal(requestedAt.Format(time.RFC3339Nano), fields[11].String)
 				assert.Equal(duration.Milliseconds(), fields[12].Integer)
 				assert.Equal("mock error", fields[13].String)
 			}

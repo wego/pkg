@@ -106,7 +106,7 @@ func (r *Request) fields() []zapcore.Field {
 		zap.Int32("status_code", r.StatusCode),
 		zap.Array("response_headers", r.ResponseHeaders),
 		zap.String("response_body", r.ResponseBody),
-		zap.String("requested_at", r.RequestedAt.Format(time.RFC3339)),
+		zap.String("requested_at", r.RequestedAt.Format(time.RFC3339Nano)),
 		zap.Int64("duration_in_ms", r.Duration.Milliseconds()),
 	}...)
 
