@@ -29,48 +29,6 @@ func RedactXML(xml, replacement string, tags []string) string {
 RedactJSON replaces value of key paths from the input JSON with replacement or defaultReplacement when replacement is empty.
 
 For nested arrays, use `[]` as the key.
-
-With the following JSON:
-
-	{
-	  "first": "first value",
-	  "second": {
-	    "first": "1st of second",
-	    "second": "2nd of second",
-	    "third": {
-	      "first": "1st of second third",
-	      "second": "2nd of second third",
-	      "third": "3rd of second third"
-	    }
-	  },
-	  "third": [
-	    { "value": "third value" }
-	  ]
-	}
-
-And the following usage:
-
-	keys := [][]string{{"first"}, {"second", "second"}, {"second", "third", "first"}, {"third", "[]", "value"}}
-	result := RedactJSON(input, "Wego", keys)
-	fmt.Println(result)
-
-We get the following output:
-
-	{
-	  "first": "Wego",
-	  "second": {
-	    "first": "1st of second",
-	    "second": "Wego",
-	    "third": {
-	      "first": "Wego",
-	      "second": "2nd of second third",
-	      "third": "3rd of second third"
-	    }
-	  },
-	  "third": [
-	    { "value": "Wego" }
-	  ]
-	}
 */
 func RedactJSON(json, replacement string, keys [][]string) string {
 	if replacement == "" {

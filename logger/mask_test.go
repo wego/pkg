@@ -327,3 +327,105 @@ func parseJSONToString(jsonFileName string) (string, error) {
 	}
 	return string(file[:]), nil
 }
+
+func BenchmarkMaskJSON(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = logger.MaskJSON(jsonInput, "*", []logger.MaskData{
+			{
+				JSONKeys:         []string{"test1"},
+				FirstCharsToShow: 0,
+				LastCharsToShow:  0,
+				KeepSameLength:   true,
+			},
+			{
+				JSONKeys:         []string{"test2"},
+				FirstCharsToShow: 2,
+				LastCharsToShow:  0,
+				KeepSameLength:   true,
+			},
+			{
+				JSONKeys:         []string{"test3"},
+				FirstCharsToShow: 0,
+				LastCharsToShow:  3,
+				KeepSameLength:   true,
+			},
+			{
+				JSONKeys:         []string{"test4"},
+				FirstCharsToShow: 3,
+				LastCharsToShow:  3,
+				KeepSameLength:   true,
+			},
+			{
+				JSONKeys:         []string{"test5", "[]", "customer", "name"},
+				FirstCharsToShow: 2,
+				LastCharsToShow:  3,
+				KeepSameLength:   false,
+			},
+			{
+				JSONKeys:         []string{"test5", "[]", "customer", "email"},
+				FirstCharsToShow: 2,
+				LastCharsToShow:  3,
+				CharsToIgnore:    []rune{'@'},
+				KeepSameLength:   true,
+			},
+			{
+				JSONKeys:         []string{"test6", "[]", "nested", "[]", "value"},
+				FirstCharsToShow: 1,
+				LastCharsToShow:  1,
+				KeepSameLength:   true,
+			},
+		})
+	}
+}
+
+func BenchmarkMaskJSONParallel(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = logger.MaskJSON(jsonInput, "*", []logger.MaskData{
+				{
+					JSONKeys:         []string{"test1"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"test2"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"test3"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  3,
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"test4"},
+					FirstCharsToShow: 3,
+					LastCharsToShow:  3,
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"test5", "[]", "customer", "name"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  3,
+					KeepSameLength:   false,
+				},
+				{
+					JSONKeys:         []string{"test5", "[]", "customer", "email"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  3,
+					CharsToIgnore:    []rune{'@'},
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"test6", "[]", "nested", "[]", "value"},
+					FirstCharsToShow: 1,
+					LastCharsToShow:  1,
+					KeepSameLength:   true,
+				},
+			})
+		}
+	})
+}
