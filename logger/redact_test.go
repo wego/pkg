@@ -3,6 +3,7 @@ package logger_test
 import (
 	"bytes"
 	"encoding/json"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -650,4 +651,27 @@ func BenchmarkRedactJSONParallel(b *testing.B) {
 			})
 		}
 	})
+}
+
+func TestRedactFormURLEncoded(t *testing.T) {
+	assert := assert.New(t)
+
+	keys := [][]string{
+		{"field1"},
+		{"field3"},
+	}
+
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+
+	input := formData.Encode()
+	output := logger.RedactFormURLEncoded(input, "[Filtered by Wego]", keys)
+
+	expected := "field1=[Filtered by Wego]&field1=[Filtered by Wego]&field2=field2value1&field3=[Filtered by Wego]"
+	expectedFormData, err := url.ParseQuery(expected)
+	assert.NoError(err)
+	assert.Equal(expectedFormData.Encode(), output)
 }

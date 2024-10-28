@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"encoding/json"
+	"net/url"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
@@ -10,9 +12,7 @@ import (
 
 // RedactXML replaces inner text of tags from the input XML with replacement or defaultReplacement when replacement is empty
 func RedactXML(xml, replacement string, tags []string) string {
-	if replacement == "" {
-		replacement = defaultReplacement
-	}
+	replacement = replacementCharOrDefault(replacement)
 	doc, err := xmlquery.Parse(strings.NewReader(xml))
 	if err != nil {
 		return errors.New("invalid XML input", err).Error()
@@ -31,9 +31,7 @@ RedactJSON replaces value of key paths from the input JSON with replacement or d
 For nested arrays, use `[]` as the key.
 */
 func RedactJSON(json, replacement string, keys [][]string) string {
-	if replacement == "" {
-		replacement = defaultReplacement
-	}
+	replacement = replacementCharOrDefault(replacement)
 	replacementValue := fastjson.MustParse(`"` + replacement + `"`)
 	var p fastjson.Parser
 	root, err := p.Parse(json)
@@ -45,6 +43,17 @@ func RedactJSON(json, replacement string, keys [][]string) string {
 		switch {
 		case l == 1:
 			if exist := root.Exists(toRedact[0]); exist {
+				obj := root.Get(toRedact[0])
+				// If the object is an array, we need to redact all the items in the array.
+				if obj.Type() == fastjson.TypeArray {
+					arr := obj.GetArray()
+					for i := range arr {
+						arr[i] = replacementValue
+					}
+
+					continue
+				}
+
 				root.Set(toRedact[0], replacementValue)
 			}
 		case l > 1:
@@ -77,6 +86,13 @@ func RedactJSON(json, replacement string, keys [][]string) string {
 
 	out := root.MarshalTo([]byte{})
 	return string(out)
+}
+
+func replacementCharOrDefault(replacement string) string {
+	if replacement == "" {
+		return defaultReplacement
+	}
+	return replacement
 }
 
 func redactArrayRecursive(obj *fastjson.Value, keys []string, replacementValue *fastjson.Value) {
@@ -120,4 +136,28 @@ func findTextMulti(doc *xmlquery.Node, tags []string) []string {
 		text = append(text, findText(doc, tag)...)
 	}
 	return text
+}
+
+// RedactFormURLEncoded replaces value of keys from the input form encoded string with replacement or defaultReplacement when replacement is empty.
+func RedactFormURLEncoded(form string, replacement string, keys [][]string) string {
+	replacement = replacementCharOrDefault(replacement)
+
+	r, err := url.ParseQuery(form)
+	if err != nil {
+		return form
+	}
+	bytes, err := json.Marshal(r)
+	if err != nil {
+		return form
+	}
+	redactedBody := RedactJSON(string(bytes), replacement, keys)
+
+	// Unmarshal the redacted JSON to a url.Values
+	var redactedForm url.Values
+	err = json.Unmarshal([]byte(redactedBody), &redactedForm)
+	if err != nil {
+		return form
+	}
+
+	return redactedForm.Encode()
 }
