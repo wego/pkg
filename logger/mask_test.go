@@ -3,6 +3,7 @@ package logger_test
 import (
 	"bytes"
 	"encoding/json"
+	"net/url"
 	"os"
 	"testing"
 
@@ -428,4 +429,37 @@ func BenchmarkMaskJSONParallel(b *testing.B) {
 			})
 		}
 	})
+}
+
+func TestMaskFormURLEncoded(t *testing.T) {
+	assert := assert.New(t)
+
+	maskData := []logger.MaskData{
+		{
+			JSONKeys:         []string{"field1"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  2,
+			KeepSameLength:   false,
+		},
+		{
+			JSONKeys:         []string{"field3"},
+			FirstCharsToShow: 0,
+			LastCharsToShow:  0,
+			KeepSameLength:   true,
+		},
+	}
+
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+
+	input := formData.Encode()
+	output := logger.MaskFormURLEncoded(input, "*", maskData)
+
+	expected := "field1=fi*e1&field1=fi*e2&field2=field2value1&field3=**************"
+	expectedFormData, err := url.ParseQuery(expected)
+	assert.NoError(err)
+	assert.Equal(expectedFormData.Encode(), output)
 }
