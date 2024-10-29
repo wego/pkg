@@ -463,3 +463,61 @@ func TestMaskFormURLEncoded(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expectedFormData.Encode(), output)
 }
+
+func BenchmarkMaskFormURLEncoded(b *testing.B) {
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+
+	input := formData.Encode()
+	maskData := []logger.MaskData{
+		{
+			JSONKeys:         []string{"field1"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  2,
+			KeepSameLength:   false,
+		},
+		{
+			JSONKeys:         []string{"field3"},
+			FirstCharsToShow: 0,
+			LastCharsToShow:  0,
+			KeepSameLength:   true,
+		},
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = logger.MaskFormURLEncoded(input, "*", maskData)
+	}
+}
+
+func BenchmarkMaskFormURLEncodedParallel(b *testing.B) {
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+
+	input := formData.Encode()
+	maskData := []logger.MaskData{
+		{
+			JSONKeys:         []string{"field1"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  2,
+			KeepSameLength:   false,
+		},
+		{
+			JSONKeys:         []string{"field3"},
+			FirstCharsToShow: 0,
+			LastCharsToShow:  0,
+			KeepSameLength:   true,
+		},
+	}
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = logger.MaskFormURLEncoded(input, "*", maskData)
+		}
+	})
+}
