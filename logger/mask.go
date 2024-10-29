@@ -2,6 +2,7 @@ package logger
 
 import (
 	"net/mail"
+	"net/url"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
@@ -228,4 +229,26 @@ func willMask(valueToReplace string, restrictionType MaskRestrictionType) bool {
 	}
 
 	return true
+}
+
+// MaskFormURLEncoded mask parts of the key paths values from the input form encoded string with replacement
+func MaskFormURLEncoded(form string, maskChar string, toMasks []MaskData) string {
+	maskChar = maskCharOrDefault(maskChar)
+
+	r, err := url.ParseQuery(form)
+	if err != nil {
+		return form
+	}
+
+	for _, toMask := range toMasks {
+		for _, key := range toMask.JSONKeys {
+			if values, exists := r[key]; exists {
+				for i := range values {
+					r[key][i] = getMaskedValue(maskChar, values[i], toMask)
+				}
+			}
+		}
+	}
+
+	return r.Encode()
 }

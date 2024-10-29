@@ -3,6 +3,7 @@ package logger_test
 import (
 	"bytes"
 	"encoding/json"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -648,6 +649,69 @@ func BenchmarkRedactJSONParallel(b *testing.B) {
 				{"3ds", "xid"},
 				{"test1", "[]", "nested", "[]", "value"},
 			})
+		}
+	})
+}
+
+func TestRedactFormURLEncoded(t *testing.T) {
+	assert := assert.New(t)
+
+	keys := []string{
+		"field1",
+		"field3",
+		"field4.nested.data",
+	}
+
+	formData := url.Values{
+		"field1":             []string{"field1value1", "field1value2"},
+		"field2":             []string{"field2value1"},
+		"field3":             []string{"sensitive_data"},
+		"field4.nested.data": []string{"data"},
+	}
+	input := formData.Encode()
+
+	output := logger.RedactFormURLEncoded(input, "[Filtered by Wego]", keys)
+
+	expected := "field1=[Filtered by Wego]&field1=[Filtered by Wego]&field2=field2value1&field3=[Filtered by Wego]&field4.nested.data=[Filtered by Wego]"
+	expectedFormData, err := url.ParseQuery(expected)
+	assert.NoError(err)
+	assert.Equal(expectedFormData.Encode(), output)
+}
+
+func BenchmarkRedactFormURLEncoded(b *testing.B) {
+	keys := []string{
+		"field1",
+		"field3",
+	}
+
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+	input := formData.Encode()
+
+	for i := 0; i < b.N; i++ {
+		_ = logger.RedactFormURLEncoded(input, "[Filtered by Wego]", keys)
+	}
+}
+
+func BenchmarkRedactFormURLEncodedParallel(b *testing.B) {
+	keys := []string{
+		"field1",
+		"field3",
+	}
+
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+	input := formData.Encode()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = logger.RedactFormURLEncoded(input, "[Filtered by Wego]", keys)
 		}
 	})
 }
