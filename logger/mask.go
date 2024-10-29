@@ -233,6 +233,10 @@ func willMask(valueToReplace string, restrictionType MaskRestrictionType) bool {
 
 // MaskFormURLEncoded mask parts of the key paths values from the input form encoded string with replacement
 func MaskFormURLEncoded(form string, maskChar string, toMasks []MaskData) string {
+	if len(toMasks) == 0 {
+		return form
+	}
+
 	maskChar = maskCharOrDefault(maskChar)
 
 	r, err := url.ParseQuery(form)
@@ -240,12 +244,18 @@ func MaskFormURLEncoded(form string, maskChar string, toMasks []MaskData) string
 		return form
 	}
 
+	keyToMask := make(map[string]MaskData, len(toMasks))
 	for _, toMask := range toMasks {
-		for _, key := range toMask.JSONKeys {
-			if values, exists := r[key]; exists {
-				for i := range values {
-					r[key][i] = getMaskedValue(maskChar, values[i], toMask)
-				}
+		if len(toMask.JSONKeys) > 0 {
+			keyToMask[toMask.JSONKeys[0]] = toMask
+		}
+	}
+
+	// Single pass through values
+	for key, values := range r {
+		if toMask, exists := keyToMask[key]; exists {
+			for i := range values {
+				r[key][i] = getMaskedValue(maskChar, values[i], toMask)
 			}
 		}
 	}
