@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"encoding/json"
 	"net/url"
 	"strings"
 
@@ -43,17 +42,6 @@ func RedactJSON(json, replacement string, keys [][]string) string {
 		switch {
 		case l == 1:
 			if exist := root.Exists(toRedact[0]); exist {
-				obj := root.Get(toRedact[0])
-				// If the object is an array, we need to redact all the items in the array.
-				if obj.Type() == fastjson.TypeArray {
-					arr := obj.GetArray()
-					for i := range arr {
-						arr[i] = replacementValue
-					}
-
-					continue
-				}
-
 				root.Set(toRedact[0], replacementValue)
 			}
 		case l > 1:
@@ -146,18 +134,16 @@ func RedactFormURLEncoded(form string, replacement string, keys [][]string) stri
 	if err != nil {
 		return form
 	}
-	bytes, err := json.Marshal(r)
-	if err != nil {
-		return form
-	}
-	redactedBody := RedactJSON(string(bytes), replacement, keys)
 
-	// Unmarshal the redacted JSON to a url.Values
-	var redactedForm url.Values
-	err = json.Unmarshal([]byte(redactedBody), &redactedForm)
-	if err != nil {
-		return form
+	for _, key := range keys {
+		if len(key) >= 1 {
+			if values, exists := r[key[0]]; exists {
+				for i := range values {
+					r[key[0]][i] = replacement
+				}
+			}
+		}
 	}
 
-	return redactedForm.Encode()
+	return r.Encode()
 }
