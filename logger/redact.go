@@ -128,29 +128,19 @@ func findTextMulti(doc *xmlquery.Node, tags []string) []string {
 
 // RedactFormURLEncoded replaces value of keys from the input form encoded string with replacement or defaultReplacement when replacement is empty.
 func RedactFormURLEncoded(form string, replacement string, keys [][]string) string {
-	if form == "" || len(keys) == 0 {
-		return form
-	}
+	replacement = replacementCharOrDefault(replacement)
 
 	r, err := url.ParseQuery(form)
 	if err != nil {
 		return form
 	}
 
-	replacement = replacementCharOrDefault(replacement)
-
-	keyMap := make(map[string]struct{}, len(keys))
 	for _, key := range keys {
 		if len(key) >= 1 {
-			keyMap[key[0]] = struct{}{}
-		}
-	}
-
-	// Single pass through values
-	for key, values := range r {
-		if _, exists := keyMap[key]; exists {
-			for i := range values {
-				r[key][i] = replacement
+			if values, exists := r[key[0]]; exists {
+				for i := range values {
+					r[key[0]][i] = replacement
+				}
 			}
 		}
 	}
