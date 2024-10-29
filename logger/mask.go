@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"encoding/json"
 	"net/mail"
 	"net/url"
 	"strings"
@@ -87,23 +86,8 @@ func MaskJSON(json, maskChar string, toMasks []MaskData) string {
 		switch {
 		case l == 1:
 			if exist := root.Exists(toMask.JSONKeys[0]); exist {
-				obj := root.Get(toMask.JSONKeys[0])
-				// If the value is an array, we mask all the items in the array
-				if obj.Type() == fastjson.TypeArray {
-					arr := obj.GetArray()
-					for i, item := range arr {
-						value := getJSONValue(item)
-						if value != "" {
-							maskedVal := getMaskedValue(maskChar, value, toMask)
-							replacement := fastjson.MustParse(`"` + maskedVal + `"`)
-							arr[i] = replacement
-						}
-					}
-					continue
-				}
-
 				// currently do not support masking for non-string values
-				value := getJSONValue(obj)
+				value := getJSONValue(root.Get(toMask.JSONKeys[0]))
 				if value != "" {
 					maskedVal := getMaskedValue(maskChar, value, toMask)
 					replacement := fastjson.MustParse(`"` + maskedVal + `"`)
@@ -255,18 +239,16 @@ func MaskFormURLEncoded(form string, maskChar string, toMasks []MaskData) string
 	if err != nil {
 		return form
 	}
-	bytes, err := json.Marshal(r)
-	if err != nil {
-		return form
-	}
-	maskedBody := MaskJSON(string(bytes), maskChar, toMasks)
 
-	// Unmarshal the masked JSON to a url.Values
-	var maskedForm url.Values
-	err = json.Unmarshal([]byte(maskedBody), &maskedForm)
-	if err != nil {
-		return form
+	for _, toMask := range toMasks {
+		for _, key := range toMask.JSONKeys {
+			if values, exists := r[key]; exists {
+				for i := range values {
+					r[key][i] = getMaskedValue(maskChar, values[i], toMask)
+				}
+			}
+		}
 	}
 
-	return maskedForm.Encode()
+	return r.Encode()
 }
