@@ -675,3 +675,41 @@ func TestRedactFormURLEncoded(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expectedFormData.Encode(), output)
 }
+
+func BenchmarkRedactFormURLEncoded(b *testing.B) {
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+
+	input := formData.Encode()
+	keys := [][]string{
+		{"field1"},
+		{"field3"},
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = logger.RedactFormURLEncoded(input, "[Filtered by Wego]", keys)
+	}
+}
+
+func BenchmarkRedactFormURLEncodedParallel(b *testing.B) {
+	formData := url.Values{
+		"field1": []string{"field1value1", "field1value2"},
+		"field2": []string{"field2value1"},
+		"field3": []string{"sensitive_data"},
+	}
+
+	input := formData.Encode()
+	keys := [][]string{
+		{"field1"},
+		{"field3"},
+	}
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = logger.RedactFormURLEncoded(input, "[Filtered by Wego]", keys)
+		}
+	})
+}
