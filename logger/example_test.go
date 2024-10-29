@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"net/url"
 )
 
 func ExampleMaskJSON() {
@@ -90,4 +91,25 @@ func ExampleRedactJSON() {
 	_, _ = fmt.Println(output)
 	// Output:
 	// {"first":"Wego","second":{"first":"1st of second","second":"Wego","third":{"first":"Wego","second":"2nd of second third","third":"3rd of second third"}},"third":[{"value":"Wego"}]}
+}
+
+func ExampleRedactFormURLEncoded() {
+	keys := []string{
+		"field1",
+		"field3",
+		"field4.nested.data",
+	}
+
+	formData := url.Values{
+		"field1":             []string{"field1value1", "field1value2"},
+		"field2":             []string{"field2value1"},
+		"field3":             []string{"sensitive_data"},
+		"field4.nested.data": []string{"data"},
+	}
+	input := formData.Encode()
+
+	output := RedactFormURLEncoded(input, "Wego", keys)
+	_, _ = fmt.Println(output)
+	// Output:
+	// field1=Wego&field1=Wego&field2=field2value1&field3=Wego&field4.nested.data=Wego
 }
