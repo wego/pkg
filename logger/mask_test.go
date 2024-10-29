@@ -447,18 +447,25 @@ func TestMaskFormURLEncoded(t *testing.T) {
 			LastCharsToShow:  0,
 			KeepSameLength:   true,
 		},
+		{
+			JSONKeys:         []string{"field4", "but-nested-doesnt-matter"},
+			FirstCharsToShow: 0,
+			LastCharsToShow:  0,
+			KeepSameLength:   true,
+		},
 	}
 
 	formData := url.Values{
 		"field1": []string{"field1value1", "field1value2"},
 		"field2": []string{"field2value1"},
 		"field3": []string{"sensitive_data"},
+		"field4": []string{"data"},
 	}
 
 	input := formData.Encode()
 	output := logger.MaskFormURLEncoded(input, "*", maskData)
 
-	expected := "field1=fi*e1&field1=fi*e2&field2=field2value1&field3=**************"
+	expected := "field1=fi*e1&field1=fi*e2&field2=field2value1&field3=**************&field4=****"
 	expectedFormData, err := url.ParseQuery(expected)
 	assert.NoError(err)
 	assert.Equal(expectedFormData.Encode(), output)
