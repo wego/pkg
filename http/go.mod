@@ -1,3 +1,3 @@
 module github.com/wego/pkg/http
 
-go 1.19
+go 1.22

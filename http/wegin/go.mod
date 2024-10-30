@@ -1,6 +1,6 @@
 module github.com/wego/pkg/http/wegin
 
-go 1.19
+go 1.22
 
 require (
 	github.com/gin-gonic/gin v1.9.1
