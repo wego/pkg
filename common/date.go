@@ -11,7 +11,7 @@ type Date time.Time
 
 const layout = "2006-01-02"
 
-// UnmarshalJSON Parses the json string into Date
+// UnmarshalJSON Parses the json string to the Date
 func (d *Date) UnmarshalJSON(b []byte) (err error) {
 	s := strings.Trim(string(b), `"`)
 	nt, err := time.Parse(layout, s)
@@ -24,7 +24,7 @@ func (d Date) MarshalJSON() ([]byte, error) {
 	return []byte(d.quote()), nil
 }
 
-// UnmarshalText Parses the text string into Date
+// UnmarshalText Parses the text string to the Date
 func (d *Date) UnmarshalText(text []byte) (err error) {
 	s := strings.Trim(string(text), `"`)
 	parsedTime, err := time.Parse(layout, s)
@@ -35,6 +35,14 @@ func (d *Date) UnmarshalText(text []byte) (err error) {
 // MarshalText marshall Date into Text
 func (d Date) MarshalText() ([]byte, error) {
 	return []byte(d.quote()), nil
+}
+
+// UnmarshalParam Parses the form's value to the Date
+func (d *Date) UnmarshalParam(param string) (err error) {
+	s := strings.Trim(param, `"`)
+	parsedTime, err := time.Parse(layout, s)
+	*d = Date(parsedTime)
+	return
 }
 
 // String returns the time in the custom format

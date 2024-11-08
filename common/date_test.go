@@ -66,6 +66,64 @@ func TestDate_MarshallJson(t *testing.T) {
 	assert.Equal([]byte(`"1999-12-31"`), result)
 }
 
+func TestDate_UnmarshalParam(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected common.Date
+		hasError bool
+	}{
+		{
+			name:     "Invalid date format",
+			input:    `"2020-30-02"`,
+			expected: common.Date{},
+			hasError: true,
+		},
+		{
+			name:     "Empty date",
+			input:    `""`,
+			expected: common.Date{},
+			hasError: true,
+		},
+		{
+			name:     "Normal date without quotes",
+			input:    `1999-12-31`,
+			expected: common.Date(time.Date(1999, 12, 31, 0, 0, 0, 0, time.UTC)),
+			hasError: false,
+		},
+		{
+			name:     "Normal date with quotes",
+			input:    `"1999-12-31"`,
+			expected: common.Date(time.Date(1999, 12, 31, 0, 0, 0, 0, time.UTC)),
+			hasError: false,
+		},
+	}
+
+	assert := assert.New(t)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var result common.Date
+			err := result.UnmarshalParam(tc.input)
+
+			if tc.hasError {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+			}
+			assert.Equal(tc.expected, result)
+		})
+	}
+}
+
+func TestDate_MarshallText(t *testing.T) {
+	assert := assert.New(t)
+
+	date := common.Date(time.Date(1999, 12, 31, 11, 11, 11, 0, time.Local))
+	result, err := date.MarshalText()
+	assert.NoError(err)
+	assert.Equal([]byte(`"1999-12-31"`), result)
+}
+
 func TestDate_UnmarshalText(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -113,15 +171,6 @@ func TestDate_UnmarshalText(t *testing.T) {
 			assert.Equal(tc.expected, result)
 		})
 	}
-}
-
-func TestDate_MarshallText(t *testing.T) {
-	assert := assert.New(t)
-
-	date := common.Date(time.Date(1999, 12, 31, 11, 11, 11, 0, time.Local))
-	result, err := date.MarshalText()
-	assert.NoError(err)
-	assert.Equal([]byte(`"1999-12-31"`), result)
 }
 
 func TestDate_String(t *testing.T) {
