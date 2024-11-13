@@ -21,9 +21,10 @@ const (
 // header values
 const (
 	ApplicationJSON            = "application/json"
+	ApplicationPDF             = "application/pdf"
+	ApplicationXML             = "application/xml"
 	ApplicationXFormURLEncoded = "application/x-www-form-urlencoded"
 	TextXML                    = "text/xml"
-	ApplicationPDF             = "application/pdf"
 )
 
 // something esle
