@@ -23,6 +23,7 @@ const (
 	ApplicationJSON            = "application/json"
 	ApplicationXFormURLEncoded = "application/x-www-form-urlencoded"
 	TextXML                    = "text/xml"
+	ApplicationPDF             = "application/pdf"
 )
 
 // something esle
