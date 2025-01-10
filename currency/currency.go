@@ -9,6 +9,7 @@ import (
 	"github.com/bojanz/currency"
 )
 
+// ISO4217 currencies
 const (
 	AED = "AED" // United Arab Emirates Dirham
 	AFN = "AFN" // Afghan Afghani

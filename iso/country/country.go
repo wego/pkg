@@ -1,5 +1,6 @@
 package country
 
+// ISO 3166-1 alpha-2
 const (
 	AD = "AD" // Andorra
 	AE = "AE" // United Arab Emirates
