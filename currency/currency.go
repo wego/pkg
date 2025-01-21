@@ -353,3 +353,13 @@ func Round(currencyCode string, amount float64) (roundedAmount float64, err erro
 	}
 	return
 }
+
+// Equal returns true if two amounts are equal
+func Equal(currencyCode string, amount1 float64, amount2 float64) bool {
+	if !IsISO4217(currencyCode) {
+		return false
+	}
+	amount1, _ = Round(currencyCode, amount1)
+	amount2, _ = Round(currencyCode, amount2)
+	return amount1 == amount2
+}

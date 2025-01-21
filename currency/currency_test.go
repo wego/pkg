@@ -414,6 +414,7 @@ func Test_Round_OK(t *testing.T) {
 			assertions.NoError(err)
 
 			assertions.Equal(testcase.roundedAmount, res)
+			assertions.True(currency.Equal(testcase.currency, testcase.amount, testcase.roundedAmount))
 		})
 	}
 }
