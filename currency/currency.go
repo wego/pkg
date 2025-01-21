@@ -359,7 +359,20 @@ func Equal(currencyCode string, amount1 float64, amount2 float64) bool {
 	if !IsISO4217(currencyCode) {
 		return false
 	}
-	amount1, _ = Round(currencyCode, amount1)
-	amount2, _ = Round(currencyCode, amount2)
-	return amount1 == amount2
+	return Amount(currencyCode, amount1) == Amount(currencyCode, amount2)
+}
+
+// Amount returns a amount in a currency, fixed to the currency factor's decimal places
+func Amount(currencyCode string, amount float64) float64 {
+	if !IsISO4217(currencyCode) {
+		return 0
+	}
+	amount, _ = Round(currencyCode, amount)
+	return amount
+}
+
+// MinorUnitAmount returns a amount in the smallest unit (minor unit) of a currency
+func MinorUnitAmount(currencyCode string, amount float64) uint64 {
+	minorUnitAmount, _ := ToMinorUnit(currencyCode, amount)
+	return minorUnitAmount
 }
