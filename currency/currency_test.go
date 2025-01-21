@@ -24,26 +24,32 @@ func Test_ToMinorUnit_OK(t *testing.T) {
 	rs, err := currency.ToMinorUnit("SGD", 25.12)
 	assertions.NoError(err)
 	assertions.EqualValues(2512, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("SGD", 25.12))
 
 	rs, err = currency.ToMinorUnit("SGD", 25.123)
 	assertions.NoError(err)
 	assertions.EqualValues(2512, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("SGD", 25.123))
 
 	rs, err = currency.ToMinorUnit("BHD", 25.123)
 	assertions.NoError(err)
 	assertions.EqualValues(25123, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("BHD", 25.123))
 
 	rs, err = currency.ToMinorUnit("BHD", 25.1234)
 	assertions.NoError(err)
 	assertions.EqualValues(25123, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("BHD", 25.1234))
 
 	rs, err = currency.ToMinorUnit("VND", 25.12345)
 	assertions.NoError(err)
 	assertions.EqualValues(25, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("VND", 25.12345))
 
 	rs, err = currency.ToMinorUnit("Vnd", 25.12345)
 	assertions.NoError(err)
 	assertions.EqualValues(25, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("Vnd", 25.12345))
 }
 
 func Test_ToMinorUnit_InvalidCurrency(t *testing.T) {
@@ -414,6 +420,7 @@ func Test_Round_OK(t *testing.T) {
 			assertions.NoError(err)
 
 			assertions.Equal(testcase.roundedAmount, res)
+			assertions.Equal(testcase.roundedAmount, currency.Amount(testcase.currency, testcase.amount))
 			assertions.True(currency.Equal(testcase.currency, testcase.amount, testcase.roundedAmount))
 		})
 	}
