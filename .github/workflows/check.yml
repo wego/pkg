@@ -12,16 +12,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v45
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: ^1.19
+          go-version: ^1.20
 
       - name: Set up tools
         run: |
@@ -64,6 +64,8 @@ jobs:
           done
 
       - name: Run Unit Test
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
           # get all the changed directories
           changed_dirs=$(echo "$ALL_CHANGED_FILES" | tr ' ' '\n' | xargs -I {} dirname {} | sort -u | uniq)
