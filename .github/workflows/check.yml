@@ -52,7 +52,7 @@ jobs:
           revive_config=$(realpath revive.toml)
           for pkg in "${changed_pkgs[@]}"; do
               # check do we need to run revive, include go files
-              have_go_files=$(find "$pkg" -depth 1 -name '*.go' -exec dirname {} \; | sort -u | uniq)
+              have_go_files=$(find "$pkg" -name '*.go' -maxdepth 1 -exec dirname {} \; | sort -u | uniq)
               if [ -z "$have_go_files" ]; then
                   continue
               fi
@@ -83,7 +83,7 @@ jobs:
 
           for pkg in "${changed_pkgs[@]}"; do
               # check do we need to run revive, include _test.go files
-              have_go_files=$(find "$pkg" -depth 1 -name '*_test.go' -exec dirname {} \; | sort -u | uniq)
+              have_go_files=$(find "$pkg" -name '*_test.go' -maxdepth 1 -exec dirname {} \; | sort -u | uniq)
               if [ -z "$have_go_files" ]; then
                   echo "skipping empty $pkg"
                   continue
