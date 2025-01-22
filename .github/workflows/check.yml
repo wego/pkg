@@ -35,12 +35,17 @@ jobs:
         env :
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
-          # get all the changed packages
-          changed_pkgs=$(echo "$ALL_CHANGED_FILES" | grep -Eo 'pkg/.*' | sort -u)
-          echo "changed_pkgs: $changed_pkgs"
-          for file in $ALL_CHANGED_FILES; do
-            echo "changed file: $file"
+          # get all the changed directories
+          changed_dirs=$(echo "$ALL_CHANGED_FILES" | tr ' ' '\n' | xargs -I {} dirname {} | sort -u | uniq)
+          # get all changed packages
+          changed_pkgs=()
+          for dir in $changed_dirs; do
+            # check if the dir has go.mod in it, recursively
+            if find "$dir" -name 'go.mod' -exec dirname {} \; | sort -u | uniq | grep -q .; then
+              changed_pkgs="$changed_pkgs $(find "$dir" -name 'go.mod' -exec dirname {} \; | sort -u | uniq | grep -v .)"
+            fi
           done
+          echo "$changed_pkgs: $changed_pkgs"
       
           exit 0
           revive_config=$(realpath revive.toml)
