@@ -41,21 +41,26 @@ jobs:
           changed_pkgs=()
           for dir in $changed_dirs; do
               # check if the dir has go.mod in it, recursively
-              updated_pkgs=$(find "$dir" -name 'go.mod' -exec dirname {} \; | sort -u | uniq)
-              if [ -n "$updated_pkgs" ]; then
-                  changed_pkgs+=("$updated_pkgs")
-              fi
+              updated_dirs=$(find "$dir" -name 'go.mod' -exec dirname {} \; | sort -u | uniq)
+              for updated_dir in $updated_dirs; do
+                  changed_pkgs+=("$updated_dir")
+              done
           done
-
           # unique the changed packages
-          changed_pkgs=$(echo "${changed_pkgs[@]}" | tr ' ' '\n' | sort -u | uniq)
+          IFS=" " read -r -a changed_pkgs <<<"$(tr ' ' '\n' <<<"${changed_pkgs[@]}" | sort -u | tr '\n' ' ')"
 
           revive_config=$(realpath revive.toml)
           for pkg in "${changed_pkgs[@]}"; do
-            pushd "$pkg" > /dev/null 2>&1 || exit 255
-            go vet ./... || exit 255
-            revive -formatter friendly -config $revive_config ./... || exit 255
-            popd > /dev/null 2>&1 || exit 255
+              # check do we need to run revive, include go files
+              have_go_files=$(find "$pkg" -depth 1 -name '*.go' -exec dirname {} \; | sort -u | uniq)
+              if [ -z "$have_go_files" ]; then
+                  continue
+              fi
+              echo "running go vet and revive for $pkg"
+              pushd "$pkg" >/dev/null 2>&1 || exit 255
+              go vet ./... || exit 255
+              revive -formatter friendly -config $revive_config ./... || exit 255
+              popd >/dev/null 2>&1 || exit 255
           done
 
       - name: Run Unit Test
@@ -66,18 +71,24 @@ jobs:
           changed_pkgs=()
           for dir in $changed_dirs; do
               # check if the dir has go.sum in it, recursively
-              updated_pkgs=$(find "$dir" -name 'go.sum' -exec dirname {} \; | sort -u | uniq)
-              if [ -n "$updated_pkgs" ]; then
-                  changed_pkgs+=("$updated_pkgs")
-              fi
+              updated_dirs=$(find "$dir" -name 'go.sum' -exec dirname {} \; | sort -u | uniq)
+              for updated_dir in $updated_dirs; do
+                  changed_pkgs+=("$updated_dir")
+              done
           done
-
           # unique the changed packages
-          changed_pkgs=$(echo "${changed_pkgs[@]}" | tr ' ' '\n' | sort -u | uniq)
+          IFS=" " read -r -a changed_pkgs <<<"$(tr ' ' '\n' <<<"${changed_pkgs[@]}" | sort -u | tr '\n' ' ')"
 
           for pkg in "${changed_pkgs[@]}"; do
-            pushd > /dev/null 2>&1 "$pkg" || exit 255
-            num_of_pros=$(grep -c ^processor /proc/cpuinfo)
-            go test ./... -race -cover -p "$num_of_pros"
-            popd > /dev/null 2>&1 || exit 255
+              # check do we need to run revive, include _test.go files
+              have_go_files=$(find "$pkg" -depth 1 -name '*_test.go' -exec dirname {} \; | sort -u | uniq)
+              if [ -z "$have_go_files" ]; then
+                  echo "skipping empty $pkg"
+                  continue
+              fi
+              echo "running go test for $pkg"
+              pushd > /dev/null 2>&1 "$pkg" || exit 255
+              num_of_pros=$(grep -c ^processor /proc/cpuinfo)
+              go test ./... -race -cover -p "$num_of_pros"
+              popd > /dev/null 2>&1 || exit 255
           done
