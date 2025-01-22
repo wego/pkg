@@ -38,7 +38,7 @@ jobs:
           # get all the changed packages
           changed_pkgs=$(echo "$ALL_CHANGED_FILES" | grep -Eo 'pkg/.*' | sort -u)
           echo "changed_pkgs: $changed_pkgs"
-          for file in $changed_pkgs; do
+          for file in $ALL_CHANGED_FILES; do
             echo "changed file: $file"
           done
       
