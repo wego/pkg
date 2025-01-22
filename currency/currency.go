@@ -363,15 +363,14 @@ func Equal(currencyCode string, amount1 float64, amount2 float64) bool {
 }
 
 // Amount returns a amount in a currency, fixed to the currency factor's decimal places
+// NOTE: if the currency is invalid, it will return 0 and ignore the error
 func Amount(currencyCode string, amount float64) float64 {
-	if !IsISO4217(currencyCode) {
-		return 0
-	}
 	amount, _ = Round(currencyCode, amount)
 	return amount
 }
 
 // MinorUnitAmount returns a amount in the smallest unit (minor unit) of a currency
+// NOTE: if the currency is invalid, it will return 0 and ignore the error
 func MinorUnitAmount(currencyCode string, amount float64) uint64 {
 	minorUnitAmount, _ := ToMinorUnit(currencyCode, amount)
 	return minorUnitAmount
