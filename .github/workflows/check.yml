@@ -24,17 +24,26 @@ jobs:
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
           # get all the updated directories
-          changed_dirs=$(echo "$ALL_CHANGED_FILES" | tr ' ' '\n' | xargs -I {} dirname {} | sort -u | uniq)
+          changed_dirs=()
+          while IFS= read -r line; do
+              changed_dirs+=("$line")
+          done <<< "$ALL_CHANGED_FILES"
+
+          # unique the changed directories
+          changed_dirs=($(echo "${changed_dirs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
           # get all changed packages
           updated_pkgs=()
           for dir in "${changed_dirs[@]}"; do
               # check if the dir has go.mod in it, recursively
-              updated_dirs=$(find "$dir" -name 'go.mod' -exec dirname {} \; | sort -u | uniq)
-              for updated_dir in $updated_dirs; do
+              updated_dirs=($(find "$dir" -name 'go.mod' -exec dirname {} \; | sort -u | uniq))
+              for updated_dir in "${updated_dirs[@]}"; do
                   updated_pkgs+=("$updated_dir")
               done
           done
-          # unique the updated packages
+
+
+          # unique the changed packages
           IFS=" " read -r -a updated_pkgs <<<"$(tr ' ' '\n' <<<"${updated_pkgs[@]}" | sort -u | tr '\n' ' ')"
 
           updated_go_files=$(echo "${updated_pkgs[@]}" | xargs -I {} find {} -name '*.go' -maxdepth 1 -exec dirname {} \; | sort -u | uniq)
