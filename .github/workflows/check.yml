@@ -63,7 +63,7 @@ jobs:
           UPDATED_PKGS: ${{ steps.updated_pkgs.outputs.updated_pkgs }}
         run: |
           # get all the changed directories
-          updated_pkgs=$(echo "$UPDATED_PKGS" | tr ' ' '\n' | sort -u | uniq)
+          updated_pkgs=($UPDATED_PKGS)
           revive_config=$(realpath revive.toml)
           for pkg in "${updated_pkgs[@]}"; do
               # check do we need to run revive, include go files
@@ -82,8 +82,8 @@ jobs:
         env:
           UPDATED_PKGS: ${{ steps.updated_pkgs.outputs.updated_pkgs }}
         run: |
-          # get all the changed directories
-          updated_pkgs=$(echo "$UPDATED_PKGS" | tr ' ' '\n' | sort -u | uniq)
+          # get all the changed packages
+          updated_pkgs=($UPDATED_PKGS)
 
           for pkg in "${updated_pkgs[@]}"; do
               # check do we need to run revive, include _test.go files
