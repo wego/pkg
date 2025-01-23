@@ -46,23 +46,21 @@ jobs:
           # unique the changed packages
           IFS=" " read -r -a updated_pkgs <<<"$(tr ' ' '\n' <<<"${updated_pkgs[@]}" | sort -u | tr '\n' ' ')"
 
-          updated_go_files=$(echo "${updated_pkgs[@]}" | xargs -I {} find {} -name '*.go' -maxdepth 1 -exec dirname {} \; | sort -u | uniq)
-
           echo "updated_pkgs=${updated_pkgs[*]}" >> $GITHUB_OUTPUT
-          has_changed_go_files=false 
-          if [ -n "$updated_go_files" ]; then
-              has_changed_go_files=true
+          has_changed_packages=false 
+          if (( ${#updated_pkgs[@]} )); then
+              has_changed_packages=true
           fi
-          echo "has_changed_go_files=$has_changed_go_files" >> $GITHUB_OUTPUT
+          echo "has_changed_packages=$has_changed_packages" >> $GITHUB_OUTPUT
 
       - name: Set up Go
         uses: actions/setup-go@v5
-        if: ${{ steps.updated_pkgs.outputs.has_changed_go_files == 'true' }}
+        if: ${{ steps.updated_pkgs.outputs.has_changed_packages == 'true' }}
         with:
           go-version: ^1.20
 
       - name: Set up tools
-        if: ${{ steps.updated_pkgs.outputs.has_changed_go_files == 'true' }}
+        if: ${{ steps.updated_pkgs.outputs.has_changed_packages == 'true' }}
         run: |
           sudo apt update && sudo apt install -y build-essential bc
           go install github.com/mgechev/revive@latest
