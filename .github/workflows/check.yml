@@ -24,8 +24,7 @@ jobs:
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
           # get all the updated directories
-          all_changed_files=($ALL_CHANGED_FILES)
-          changed_dirs=$(echo "${all_changed_files[@]}" | xargs -I {} dirname {} | sort -u | uniq)
+          changed_dirs=$(echo "$ALL_CHANGED_FILES" | tr ' ' '\n' | xargs -I {} dirname {} | sort -u | uniq)
           # get all changed packages
           updated_pkgs=()
           for dir in "${changed_dirs[@]}"; do
