@@ -8,156 +8,162 @@ import (
 )
 
 func Test_IsISO4217(t *testing.T) {
-	assert := assert.New(t)
-	assert.True(currency.IsISO4217("afn"))
-	assert.True(currency.IsISO4217("UsD"))
-	assert.True(currency.IsISO4217("UsD "))
-	assert.True(currency.IsISO4217("CNY"))
-	assert.True(currency.IsISO4217("KWD"))
-	assert.False(currency.IsISO4217("UsDD"))
-	assert.False(currency.IsISO4217(""))
+	assertions := assert.New(t)
+	assertions.True(currency.IsISO4217("afn"))
+	assertions.True(currency.IsISO4217("UsD"))
+	assertions.True(currency.IsISO4217("UsD "))
+	assertions.True(currency.IsISO4217("CNY"))
+	assertions.True(currency.IsISO4217("KWD"))
+	assertions.False(currency.IsISO4217("UsDD"))
+	assertions.False(currency.IsISO4217(""))
 }
 
 func Test_ToMinorUnit_OK(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.ToMinorUnit("SGD", 25.12)
-	assert.NoError(err)
-	assert.EqualValues(2512, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(2512, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("SGD", 25.12))
 
 	rs, err = currency.ToMinorUnit("SGD", 25.123)
-	assert.NoError(err)
-	assert.EqualValues(2512, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(2512, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("SGD", 25.123))
 
 	rs, err = currency.ToMinorUnit("BHD", 25.123)
-	assert.NoError(err)
-	assert.EqualValues(25123, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(25123, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("BHD", 25.123))
 
 	rs, err = currency.ToMinorUnit("BHD", 25.1234)
-	assert.NoError(err)
-	assert.EqualValues(25123, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(25123, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("BHD", 25.1234))
 
 	rs, err = currency.ToMinorUnit("VND", 25.12345)
-	assert.NoError(err)
-	assert.EqualValues(25, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(25, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("VND", 25.12345))
 
 	rs, err = currency.ToMinorUnit("Vnd", 25.12345)
-	assert.NoError(err)
-	assert.EqualValues(25, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(25, rs)
+	assertions.EqualValues(rs, currency.MinorUnitAmount("Vnd", 25.12345))
 }
 
 func Test_ToMinorUnit_InvalidCurrency(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.ToMinorUnit("", 25.12)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.ToMinorUnit("sg", 25.12)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.ToMinorUnit(" ", 25.12)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.ToMinorUnit("      ", 25.12)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 }
 
 func Test_ToMinorUnit_ZeroAmount(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.ToMinorUnit("SGD", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
+	assertions.NoError(err)
+	assertions.Zero(rs)
 }
 
 func Test_ToMinorUnit_InvalidAmount(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.ToMinorUnit("USD", -0.0001)
-	assert.Error(err)
-	assert.Contains(err.Error(), "invalid amount")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "invalid amount")
+	assertions.Zero(rs)
 
 	rs, err = currency.ToMinorUnit("SGd", -0.0001)
-	assert.Error(err)
-	assert.Contains(err.Error(), "invalid amount")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "invalid amount")
+	assertions.Zero(rs)
 }
 
 func Test_FromMinorUnit_OK(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.FromMinorUnit("SGD", 2599)
-	assert.NoError(err)
-	assert.EqualValues(25.99, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(25.99, rs)
 
 	rs, err = currency.FromMinorUnit("SGD", 25123)
-	assert.NoError(err)
-	assert.EqualValues(251.23, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(251.23, rs)
 
 	rs, err = currency.FromMinorUnit("BHD", 25123)
-	assert.NoError(err)
-	assert.EqualValues(25.123, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(25.123, rs)
 
 	rs, err = currency.FromMinorUnit("BHD", 251987)
-	assert.NoError(err)
-	assert.EqualValues(251.987, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(251.987, rs)
 
 	rs, err = currency.FromMinorUnit("VND", 2512345)
-	assert.NoError(err)
-	assert.EqualValues(2512345, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(2512345, rs)
 
 	rs, err = currency.FromMinorUnit("Vnd", 2512345)
-	assert.NoError(err)
-	assert.EqualValues(2512345, rs)
+	assertions.NoError(err)
+	assertions.EqualValues(2512345, rs)
 }
 
 func Test_FromMinorUnit_InvalidCurrency(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.FromMinorUnit("", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.FromMinorUnit("sg", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.FromMinorUnit(" ", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.FromMinorUnit("      ", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 }
 
 func Test_FromMinorUnit_ZeroAmount(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.FromMinorUnit("USD", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
+	assertions.NoError(err)
+	assertions.Zero(rs)
 
 	rs, err = currency.FromMinorUnit("VND", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
+	assertions.NoError(err)
+	assertions.Zero(rs)
 
 	rs, err = currency.FromMinorUnit("KWD", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
+	assertions.NoError(err)
+	assertions.Zero(rs)
 }
 
 func Test_Format(t *testing.T) {
@@ -286,7 +292,7 @@ func Test_FormatAmount(t *testing.T) {
 }
 
 func Test_GetCurrencyFactor(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	factorOf100 := []string{"AED", "USD", "PHP", "qwerty", "1234", "SAR"}
 	factorOf1000 := []string{"BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND"}
@@ -295,72 +301,72 @@ func Test_GetCurrencyFactor(t *testing.T) {
 
 	for _, cur := range factorOf100 {
 		factor := currency.GetCurrencyFactor(cur)
-		assert.Equal(100.0, factor)
+		assertions.Equal(100.0, factor)
 	}
 
 	for _, cur := range factorOf1000 {
 		factor := currency.GetCurrencyFactor(cur)
-		assert.Equal(1000.0, factor)
+		assertions.Equal(1000.0, factor)
 	}
 
 	for _, cur := range factorOfOne {
 		factor := currency.GetCurrencyFactor(cur)
-		assert.Equal(1.0, factor)
+		assertions.Equal(1.0, factor)
 	}
 }
 
 func Test_Round_InvalidCurrency(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.Round("", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.Round("sg", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.Round(" ", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 
 	rs, err = currency.Round("      ", 2512)
-	assert.Error(err)
-	assert.Contains(err.Error(), "is not a valid ISO 4217 currency code")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "is not a valid ISO 4217 currency code")
+	assertions.Zero(rs)
 }
 
 func Test_Round_InvalidAmount(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.Round("USD", -0.0001)
-	assert.Error(err)
-	assert.Contains(err.Error(), "invalid amount")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "invalid amount")
+	assertions.Zero(rs)
 
 	rs, err = currency.Round("SGd", -0.0001)
-	assert.Error(err)
-	assert.Contains(err.Error(), "invalid amount")
-	assert.Zero(rs)
+	assertions.Error(err)
+	assertions.Contains(err.Error(), "invalid amount")
+	assertions.Zero(rs)
 }
 
 func Test_Round_ZeroAmount(t *testing.T) {
-	assert := assert.New(t)
+	assertions := assert.New(t)
 
 	rs, err := currency.Round("USD", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
+	assertions.NoError(err)
+	assertions.Zero(rs)
 
 	rs, err = currency.Round("VND", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
+	assertions.NoError(err)
+	assertions.Zero(rs)
 
 	rs, err = currency.Round("KWD", 0)
-	assert.NoError(err)
-	assert.Zero(rs)
+	assertions.NoError(err)
+	assertions.Zero(rs)
 }
 
 func Test_Round_OK(t *testing.T) {
@@ -408,12 +414,14 @@ func Test_Round_OK(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assertions := assert.New(t)
 
 			res, err := currency.Round(testcase.currency, testcase.amount)
-			assert.NoError(err)
+			assertions.NoError(err)
 
-			assert.Equal(testcase.roundedAmount, res)
+			assertions.Equal(testcase.roundedAmount, res)
+			assertions.Equal(testcase.roundedAmount, currency.Amount(testcase.currency, testcase.amount))
+			assertions.True(currency.Equal(testcase.currency, testcase.amount, testcase.roundedAmount))
 		})
 	}
 }
