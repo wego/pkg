@@ -2,6 +2,7 @@ package postgres
 
 import "github.com/jackc/pgconn"
 
+// IsLockError checks if the error is a lock error
 func IsLockError(err error) bool {
 	pgErr, ok := err.(*pgconn.PgError)
 	if !ok {
@@ -13,6 +14,7 @@ func IsLockError(err error) bool {
 	return pgErr.Code == "55P03"
 }
 
+// IsUniqueConstraintError checks if the error is a unique constraint error
 func IsUniqueConstraintError(err error) bool {
 	pgErr, ok := err.(*pgconn.PgError)
 	if !ok {
