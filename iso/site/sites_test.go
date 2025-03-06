@@ -5,32 +5,32 @@ import "testing"
 func TestCurrency(t *testing.T) {
 	tests := []struct {
 		name     string
-		siteCode Site
+		siteCode string
 		want     string
 		wantOk   bool
 	}{
 		// Major countries
 		{
 			name:     "United States",
-			siteCode: Site(US),
+			siteCode: US,
 			want:     "USD",
 			wantOk:   true,
 		},
 		{
 			name:     "United Kingdom",
-			siteCode: Site(GB),
+			siteCode: GB,
 			want:     "GBP",
 			wantOk:   true,
 		},
 		{
 			name:     "Japan",
-			siteCode: Site(JP),
+			siteCode: JP,
 			want:     "JPY",
 			wantOk:   true,
 		},
 		{
 			name:     "China",
-			siteCode: Site(CN),
+			siteCode: CN,
 			want:     "CNY",
 			wantOk:   true,
 		},
@@ -38,19 +38,19 @@ func TestCurrency(t *testing.T) {
 		// Eurozone countries
 		{
 			name:     "Germany",
-			siteCode: Site(DE),
+			siteCode: DE,
 			want:     "EUR",
 			wantOk:   true,
 		},
 		{
 			name:     "France",
-			siteCode: Site(FR),
+			siteCode: FR,
 			want:     "EUR",
 			wantOk:   true,
 		},
 		{
 			name:     "Italy",
-			siteCode: Site(IT),
+			siteCode: IT,
 			want:     "EUR",
 			wantOk:   true,
 		},
@@ -58,19 +58,19 @@ func TestCurrency(t *testing.T) {
 		// Territories using parent country currency
 		{
 			name:     "Puerto Rico",
-			siteCode: Site(PR),
+			siteCode: PR,
 			want:     "USD",
 			wantOk:   true,
 		},
 		{
 			name:     "Guam",
-			siteCode: Site(GU),
+			siteCode: GU,
 			want:     "USD",
 			wantOk:   true,
 		},
 		{
 			name:     "British Virgin Islands",
-			siteCode: Site(VG),
+			siteCode: VG,
 			want:     "USD",
 			wantOk:   true,
 		},
@@ -78,19 +78,19 @@ func TestCurrency(t *testing.T) {
 		// Territories using regional currency
 		{
 			name:     "Aruba",
-			siteCode: Site(AW),
+			siteCode: AW,
 			want:     "AWG",
 			wantOk:   true,
 		},
 		{
 			name:     "Curaçao",
-			siteCode: Site(CW),
+			siteCode: CW,
 			want:     "ANG",
 			wantOk:   true,
 		},
 		{
 			name:     "Sint Maarten",
-			siteCode: Site(SX),
+			siteCode: SX,
 			want:     "ANG",
 			wantOk:   true,
 		},
@@ -98,19 +98,19 @@ func TestCurrency(t *testing.T) {
 		// Special cases
 		{
 			name:     "Bonaire, Sint Eustatius and Saba",
-			siteCode: Site(BQ),
+			siteCode: BQ,
 			want:     "USD",
 			wantOk:   true,
 		},
 		{
 			name:     "Hong Kong",
-			siteCode: Site(HK),
+			siteCode: HK,
 			want:     "HKD",
 			wantOk:   true,
 		},
 		{
 			name:     "Macao",
-			siteCode: Site(MO),
+			siteCode: MO,
 			want:     "MOP",
 			wantOk:   true,
 		},
@@ -118,19 +118,19 @@ func TestCurrency(t *testing.T) {
 		// Invalid cases
 		{
 			name:     "Non-existent country",
-			siteCode: Site("XX"),
+			siteCode: "XX",
 			want:     "",
 			wantOk:   false,
 		},
 		{
 			name:     "Empty string",
-			siteCode: Site(""),
+			siteCode: "",
 			want:     "",
 			wantOk:   false,
 		},
 		{
 			name:     "Invalid length",
-			siteCode: Site("XXX"),
+			siteCode: "XXX",
 			want:     "",
 			wantOk:   false,
 		},

@@ -253,306 +253,303 @@ const (
 	ZW = "ZW" // Zimbabwe
 )
 
-// Site represents an ISO 3166-1 alpha-2 country code
-type Site string
-
 // currencySite maps ISO 3166-1 alpha-2 site codes to ISO 4217 currency codes
-var currencySite = map[Site]string{
+var currencySite = map[string]string{
 	// A
-	Site(AE): "AED", // United Arab Emirates Dirham
-	Site(AF): "AFN", // Afghan Afghani
-	Site(AL): "ALL", // Albanian Lek
-	Site(AM): "AMD", // Armenian Dram
-	Site(AO): "AOA", // Angolan Kwanza
-	Site(AR): "ARS", // Argentine Peso
-	Site(AU): "AUD", // Australian Dollar
-	Site(AW): "AWG", // Aruban Florin
-	Site(AZ): "AZN", // Azerbaijani Manat
+	AE: "AED", // United Arab Emirates Dirham
+	AF: "AFN", // Afghan Afghani
+	AL: "ALL", // Albanian Lek
+	AM: "AMD", // Armenian Dram
+	AO: "AOA", // Angolan Kwanza
+	AR: "ARS", // Argentine Peso
+	AU: "AUD", // Australian Dollar
+	AW: "AWG", // Aruban Florin
+	AZ: "AZN", // Azerbaijani Manat
 
 	// B
-	Site(BA): "BAM", // Bosnia and Herzegovina Convertible Mark
-	Site(BB): "BBD", // Barbadian Dollar
-	Site(BD): "BDT", // Bangladeshi Taka
-	Site(BE): "EUR", // Belgian Euro
-	Site(BF): "XOF", // West African CFA Franc
-	Site(BG): "BGN", // Bulgarian Lev
-	Site(BH): "BHD", // Bahraini Dinar
-	Site(BI): "BIF", // Burundian Franc
-	Site(BJ): "XOF", // West African CFA Franc
-	Site(BM): "BMD", // Bermudian Dollar
-	Site(BN): "BND", // Brunei Dollar
-	Site(BO): "BOB", // Bolivian Boliviano
-	Site(BQ): "USD", // US Dollar (Bonaire, Sint Eustatius and Saba)
-	Site(BR): "BRL", // Brazilian Real
-	Site(BS): "BSD", // Bahamian Dollar
-	Site(BT): "BTN", // Bhutanese Ngultrum
-	Site(BV): "NOK", // Norwegian Krone
-	Site(BW): "BWP", // Botswana Pula
-	Site(BY): "BYN", // Belarusian Ruble
-	Site(BZ): "BZD", // Belize Dollar
+	BA: "BAM", // Bosnia and Herzegovina Convertible Mark
+	BB: "BBD", // Barbadian Dollar
+	BD: "BDT", // Bangladeshi Taka
+	BE: "EUR", // Belgian Euro
+	BF: "XOF", // West African CFA Franc
+	BG: "BGN", // Bulgarian Lev
+	BH: "BHD", // Bahraini Dinar
+	BI: "BIF", // Burundian Franc
+	BJ: "XOF", // West African CFA Franc
+	BM: "BMD", // Bermudian Dollar
+	BN: "BND", // Brunei Dollar
+	BO: "BOB", // Bolivian Boliviano
+	BQ: "USD", // US Dollar (Bonaire, Sint Eustatius and Saba)
+	BR: "BRL", // Brazilian Real
+	BS: "BSD", // Bahamian Dollar
+	BT: "BTN", // Bhutanese Ngultrum
+	BV: "NOK", // Norwegian Krone
+	BW: "BWP", // Botswana Pula
+	BY: "BYN", // Belarusian Ruble
+	BZ: "BZD", // Belize Dollar
 
 	// C
-	Site(CA): "CAD", // Canadian Dollar
-	Site(CC): "AUD", // Australian Dollar
-	Site(CD): "CDF", // Congolese Franc
-	Site(CF): "XAF", // Central African CFA Franc
-	Site(CG): "XAF", // Central African CFA Franc
-	Site(CH): "CHF", // Swiss Franc
-	Site(CI): "XOF", // West African CFA Franc
-	Site(CK): "NZD", // New Zealand Dollar
-	Site(CL): "CLP", // Chilean Peso
-	Site(CM): "XAF", // Central African CFA Franc
-	Site(CN): "CNY", // Chinese Yuan
-	Site(CO): "COP", // Colombian Peso
-	Site(CR): "CRC", // Costa Rican Colón
-	Site(CU): "CUP", // Cuban Peso
-	Site(CV): "CVE", // Cape Verdean Escudo
-	Site(CW): "ANG", // Netherlands Antillean Guilder
-	Site(CX): "AUD", // Australian Dollar
-	Site(CY): "EUR", // Cypriot Euro
-	Site(CZ): "CZK", // Czech Republic Koruna
+	CA: "CAD", // Canadian Dollar
+	CC: "AUD", // Australian Dollar
+	CD: "CDF", // Congolese Franc
+	CF: "XAF", // Central African CFA Franc
+	CG: "XAF", // Central African CFA Franc
+	CH: "CHF", // Swiss Franc
+	CI: "XOF", // West African CFA Franc
+	CK: "NZD", // New Zealand Dollar
+	CL: "CLP", // Chilean Peso
+	CM: "XAF", // Central African CFA Franc
+	CN: "CNY", // Chinese Yuan
+	CO: "COP", // Colombian Peso
+	CR: "CRC", // Costa Rican Colón
+	CU: "CUP", // Cuban Peso
+	CV: "CVE", // Cape Verdean Escudo
+	CW: "ANG", // Netherlands Antillean Guilder
+	CX: "AUD", // Australian Dollar
+	CY: "EUR", // Cypriot Euro
+	CZ: "CZK", // Czech Republic Koruna
 
 	// D
-	Site(DE): "EUR", // German Euro
-	Site(DJ): "DJF", // Djiboutian Franc
-	Site(DK): "DKK", // Danish Krone
-	Site(DM): "XCD", // East Caribbean Dollar
-	Site(DO): "DOP", // Dominican Peso
-	Site(DZ): "DZD", // Algerian Dinar
+	DE: "EUR", // German Euro
+	DJ: "DJF", // Djiboutian Franc
+	DK: "DKK", // Danish Krone
+	DM: "XCD", // East Caribbean Dollar
+	DO: "DOP", // Dominican Peso
+	DZ: "DZD", // Algerian Dinar
 
 	// E
-	Site(EC): "USD", // US Dollar
-	Site(EE): "EUR", // Estonian Euro
-	Site(EG): "EGP", // Egyptian Pound
-	Site(EH): "MAD", // Moroccan Dirham
-	Site(ER): "ERN", // Eritrean Nakfa
-	Site(ES): "EUR", // Spanish Euro
-	Site(ET): "ETB", // Ethiopian Birr
+	EC: "USD", // US Dollar
+	EE: "EUR", // Estonian Euro
+	EG: "EGP", // Egyptian Pound
+	EH: "MAD", // Moroccan Dirham
+	ER: "ERN", // Eritrean Nakfa
+	ES: "EUR", // Spanish Euro
+	ET: "ETB", // Ethiopian Birr
 
 	// F
-	Site(FI): "EUR", // Finnish Euro
-	Site(FJ): "FJD", // Fijian Dollar
-	Site(FK): "FKP", // Falkland Islands Pound
-	Site(FM): "USD", // US Dollar
-	Site(FO): "DKK", // Danish Krone
-	Site(FR): "EUR", // French Euro
+	FI: "EUR", // Finnish Euro
+	FJ: "FJD", // Fijian Dollar
+	FK: "FKP", // Falkland Islands Pound
+	FM: "USD", // US Dollar
+	FO: "DKK", // Danish Krone
+	FR: "EUR", // French Euro
 
 	// G
-	Site(GA): "XAF", // Central African CFA Franc
-	Site(GB): "GBP", // British Pound Sterling
-	Site(GD): "XCD", // East Caribbean Dollar
-	Site(GE): "GEL", // Georgian Lari
-	Site(GF): "EUR", // Euro
-	Site(GG): "GBP", // British Pound Sterling
-	Site(GH): "GHS", // Ghanaian Cedi
-	Site(GI): "GIP", // Gibraltar Pound
-	Site(GL): "DKK", // Danish Krone
-	Site(GM): "GMD", // Gambian Dalasi
-	Site(GN): "GNF", // Guinean Franc
-	Site(GP): "EUR", // Euro
-	Site(GQ): "XAF", // Central African CFA Franc
-	Site(GR): "EUR", // Greek Euro
-	Site(GS): "GBP", // British Pound Sterling
-	Site(GT): "GTQ", // Guatemalan Quetzal
-	Site(GU): "USD", // US Dollar
-	Site(GW): "XOF", // West African CFA Franc
-	Site(GY): "GYD", // Guyanese Dollar
+	GA: "XAF", // Central African CFA Franc
+	GB: "GBP", // British Pound Sterling
+	GD: "XCD", // East Caribbean Dollar
+	GE: "GEL", // Georgian Lari
+	GF: "EUR", // Euro
+	GG: "GBP", // British Pound Sterling
+	GH: "GHS", // Ghanaian Cedi
+	GI: "GIP", // Gibraltar Pound
+	GL: "DKK", // Danish Krone
+	GM: "GMD", // Gambian Dalasi
+	GN: "GNF", // Guinean Franc
+	GP: "EUR", // Euro
+	GQ: "XAF", // Central African CFA Franc
+	GR: "EUR", // Greek Euro
+	GS: "GBP", // British Pound Sterling
+	GT: "GTQ", // Guatemalan Quetzal
+	GU: "USD", // US Dollar
+	GW: "XOF", // West African CFA Franc
+	GY: "GYD", // Guyanese Dollar
 
 	// H
-	Site(HK): "HKD", // Hong Kong Dollar
-	Site(HM): "AUD", // Australian Dollar
-	Site(HN): "HNL", // Honduran Lempira
-	Site(HR): "EUR", // Croatian Euro
-	Site(HT): "HTG", // Haitian Gourde
-	Site(HU): "HUF", // Hungarian Forint
+	HK: "HKD", // Hong Kong Dollar
+	HM: "AUD", // Australian Dollar
+	HN: "HNL", // Honduran Lempira
+	HR: "EUR", // Croatian Euro
+	HT: "HTG", // Haitian Gourde
+	HU: "HUF", // Hungarian Forint
 
 	// I
-	Site(ID): "IDR", // Indonesian Rupiah
-	Site(IE): "EUR", // Irish Euro
-	Site(IL): "ILS", // Israeli New Shekel
-	Site(IM): "GBP", // British Pound Sterling
-	Site(IN): "INR", // Indian Rupee
-	Site(IO): "USD", // US Dollar
-	Site(IQ): "IQD", // Iraqi Dinar
-	Site(IR): "IRR", // Iranian Rial
-	Site(IS): "ISK", // Icelandic Krona
-	Site(IT): "EUR", // Italian Euro
+	ID: "IDR", // Indonesian Rupiah
+	IE: "EUR", // Irish Euro
+	IL: "ILS", // Israeli New Shekel
+	IM: "GBP", // British Pound Sterling
+	IN: "INR", // Indian Rupee
+	IO: "USD", // US Dollar
+	IQ: "IQD", // Iraqi Dinar
+	IR: "IRR", // Iranian Rial
+	IS: "ISK", // Icelandic Krona
+	IT: "EUR", // Italian Euro
 
 	// J
-	Site(JE): "GBP", // British Pound Sterling
-	Site(JM): "JMD", // Jamaican Dollar
-	Site(JO): "JOD", // Jordanian Dinar
-	Site(JP): "JPY", // Japanese Yen
+	JE: "GBP", // British Pound Sterling
+	JM: "JMD", // Jamaican Dollar
+	JO: "JOD", // Jordanian Dinar
+	JP: "JPY", // Japanese Yen
 
 	// K
-	Site(KE): "KES", // Kenyan Shilling
-	Site(KG): "KGS", // Kyrgyzstani Som
-	Site(KH): "KHR", // Cambodian Riel
-	Site(KI): "AUD", // Australian Dollar
-	Site(KM): "KMF", // Comoran Franc
-	Site(KN): "XCD", // East Caribbean Dollar
-	Site(KP): "KPW", // North Korean Won
-	Site(KR): "KRW", // South Korean Won
-	Site(KW): "KWD", // Kuwaiti Dinar
-	Site(KY): "KYD", // Cayman Islands Dollar
-	Site(KZ): "KZT", // Kazakhstani Tenge
+	KE: "KES", // Kenyan Shilling
+	KG: "KGS", // Kyrgyzstani Som
+	KH: "KHR", // Cambodian Riel
+	KI: "AUD", // Australian Dollar
+	KM: "KMF", // Comoran Franc
+	KN: "XCD", // East Caribbean Dollar
+	KP: "KPW", // North Korean Won
+	KR: "KRW", // South Korean Won
+	KW: "KWD", // Kuwaiti Dinar
+	KY: "KYD", // Cayman Islands Dollar
+	KZ: "KZT", // Kazakhstani Tenge
 
 	// L
-	Site(LA): "LAK", // Lao Kip
-	Site(LB): "LBP", // Lebanese Pound
-	Site(LC): "XCD", // East Caribbean Dollar
-	Site(LI): "CHF", // Swiss Franc
-	Site(LK): "LKR", // Sri Lankan Rupee
-	Site(LR): "LRD", // Liberian Dollar
-	Site(LS): "LSL", // Lesotho Loti
-	Site(LT): "EUR", // Lithuanian Euro
-	Site(LU): "EUR", // Luxembourg Euro
-	Site(LV): "EUR", // Latvian Euro
-	Site(LY): "LYD", // Libyan Dinar
+	LA: "LAK", // Lao Kip
+	LB: "LBP", // Lebanese Pound
+	LC: "XCD", // East Caribbean Dollar
+	LI: "CHF", // Swiss Franc
+	LK: "LKR", // Sri Lankan Rupee
+	LR: "LRD", // Liberian Dollar
+	LS: "LSL", // Lesotho Loti
+	LT: "EUR", // Lithuanian Euro
+	LU: "EUR", // Luxembourg Euro
+	LV: "EUR", // Latvian Euro
+	LY: "LYD", // Libyan Dinar
 
 	// M
-	Site(MA): "MAD", // Moroccan Dirham
-	Site(MC): "EUR", // Euro
-	Site(MD): "MDL", // Moldovan Leu
-	Site(ME): "EUR", // Montenegrin Euro
-	Site(MF): "EUR", // Euro
-	Site(MG): "MGA", // Malagasy Ariary
-	Site(MH): "USD", // US Dollar
-	Site(MK): "MKD", // Macedonian Denar
-	Site(ML): "XOF", // West African CFA Franc
-	Site(MM): "MMK", // Myanmar Kyat
-	Site(MN): "MNT", // Mongolian Tögrög
-	Site(MO): "MOP", // Macanese Pataca
-	Site(MP): "USD", // US Dollar
-	Site(MQ): "EUR", // Euro
-	Site(MR): "MRU", // Mauritanian Ouguiya
-	Site(MS): "XCD", // East Caribbean Dollar
-	Site(MT): "EUR", // Maltese Euro
-	Site(MU): "MUR", // Mauritian Rupee
-	Site(MV): "MVR", // Maldivian Rufiyaa
-	Site(MW): "MWK", // Malawian Kwacha
-	Site(MX): "MXN", // Mexican Peso
-	Site(MY): "MYR", // Malaysian Ringgit
-	Site(MZ): "MZN", // Mozambican Metical
+	MA: "MAD", // Moroccan Dirham
+	MC: "EUR", // Euro
+	MD: "MDL", // Moldovan Leu
+	ME: "EUR", // Montenegrin Euro
+	MF: "EUR", // Euro
+	MG: "MGA", // Malagasy Ariary
+	MH: "USD", // US Dollar
+	MK: "MKD", // Macedonian Denar
+	ML: "XOF", // West African CFA Franc
+	MM: "MMK", // Myanmar Kyat
+	MN: "MNT", // Mongolian Tögrög
+	MO: "MOP", // Macanese Pataca
+	MP: "USD", // US Dollar
+	MQ: "EUR", // Euro
+	MR: "MRU", // Mauritanian Ouguiya
+	MS: "XCD", // East Caribbean Dollar
+	MT: "EUR", // Maltese Euro
+	MU: "MUR", // Mauritian Rupee
+	MV: "MVR", // Maldivian Rufiyaa
+	MW: "MWK", // Malawian Kwacha
+	MX: "MXN", // Mexican Peso
+	MY: "MYR", // Malaysian Ringgit
+	MZ: "MZN", // Mozambican Metical
 
 	// N
-	Site(NA): "NAD", // Namibian Dollar
-	Site(NC): "XPF", // CFP Franc
-	Site(NE): "XOF", // West African CFA Franc
-	Site(NF): "AUD", // Australian Dollar
-	Site(NG): "NGN", // Nigerian Naira
-	Site(NI): "NIO", // Nicaraguan Córdoba
-	Site(NL): "EUR", // Dutch Euro
-	Site(NO): "NOK", // Norwegian Krone
-	Site(NP): "NPR", // Nepalese Rupee
-	Site(NR): "AUD", // Australian Dollar
-	Site(NU): "NZD", // New Zealand Dollar
-	Site(NZ): "NZD", // New Zealand Dollar
+	NA: "NAD", // Namibian Dollar
+	NC: "XPF", // CFP Franc
+	NE: "XOF", // West African CFA Franc
+	NF: "AUD", // Australian Dollar
+	NG: "NGN", // Nigerian Naira
+	NI: "NIO", // Nicaraguan Córdoba
+	NL: "EUR", // Dutch Euro
+	NO: "NOK", // Norwegian Krone
+	NP: "NPR", // Nepalese Rupee
+	NR: "AUD", // Australian Dollar
+	NU: "NZD", // New Zealand Dollar
+	NZ: "NZD", // New Zealand Dollar
 
 	// O
-	Site(OM): "OMR", // Omani Rial
+	OM: "OMR", // Omani Rial
 
 	// P
-	Site(PA): "PAB", // Panamanian Balboa
-	Site(PE): "PEN", // Peruvian Sol
-	Site(PF): "XPF", // CFP Franc
-	Site(PG): "PGK", // Papua New Guinean Kina
-	Site(PH): "PHP", // Philippine Peso
-	Site(PK): "PKR", // Pakistani Rupee
-	Site(PL): "PLN", // Polish Zloty
-	Site(PM): "EUR", // Euro
-	Site(PN): "NZD", // New Zealand Dollar
-	Site(PR): "USD", // US Dollar
-	Site(PS): "ILS", // Israeli New Shekel
-	Site(PT): "EUR", // Portuguese Euro
-	Site(PW): "USD", // US Dollar
-	Site(PY): "PYG", // Paraguayan Guarani
+	PA: "PAB", // Panamanian Balboa
+	PE: "PEN", // Peruvian Sol
+	PF: "XPF", // CFP Franc
+	PG: "PGK", // Papua New Guinean Kina
+	PH: "PHP", // Philippine Peso
+	PK: "PKR", // Pakistani Rupee
+	PL: "PLN", // Polish Zloty
+	PM: "EUR", // Euro
+	PN: "NZD", // New Zealand Dollar
+	PR: "USD", // US Dollar
+	PS: "ILS", // Israeli New Shekel
+	PT: "EUR", // Portuguese Euro
+	PW: "USD", // US Dollar
+	PY: "PYG", // Paraguayan Guarani
 
 	// Q
-	Site(QA): "QAR", // Qatari Riyal
+	QA: "QAR", // Qatari Riyal
 
 	// R
-	Site(RE): "EUR", // Euro
-	Site(RO): "RON", // Romanian Leu
-	Site(RS): "RSD", // Serbian Dinar
-	Site(RU): "RUB", // Russian Ruble
-	Site(RW): "RWF", // Rwandan Franc
+	RE: "EUR", // Euro
+	RO: "RON", // Romanian Leu
+	RS: "RSD", // Serbian Dinar
+	RU: "RUB", // Russian Ruble
+	RW: "RWF", // Rwandan Franc
 
 	// S
-	Site(SA): "SAR", // Saudi Riyal
-	Site(SB): "SBD", // Solomon Islands Dollar
-	Site(SC): "SCR", // Seychellois Rupee
-	Site(SD): "SDG", // Sudanese Pound
-	Site(SE): "SEK", // Swedish Krona
-	Site(SG): "SGD", // Singapore Dollar
-	Site(SH): "SHP", // Saint Helena Pound
-	Site(SI): "EUR", // Slovenian Euro
-	Site(SJ): "NOK", // Norwegian Krone
-	Site(SK): "EUR", // Slovak Euro
-	Site(SL): "SLL", // Sierra Leonean Leone
-	Site(SM): "EUR", // Euro
-	Site(SN): "XOF", // West African CFA Franc
-	Site(SO): "SOS", // Somali Shilling
-	Site(SR): "SRD", // Surinamese Dollar
-	Site(SS): "SSP", // South Sudanese Pound
-	Site(ST): "STN", // São Tomé and Príncipe Dobra
-	Site(SV): "SVC", // Salvadoran Colón
-	Site(SX): "ANG", // Netherlands Antillean Guilder
-	Site(SY): "SYP", // Syrian Pound
-	Site(SZ): "SZL", // Swazi Lilangeni
+	SA: "SAR", // Saudi Riyal
+	SB: "SBD", // Solomon Islands Dollar
+	SC: "SCR", // Seychellois Rupee
+	SD: "SDG", // Sudanese Pound
+	SE: "SEK", // Swedish Krona
+	SG: "SGD", // Singapore Dollar
+	SH: "SHP", // Saint Helena Pound
+	SI: "EUR", // Slovenian Euro
+	SJ: "NOK", // Norwegian Krone
+	SK: "EUR", // Slovak Euro
+	SL: "SLL", // Sierra Leonean Leone
+	SM: "EUR", // Euro
+	SN: "XOF", // West African CFA Franc
+	SO: "SOS", // Somali Shilling
+	SR: "SRD", // Surinamese Dollar
+	SS: "SSP", // South Sudanese Pound
+	ST: "STN", // São Tomé and Príncipe Dobra
+	SV: "SVC", // Salvadoran Colón
+	SX: "ANG", // Netherlands Antillean Guilder
+	SY: "SYP", // Syrian Pound
+	SZ: "SZL", // Swazi Lilangeni
 
 	// T
-	Site(TC): "USD", // US Dollar
-	Site(TD): "XAF", // Central African CFA Franc
-	Site(TF): "EUR", // Euro
-	Site(TG): "XOF", // West African CFA Franc
-	Site(TH): "THB", // Thai Baht
-	Site(TJ): "TJS", // Tajikistani Somoni
-	Site(TK): "NZD", // New Zealand Dollar
-	Site(TL): "USD", // US Dollar
-	Site(TM): "TMT", // Turkmenistani Manat
-	Site(TN): "TND", // Tunisian Dinar
-	Site(TO): "TOP", // Tongan Paʻanga
-	Site(TR): "TRY", // Turkish Lira
-	Site(TT): "TTD", // Trinidad and Tobago Dollar
-	Site(TV): "AUD", // Australian Dollar
-	Site(TW): "TWD", // New Taiwan Dollar
-	Site(TZ): "TZS", // Tanzanian Shilling
+	TC: "USD", // US Dollar
+	TD: "XAF", // Central African CFA Franc
+	TF: "EUR", // Euro
+	TG: "XOF", // West African CFA Franc
+	TH: "THB", // Thai Baht
+	TJ: "TJS", // Tajikistani Somoni
+	TK: "NZD", // New Zealand Dollar
+	TL: "USD", // US Dollar
+	TM: "TMT", // Turkmenistani Manat
+	TN: "TND", // Tunisian Dinar
+	TO: "TOP", // Tongan Paʻanga
+	TR: "TRY", // Turkish Lira
+	TT: "TTD", // Trinidad and Tobago Dollar
+	TV: "AUD", // Australian Dollar
+	TW: "TWD", // New Taiwan Dollar
+	TZ: "TZS", // Tanzanian Shilling
 
 	// U
-	Site(UA): "UAH", // Ukrainian Hryvnia
-	Site(UG): "UGX", // Ugandan Shilling
-	Site(UM): "USD", // US Dollar
-	Site(US): "USD", // US Dollar
-	Site(UY): "UYU", // Uruguayan Peso
-	Site(UZ): "UZS", // Uzbekistani Som
+	UA: "UAH", // Ukrainian Hryvnia
+	UG: "UGX", // Ugandan Shilling
+	UM: "USD", // US Dollar
+	US: "USD", // US Dollar
+	UY: "UYU", // Uruguayan Peso
+	UZ: "UZS", // Uzbekistani Som
 
 	// V
-	Site(VA): "EUR", // Euro
-	Site(VC): "XCD", // East Caribbean Dollar
-	Site(VE): "VES", // Venezuelan Bolívar Soberano
-	Site(VG): "USD", // US Dollar
-	Site(VI): "USD", // US Dollar
-	Site(VN): "VND", // Vietnamese Dong
-	Site(VU): "VUV", // Vanuatu Vatu
+	VA: "EUR", // Euro
+	VC: "XCD", // East Caribbean Dollar
+	VE: "VES", // Venezuelan Bolívar Soberano
+	VG: "USD", // US Dollar
+	VI: "USD", // US Dollar
+	VN: "VND", // Vietnamese Dong
+	VU: "VUV", // Vanuatu Vatu
 
 	// W
-	Site(WF): "XPF", // CFP Franc
-	Site(WS): "WST", // Samoan Tala
+	WF: "XPF", // CFP Franc
+	WS: "WST", // Samoan Tala
 
 	// Y
-	Site(YE): "YER", // Yemeni Rial
-	Site(YT): "EUR", // Euro
+	YE: "YER", // Yemeni Rial
+	YT: "EUR", // Euro
 
 	// Z
-	Site(ZA): "ZAR", // South African Rand
-	Site(ZM): "ZMW", // Zambian Kwacha
-	Site(ZW): "ZWL", // Zimbabwean Dollar
+	ZA: "ZAR", // South African Rand
+	ZM: "ZMW", // Zambian Kwacha
+	ZW: "ZWL", // Zimbabwean Dollar
 }
 
 // Currency returns the ISO 4217 currency code for a given ISO 3166-1 alpha-2 site code
 // and a boolean indicating whether the currency was found
-func Currency(siteCode Site) (string, bool) {
-	currency, ok := currencySite[siteCode]
-	return currency, ok
+func Currency(siteCode string) (currency string, found bool) {
+	currency, found = currencySite[siteCode]
+	return
 }
