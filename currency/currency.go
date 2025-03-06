@@ -393,6 +393,12 @@ func RoundWithSign(currencyCode string, amount float64) (roundedNumber float64, 
 	factor := GetCurrencyFactor(currencyCode)
 	bigFactor := new(big.Float).SetFloat64(factor)
 
+	// For currencies with factor 1000 (like KWD), we want to round to 2 decimal places
+	// So we multiply by 100 instead of 1000
+	if factor == 1000 {
+		bigFactor.SetFloat64(100)
+	}
+
 	// Multiply by factor
 	bigAmount.Mul(bigAmount, bigFactor)
 
@@ -410,6 +416,11 @@ func RoundWithSign(currencyCode string, amount float64) (roundedNumber float64, 
 	// Convert back to float64 with proper scaling
 	roundedBig := new(big.Float).SetInt(bigInt)
 	roundedBig.Quo(roundedBig, bigFactor)
+
+	// For currencies with factor 1000, multiply by 1 to get back to 3 decimal places
+	if factor == 1000 {
+		roundedBig.Mul(roundedBig, new(big.Float).SetFloat64(1))
+	}
 
 	// Convert back to float64
 	roundedNumber, _ = roundedBig.Float64()
