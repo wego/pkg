@@ -4,6 +4,7 @@ package currency
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"strings"
 
 	"github.com/bojanz/currency"
@@ -374,4 +375,43 @@ func Amount(currencyCode string, amount float64) float64 {
 func MinorUnitAmount(currencyCode string, amount float64) uint64 {
 	minorUnitAmount, _ := ToMinorUnit(currencyCode, amount)
 	return minorUnitAmount
+}
+
+// RoundWithSign rounds an amount to the currency factor's decimal places and returns the amount with the sign of the original amount
+func RoundWithSign(currencyCode string, amount float64) (roundedNumber float64, err error) {
+	if !IsISO4217(currencyCode) {
+		return 0, fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
+	}
+
+	// Convert float64 to big.Float for precise calculation
+	bigAmount := new(big.Float).SetFloat64(amount)
+	if bigAmount == nil {
+		return 0, fmt.Errorf("invalid amount: %f", amount)
+	}
+
+	// Get the currency factor
+	factor := GetCurrencyFactor(currencyCode)
+	bigFactor := new(big.Float).SetFloat64(factor)
+
+	// Multiply by factor
+	bigAmount.Mul(bigAmount, bigFactor)
+
+	// Add 0.5 for rounding, considering the sign
+	half := new(big.Float).SetFloat64(0.5)
+	if amount < 0 {
+		half.Neg(half)
+	}
+	bigAmount.Add(bigAmount, half)
+
+	// Convert to integer (truncating)
+	bigInt := new(big.Int)
+	bigAmount.Int(bigInt)
+
+	// Convert back to float64 with proper scaling
+	roundedBig := new(big.Float).SetInt(bigInt)
+	roundedBig.Quo(roundedBig, bigFactor)
+
+	// Convert back to float64
+	roundedNumber, _ = roundedBig.Float64()
+	return
 }

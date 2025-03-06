@@ -1,5 +1,7 @@
 package site
 
+import "strings"
+
 // ISO 3166-1 alpha-2
 const (
 	AD = "AD" // Andorra
@@ -252,3 +254,214 @@ const (
 	ZM = "ZM" // Zambia
 	ZW = "ZW" // Zimbabwe
 )
+
+// currencySite maps ISO 3166-1 alpha-2 site codes to ISO 4217 currency codes
+var currencySite = map[string]string{
+	// A
+	"AE": "AED", // United Arab Emirates Dirham
+	"AF": "AFN", // Afghan Afghani
+	"AL": "ALL", // Albanian Lek
+	"AM": "AMD", // Armenian Dram
+	"AN": "ANG", // Netherlands Antillean Guilder
+	"AO": "AOA", // Angolan Kwanza
+	"AR": "ARS", // Argentine Peso
+	"AU": "AUD", // Australian Dollar
+	"AW": "AWG", // Aruban Florin
+	"AZ": "AZN", // Azerbaijani Manat
+
+	// B
+	"BA": "BAM", // Bosnia and Herzegovina Convertible Mark
+	"BB": "BBD", // Barbadian Dollar
+	"BD": "BDT", // Bangladeshi Taka
+	"BG": "BGN", // Bulgarian Lev
+	"BH": "BHD", // Bahraini Dinar
+	"BI": "BIF", // Burundian Franc
+	"BM": "BMD", // Bermudian Dollar
+	"BN": "BND", // Brunei Dollar
+	"BO": "BOB", // Bolivian Boliviano
+	"BR": "BRL", // Brazilian Real
+	"BS": "BSD", // Bahamian Dollar
+	"BT": "BTN", // Bhutanese Ngultrum
+	"BW": "BWP", // Botswana Pula
+	"BY": "BYN", // Belarusian Ruble
+	"BZ": "BZD", // Belize Dollar
+
+	// C
+	"CA": "CAD", // Canadian Dollar
+	"CD": "CDF", // Congolese Franc
+	"CH": "CHF", // Swiss Franc
+	"CL": "CLP", // Chilean Peso
+	"CN": "CNY", // Chinese Yuan
+	"CO": "COP", // Colombian Peso
+	"CR": "CRC", // Costa Rican Colón
+	"CU": "CUP", // Cuban Peso
+	"CV": "CVE", // Cape Verdean Escudo
+	"CZ": "CZK", // Czech Republic Koruna
+
+	// D
+	"DJ": "DJF", // Djiboutian Franc
+	"DK": "DKK", // Danish Krone
+	"DO": "DOP", // Dominican Peso
+	"DZ": "DZD", // Algerian Dinar
+
+	// E
+	"EG": "EGP", // Egyptian Pound
+	"ER": "ERN", // Eritrean Nakfa
+	"ET": "ETB", // Ethiopian Birr
+	"EU": "EUR", // Euro
+
+	// F
+	"FJ": "FJD", // Fijian Dollar
+	"FK": "FKP", // Falkland Islands Pound
+
+	// G
+	"GB": "GBP", // British Pound Sterling
+	"GE": "GEL", // Georgian Lari
+	"GH": "GHS", // Ghanaian Cedi
+	"GI": "GIP", // Gibraltar Pound
+	"GM": "GMD", // Gambian Dalasi
+	"GN": "GNF", // Guinean Franc
+	"GT": "GTQ", // Guatemalan Quetzal
+	"GY": "GYD", // Guyanese Dollar
+
+	// H
+	"HK": "HKD", // Hong Kong Dollar
+	"HN": "HNL", // Honduran Lempira
+	"HR": "HRK", // Croatian Kuna
+	"HT": "HTG", // Haitian Gourde
+	"HU": "HUF", // Hungarian Forint
+
+	// I
+	"ID": "IDR", // Indonesian Rupiah
+	"IL": "ILS", // Israeli New Shekel
+	"IN": "INR", // Indian Rupee
+	"IQ": "IQD", // Iraqi Dinar
+	"IR": "IRR", // Iranian Rial
+	"IS": "ISK", // Icelandic Krona
+
+	// J
+	"JM": "JMD", // Jamaican Dollar
+	"JO": "JOD", // Jordanian Dinar
+	"JP": "JPY", // Japanese Yen
+
+	// K
+	"KE": "KES", // Kenyan Shilling
+	"KG": "KGS", // Kyrgyzstani Som
+	"KH": "KHR", // Cambodian Riel
+	"KM": "KMF", // Comoran Franc
+	"KP": "KPW", // North Korean Won
+	"KR": "KRW", // South Korean Won
+	"KW": "KWD", // Kuwaiti Dinar
+	"KY": "KYD", // Cayman Islands Dollar
+	"KZ": "KZT", // Kazakhstani Tenge
+
+	// L
+	"LA": "LAK", // Lao Kip
+	"LB": "LBP", // Lebanese Pound
+	"LK": "LKR", // Sri Lankan Rupee
+	"LR": "LRD", // Liberian Dollar
+	"LS": "LSL", // Lesotho Loti
+	"LY": "LYD", // Libyan Dinar
+
+	// M
+	"MA": "MAD", // Moroccan Dirham
+	"MD": "MDL", // Moldovan Leu
+	"MG": "MGA", // Malagasy Ariary
+	"MK": "MKD", // Macedonian Denar
+	"MM": "MMK", // Myanmar Kyat
+	"MN": "MNT", // Mongolian Tögrög
+	"MO": "MOP", // Macanese Pataca
+	"MR": "MRU", // Mauritanian Ouguiya
+	"MU": "MUR", // Mauritian Rupee
+	"MV": "MVR", // Maldivian Rufiyaa
+	"MW": "MWK", // Malawian Kwacha
+	"MX": "MXN", // Mexican Peso
+	"MY": "MYR", // Malaysian Ringgit
+	"MZ": "MZN", // Mozambican Metical
+
+	// N
+	"NA": "NAD", // Namibian Dollar
+	"NG": "NGN", // Nigerian Naira
+	"NI": "NIO", // Nicaraguan Córdoba
+	"NO": "NOK", // Norwegian Krone
+	"NP": "NPR", // Nepalese Rupee
+	"NZ": "NZD", // New Zealand Dollar
+
+	// O
+	"OM": "OMR", // Omani Rial
+
+	// P
+	"PA": "PAB", // Panamanian Balboa
+	"PE": "PEN", // Peruvian Sol
+	"PG": "PGK", // Papua New Guinean Kina
+	"PH": "PHP", // Philippine Peso
+	"PK": "PKR", // Pakistani Rupee
+	"PL": "PLN", // Polish Zloty
+	"PY": "PYG", // Paraguayan Guarani
+
+	// Q
+	"QA": "QAR", // Qatari Riyal
+
+	// R
+	"RO": "RON", // Romanian Leu
+	"RS": "RSD", // Serbian Dinar
+	"RU": "RUB", // Russian Ruble
+	"RW": "RWF", // Rwandan Franc
+
+	// S
+	"SA": "SAR", // Saudi Riyal
+	"SB": "SBD", // Solomon Islands Dollar
+	"SC": "SCR", // Seychellois Rupee
+	"SD": "SDG", // Sudanese Pound
+	"SE": "SEK", // Swedish Krona
+	"SG": "SGD", // Singapore Dollar
+	"SH": "SHP", // Saint Helena Pound
+	"SL": "SLL", // Sierra Leonean Leone
+	"SO": "SOS", // Somali Shilling
+	"SR": "SRD", // Surinamese Dollar
+	"SS": "SSP", // South Sudanese Pound
+	"ST": "STN", // São Tomé and Príncipe Dobra
+	"SV": "SVC", // Salvadoran Colón
+	"SY": "SYP", // Syrian Pound
+	"SZ": "SZL", // Swazi Lilangeni
+
+	// T
+	"TH": "THB", // Thai Baht
+	"TJ": "TJS", // Tajikistani Somoni
+	"TM": "TMT", // Turkmenistani Manat
+	"TN": "TND", // Tunisian Dinar
+	"TO": "TOP", // Tongan Paʻanga
+	"TR": "TRY", // Turkish Lira
+	"TT": "TTD", // Trinidad and Tobago Dollar
+	"TW": "TWD", // New Taiwan Dollar
+	"TZ": "TZS", // Tanzanian Shilling
+
+	// U
+	"UA": "UAH", // Ukrainian Hryvnia
+	"UG": "UGX", // Ugandan Shilling
+	"US": "USD", // United States Dollar
+	"UY": "UYU", // Uruguayan Peso
+	"UZ": "UZS", // Uzbekistani Som
+
+	// V
+	"VE": "VES", // Venezuelan Bolívar Soberano
+	"VN": "VND", // Vietnamese Dong
+	"VU": "VUV", // Vanuatu Vatu
+
+	// W
+	"WS": "WST", // Samoan Tala
+
+	// Y
+	"YE": "YER", // Yemeni Rial
+
+	// Z
+	"ZA": "ZAR", // South African Rand
+	"ZM": "ZMW", // Zambian Kwacha
+	"ZW": "ZWL", // Zimbabwean Dollar
+}
+
+// Currency returns the ISO 4217 currency code for a given ISO 3166-1 alpha-2 site code
+func Currency(siteCode string) string {
+	siteCode = strings.ToUpper(strings.TrimSpace(siteCode))
+	return currencySite[siteCode]
+}
