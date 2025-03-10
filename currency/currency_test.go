@@ -425,3 +425,139 @@ func Test_Round_OK(t *testing.T) {
 		})
 	}
 }
+
+func TestRoundWithSign(t *testing.T) {
+	tests := []struct {
+		name         string
+		currencyCode string
+		amount       float64
+		want         float64
+		wantErr      bool
+	}{
+		{
+			name:         "Positive USD amount",
+			currencyCode: currency.USD,
+			amount:       123.456,
+			want:         123.46,
+			wantErr:      false,
+		},
+		{
+			name:         "Negative USD amount",
+			currencyCode: currency.USD,
+			amount:       -123.456,
+			want:         -123.46,
+			wantErr:      false,
+		},
+		{
+			name:         "Zero amount",
+			currencyCode: currency.USD,
+			amount:       0,
+			want:         0,
+			wantErr:      false,
+		},
+		{
+			name:         "JPY positive amount",
+			currencyCode: currency.JPY,
+			amount:       123.456,
+			want:         123,
+			wantErr:      false,
+		},
+		{
+			name:         "JPY negative amount",
+			currencyCode: currency.JPY,
+			amount:       -123.456,
+			want:         -123,
+			wantErr:      false,
+		},
+		{
+			name:         "KWD positive amount (3 decimal places)",
+			currencyCode: currency.KWD,
+			amount:       123.4567,
+			want:         123.460,
+			wantErr:      false,
+		},
+		{
+			name:         "KWD negative amount (3 decimal places)",
+			currencyCode: currency.KWD,
+			amount:       -123.4567,
+			want:         -123.460,
+			wantErr:      false,
+		},
+		{
+			name:         "Invalid currency code",
+			currencyCode: "YYY",
+			amount:       123.456,
+			want:         0,
+			wantErr:      true,
+		},
+		{
+			name:         "Very small positive number",
+			currencyCode: currency.USD,
+			amount:       0.0000001,
+			want:         0,
+			wantErr:      false,
+		},
+		{
+			name:         "Very small negative number",
+			currencyCode: currency.USD,
+			amount:       -0.0000001,
+			want:         0,
+			wantErr:      false,
+		},
+		{
+			name:         "Large positive number with factor 100",
+			currencyCode: currency.USD,
+			amount:       999999.999,
+			want:         1000000.00,
+			wantErr:      false,
+		},
+		{
+			name:         "Large negative number with factor 100",
+			currencyCode: currency.USD,
+			amount:       -999999.999,
+			want:         -1000000.00,
+			wantErr:      false,
+		},
+		{
+			name:         "Large positive number with factor 1",
+			currencyCode: currency.JPY,
+			amount:       999999.999,
+			want:         1000000,
+			wantErr:      false,
+		},
+		{
+			name:         "Large negative number with factor 1",
+			currencyCode: currency.JPY,
+			amount:       -999999.999,
+			want:         -1000000,
+			wantErr:      false,
+		},
+		{
+			name:         "KWD Large positive number with factor 1000",
+			currencyCode: currency.KWD,
+			amount:       999999.999,
+			want:         1000000.000,
+			wantErr:      false,
+		},
+		{
+			name:         "KWD Large negative number with factor 1000",
+			currencyCode: currency.KWD,
+			amount:       -999999.999,
+			want:         -1000000.000,
+			wantErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := currency.RoundWithSign(tt.currencyCode, tt.amount)
+			if tt.wantErr && err == nil {
+				t.Errorf("RoundWithSign() wantErr")
+				return
+			}
+			if !tt.wantErr && got != tt.want {
+				t.Errorf("RoundWithSign() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

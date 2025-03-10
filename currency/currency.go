@@ -4,6 +4,7 @@ package currency
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"strings"
 
 	"github.com/bojanz/currency"
@@ -374,4 +375,54 @@ func Amount(currencyCode string, amount float64) float64 {
 func MinorUnitAmount(currencyCode string, amount float64) uint64 {
 	minorUnitAmount, _ := ToMinorUnit(currencyCode, amount)
 	return minorUnitAmount
+}
+
+// RoundWithSign rounds an amount to the currency factor's decimal places and returns the amount with the sign of the original amount
+func RoundWithSign(currencyCode string, amount float64) (roundedNumber float64, err error) {
+	if !IsISO4217(currencyCode) {
+		return 0, fmt.Errorf("%s is not a valid ISO 4217 currency code", currencyCode)
+	}
+
+	// Convert float64 to big.Float for precise calculation
+	bigAmount := new(big.Float).SetFloat64(amount)
+	if bigAmount == nil {
+		return 0, fmt.Errorf("invalid amount: %f", amount)
+	}
+
+	// Get the currency factor
+	factor := GetCurrencyFactor(currencyCode)
+	bigFactor := new(big.Float).SetFloat64(factor)
+
+	// For currencies with factor 1000 (like KWD), we want to round to 2 decimal places
+	// So we multiply by 100 instead of 1000
+	if factor == 1000 {
+		bigFactor.SetFloat64(100)
+	}
+
+	// Multiply by factor
+	bigAmount.Mul(bigAmount, bigFactor)
+
+	// Add 0.5 for rounding, considering the sign
+	half := new(big.Float).SetFloat64(0.5)
+	if amount < 0 {
+		half.Neg(half)
+	}
+	bigAmount.Add(bigAmount, half)
+
+	// Convert to integer (truncating)
+	bigInt := new(big.Int)
+	bigAmount.Int(bigInt)
+
+	// Convert back to float64 with proper scaling
+	roundedBig := new(big.Float).SetInt(bigInt)
+	roundedBig.Quo(roundedBig, bigFactor)
+
+	// For currencies with factor 1000, multiply by 1 to get back to 3 decimal places
+	if factor == 1000 {
+		roundedBig.Mul(roundedBig, new(big.Float).SetFloat64(1))
+	}
+
+	// Convert back to float64
+	roundedNumber, _ = roundedBig.Float64()
+	return
 }
