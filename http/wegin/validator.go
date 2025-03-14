@@ -19,7 +19,7 @@ var (
 var (
 	fieldValidators = map[string]validator.Func{
 		"alphanum_with_underscore_or_dash": alphaNumWithDash,
-		"one_of_or_blank":                  isOneOfOrBlank, // only for string pointer type
+		"one_of_or_blank":                  isOneOfOrBlank, // only for string or string pointer types
 	}
 	structValidators = map[any]validator.StructLevelFunc{}
 )
@@ -58,8 +58,8 @@ var isOneOfOrBlank validator.Func = func(fl validator.FieldLevel) bool {
 	}
 
 	// Check if value is in the allowed list
-	for i := 0; i < len(vals); i++ {
-		if vals[i] == v {
+	for _, val := range vals {
+		if val == v {
 			return true
 		}
 	}
