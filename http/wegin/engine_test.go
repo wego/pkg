@@ -14,8 +14,8 @@ import (
 )
 
 // Helper function to create string pointers
-func strPtr(s string) *string {
-	return &s
+func pointer[T any](v T) *T {
+	return &v
 }
 
 type alphaNumTestStruct struct {
@@ -221,7 +221,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStatus: http.StatusOK,
 			expectedBodies: []string{`"string_ptr_field1":""`},
 			expectedStruct: &oneOfOrBlankTestStruct{
-				StringPtrField1: strPtr(""),
+				StringPtrField1: pointer(""),
 				StringPtrField2: nil,
 				StringPtrField3: nil,
 			},
@@ -232,7 +232,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStatus: http.StatusOK,
 			expectedBodies: []string{`"string_ptr_field1":"red"`},
 			expectedStruct: &oneOfOrBlankTestStruct{
-				StringPtrField1: strPtr("red"),
+				StringPtrField1: pointer("red"),
 				StringPtrField2: nil,
 				StringPtrField3: nil,
 			},
@@ -243,7 +243,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStatus: http.StatusOK,
 			expectedBodies: []string{`"string_ptr_field1":"blue"`},
 			expectedStruct: &oneOfOrBlankTestStruct{
-				StringPtrField1: strPtr("blue"),
+				StringPtrField1: pointer("blue"),
 				StringPtrField2: nil,
 				StringPtrField3: nil,
 			},
@@ -254,7 +254,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStatus: http.StatusOK,
 			expectedBodies: []string{`"string_ptr_field1":"green"`},
 			expectedStruct: &oneOfOrBlankTestStruct{
-				StringPtrField1: strPtr("green"),
+				StringPtrField1: pointer("green"),
 				StringPtrField2: nil,
 				StringPtrField3: nil,
 			},
@@ -284,7 +284,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedBodies: []string{`"string_ptr_field2":""`},
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
-				StringPtrField2: strPtr(""),
+				StringPtrField2: pointer(""),
 				StringPtrField3: nil,
 			},
 		},
@@ -295,7 +295,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedBodies: []string{`"string_ptr_field2":"apple"`},
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
-				StringPtrField2: strPtr("apple"),
+				StringPtrField2: pointer("apple"),
 				StringPtrField3: nil,
 			},
 		},
@@ -306,7 +306,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedBodies: []string{`"string_ptr_field2":"orange"`},
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
-				StringPtrField2: strPtr("orange"),
+				StringPtrField2: pointer("orange"),
 				StringPtrField3: nil,
 			},
 		},
@@ -317,7 +317,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedBodies: []string{`"string_ptr_field2":"banana"`},
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
-				StringPtrField2: strPtr("banana"),
+				StringPtrField2: pointer("banana"),
 				StringPtrField3: nil,
 			},
 		},
@@ -347,7 +347,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
 				StringPtrField2: nil,
-				StringPtrField3: strPtr(""),
+				StringPtrField3: pointer(""),
 			},
 		},
 		{
@@ -358,7 +358,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
 				StringPtrField2: nil,
-				StringPtrField3: strPtr("dog"),
+				StringPtrField3: pointer("dog"),
 			},
 		},
 		{
@@ -369,7 +369,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
 				StringPtrField2: nil,
-				StringPtrField3: strPtr("cat"),
+				StringPtrField3: pointer("cat"),
 			},
 		},
 		{
@@ -380,7 +380,7 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 			expectedStruct: &oneOfOrBlankTestStruct{
 				StringPtrField1: nil,
 				StringPtrField2: nil,
-				StringPtrField3: strPtr("fish"),
+				StringPtrField3: pointer("fish"),
 			},
 		},
 		{
@@ -401,9 +401,9 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 				`"string_ptr_field3":"dog"`,
 			},
 			expectedStruct: &oneOfOrBlankTestStruct{
-				StringPtrField1: strPtr("red"),
-				StringPtrField2: strPtr("apple"),
-				StringPtrField3: strPtr("dog"),
+				StringPtrField1: pointer("red"),
+				StringPtrField2: pointer("apple"),
+				StringPtrField3: pointer("dog"),
 			},
 		},
 		{
@@ -422,9 +422,9 @@ func (s *EngineSuite) Test_OneOfOrBlank() {
 				`"string_ptr_field3":""`,
 			},
 			expectedStruct: &oneOfOrBlankTestStruct{
-				StringPtrField1: strPtr(""),
-				StringPtrField2: strPtr(""),
-				StringPtrField3: strPtr(""),
+				StringPtrField1: pointer(""),
+				StringPtrField2: pointer(""),
+				StringPtrField3: pointer(""),
 			},
 		},
 	}
