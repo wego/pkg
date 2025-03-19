@@ -1,33 +1,54 @@
 module github.com/wego/pkg/http/jwt
 
-go 1.22
+go 1.23.0
+
+toolchain go1.24.1
 
 require (
-	github.com/lestrrat-go/jwx/v2 v2.0.8
-	github.com/wego/pkg/errors v0.1.16
-	github.com/wego/pkg/http/header v0.1.1
+	github.com/lestrrat-go/jwx/v2 v2.1.4
+	github.com/wego/pkg/errors v0.2.2
+	github.com/wego/pkg/http/header v0.1.6
 )
 
 require (
+	github.com/Ardesco/credit-card-generator v0.0.0-20201208233833-a7202c328b75 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
-	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
-	github.com/getsentry/sentry-go v0.12.0 // indirect
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.10.0 // indirect
-	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
+	github.com/getsentry/sentry-go v0.31.1 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.25.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.4 // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc v1.0.4 // indirect
+	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/option v1.0.0 // indirect
-	github.com/wego/pkg/common v0.1.12 // indirect
-	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
-	golang.org/x/sys v0.0.0-20220222200937-f2425489ef4c // indirect
-	golang.org/x/text v0.3.7 // indirect
-	gorm.io/gorm v1.23.1 // indirect
+	github.com/lestrrat-go/option v1.0.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+	github.com/sagikazarmark/locafero v0.8.0 // indirect
+	github.com/segmentio/asm v1.2.0 // indirect
+	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/spf13/afero v1.14.0 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/viper v1.20.0 // indirect
+	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/wego/pkg/collection v0.1.10 // indirect
+	github.com/wego/pkg/common v0.1.17 // indirect
+	github.com/wego/pkg/env v0.1.0 // indirect
+	github.com/wego/pkg/pointer v0.1.2 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/gorm v1.25.12 // indirect
 )
