@@ -47,7 +47,7 @@ done
 
 for dir in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
   pkg=$(echo "$dir" | sed 's/\.\///')
-  latest_version=$(git tag --sort=-v:refname -l "$pkg/v*" | head -1 | grep -Eo 'v.*')
+  latest_version=$(git tag --sort=-v:refname -l "$pkg/v*" | head -1 | sed 's/.*\///')
 
   current_version=$latest_version
   major_version=0
