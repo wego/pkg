@@ -19,16 +19,24 @@ import (
 
 var (
 	testJSONEndpoint          = "/test/json"
+	testMultipleBindEndpoint  = "/test/multiple"
 	testQueryEndpoint         = "/test/query"
 	testChangeRequestEndpoint = "/test/cr"
 	testIDEndpoint            = "/test"
 	testUriEndpoint           = "/test/:id/child/:child_id"
 	ctxKey                    = "testRequest"
+	anotherCtxKey             = "anotherTestRequest"
 )
 
 type testStruct struct {
 	Number []uint   `form:"Num,omitempty" json:"number" binding:"required,dive,number,min=1"`
 	String []string `form:"Str,omitempty" json:"string" binding:"required,dive,printascii"`
+}
+
+type anotherTestStruct struct {
+	Number []uint   `form:"Num,omitempty" json:"number" binding:"required,dive,number,min=1"`
+	String []string `form:"Str,omitempty" json:"string" binding:"required,dive,printascii"`
+	Dummy  string   `form:"Dummy,omitempty" json:"dummy" binding:"required"`
 }
 
 type testChangeStruct struct {
@@ -55,6 +63,24 @@ func shouldBindJSONHandler(c *gin.Context) {
 func bindJSONHandler(c *gin.Context) {
 	var t testStruct
 	if err := binding.BindJSON(c, ctxKey, &t); err != nil {
+		c.AbortWithStatus(errors.Code(err))
+		return
+	}
+	c.JSON(http.StatusOK, t)
+}
+
+func aBindJSONHandler(c *gin.Context) {
+	var t testStruct
+	if err := binding.BindJSON(c, ctxKey, &t); err != nil {
+		c.AbortWithStatus(errors.Code(err))
+		return
+	}
+	return
+}
+
+func anotherBindJSONHandler(c *gin.Context) {
+	var t anotherTestStruct
+	if err := binding.BindJSON(c, anotherCtxKey, &t); err != nil {
 		c.AbortWithStatus(errors.Code(err))
 		return
 	}
@@ -295,6 +321,56 @@ func (s *BindingSuite) Test_BindJSON_FromContext_TypeMismatch() {
 
 	s.Equal(http.StatusOK, r.Code)
 	s.Equal("{\"number\":[1,2,3],\"string\":[\"A\",\"B\",\"C\"]}", r.Body.String())
+}
+
+func (s *BindingSuite) Test_BindJSON_MultipleBinds_OK() {
+	requestBody := `{
+	    "number": [
+	        1,
+	        2,
+	        3
+	    ],
+	    "string": [
+	        "A",
+	        "B",
+	        "C"
+	    ],
+		"dummy": "dummy"
+	}`
+	req, err := http.NewRequest(http.MethodPatch, testMultipleBindEndpoint, strings.NewReader(requestBody))
+	s.NoError(err)
+
+	inCtx := &testStruct{
+		Number: []uint{1, 2, 3},
+		String: []string{"A", "B", "C"},
+	}
+
+	anotherInCtx := &anotherTestStruct{
+		Number: []uint{1, 2, 3},
+		String: []string{"A", "B", "C"},
+		Dummy:  "dummy",
+	}
+
+	verifyContext := func(c *gin.Context, ctxKey string, expected interface{}) {
+		actual, exists := c.Get(ctxKey)
+		s.True(exists)
+		s.Equal(expected, actual)
+	}
+
+	verifyTestStructs := func(c *gin.Context) {
+		verifyContext(c, ctxKey, inCtx)
+		verifyContext(c, anotherCtxKey, anotherInCtx)
+	}
+
+	s.router.PATCH(testMultipleBindEndpoint, aBindJSONHandler, anotherBindJSONHandler, verifyTestStructs)
+	r := httptest.NewRecorder()
+	s.router.ServeHTTP(r, req)
+
+	s.Equal(http.StatusOK, r.Code)
+
+	body, err := json.Marshal(&anotherInCtx)
+	s.NoError(err)
+	s.Equal(string(body), r.Body.String())
 }
 
 func (s *BindingSuite) Test_BindQuery_FromURL_BindError() {
