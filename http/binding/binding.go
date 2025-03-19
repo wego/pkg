@@ -2,6 +2,7 @@ package binding
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin/binding"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -56,7 +57,7 @@ func BindChangeRequest(c *gin.Context, ctxKey string, request audit.IChangeReque
 	}
 
 	// try to bind from request & set to context if ok
-	if err = c.ShouldBindJSON(request); err != nil {
+	if err = c.ShouldBindBodyWith(request, binding.JSON); err != nil {
 		err = errors.New(errors.BadRequest, err)
 		return
 	}
@@ -114,7 +115,7 @@ func fromContext(c *gin.Context, ctxKey string, value interface{}) bool {
 
 // bindJSON tries to bind JSON object from request body & set to context if ok
 func bindJSON(c *gin.Context, ctxKey string, request interface{}) (err error) {
-	if err = c.ShouldBindJSON(request); err != nil {
+	if err = c.ShouldBindBodyWith(request, binding.JSON); err != nil {
 		return errors.New(errors.BadRequest, err)
 	}
 	c.Set(ctxKey, request)
