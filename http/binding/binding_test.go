@@ -12,10 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/wego/pkg/audit"
-	"github.com/wego/pkg/common"
 	"github.com/wego/pkg/errors"
 	"github.com/wego/pkg/http/binding"
 )
+
+// Helper function to create string pointers
+func pointer[T any](v T) *T {
+	return &v
+}
 
 var (
 	testJSONEndpoint          = "/test/json"
@@ -591,8 +595,8 @@ func (s *BindingSuite) Test_BindChangeRequest_FromContext_OK() {
 		ChangeRequest: audit.ChangeRequest{
 			ID: 2,
 			Request: audit.Request{
-				RequestedBy: common.StrRef("admin@payments"),
-				Reason:      common.StrRef("update"),
+				RequestedBy: pointer("admin@payments"),
+				Reason:      pointer("update"),
 			},
 		},
 	}
