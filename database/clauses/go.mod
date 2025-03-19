@@ -2,8 +2,6 @@ module github.com/wego/pkg/database/clauses
 
 go 1.23.0
 
-toolchain go1.24.1
-
 require (
 	github.com/wego/pkg/strings v0.1.0
 	gorm.io/gorm v1.25.12

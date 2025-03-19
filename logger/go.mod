@@ -1,6 +1,7 @@
 module github.com/wego/pkg/logger
 
-go 1.22
+go 1.23.0
+
 
 require (
 	github.com/antchfx/xmlquery v1.4.4
