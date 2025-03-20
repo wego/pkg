@@ -1,6 +1,7 @@
 package binding
 
 import (
+	goErrors "errors"
 	"fmt"
 	"github.com/gin-gonic/gin/binding"
 	"net/http"
@@ -12,14 +13,19 @@ import (
 	"github.com/wego/pkg/errors"
 )
 
+var (
+	// errNoContent is returned when request body is empty
+	errNoContent = errors.New(errors.BadRequest, "request body is empty")
+)
+
 // ShouldBindJSON binds general JSON request. It will ignore request without body.
 func ShouldBindJSON(c *gin.Context, ctxKey string, request interface{}) error {
 	if fromContext(c, ctxKey, request) {
 		return nil
 	}
 
-	if c.Request.Body != nil && c.Request.Body != http.NoBody {
-		return bindJSON(c, ctxKey, request)
+	if err := bindJSON(c, ctxKey, request); err != nil && !goErrors.Is(err, errNoContent) {
+		return err
 	}
 	return nil
 }
@@ -115,6 +121,9 @@ func fromContext(c *gin.Context, ctxKey string, value interface{}) bool {
 
 // bindJSON tries to bind JSON object from request body & set to context if ok
 func bindJSON(c *gin.Context, ctxKey string, request interface{}) (err error) {
+	if c.Request.Body == nil || c.Request.Body == http.NoBody {
+		return errNoContent
+	}
 	if err = c.ShouldBindBodyWith(request, binding.JSON); err != nil {
 		return errors.New(errors.BadRequest, err)
 	}
