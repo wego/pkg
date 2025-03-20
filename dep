@@ -20,8 +20,10 @@ function install() {
 }
 
 function update() {
-  go get -u -v ./... || exit 255
+  go get -u -v all ./... || exit 255
   go mod download || exit 255
+  go mod tidy || exit 255
+  #git diff --exit-code go.sum go.mod 2>&1 > /dev/null || exit 255
 }
 
 for pkg in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do

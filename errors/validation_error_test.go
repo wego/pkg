@@ -11,7 +11,7 @@ import (
 
 type RootStruct struct {
 	TopLevel int    `json:"top_level" validate:"required"`
-	Parent   Parent `json:"parent_field" validate:"dive"`
+	Parent   Parent `json:"parent_field"`
 }
 
 type Parent struct {
