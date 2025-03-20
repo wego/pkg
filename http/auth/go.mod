@@ -2,11 +2,10 @@ module github.com/wego/pkg/http/auth
 
 go 1.23.0
 
-
 require (
 	github.com/casbin/casbin/v2 v2.104.0
 	github.com/gin-gonic/gin v1.10.0
-	github.com/wego/pkg/errors v0.2.2
+	github.com/wego/pkg/errors v0.2.3
 	gorm.io/gorm v1.25.12
 )
 
@@ -46,9 +45,9 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	github.com/wego/pkg/collection v0.1.10 // indirect
-	github.com/wego/pkg/common v0.1.17 // indirect
-	github.com/wego/pkg/env v0.1.0 // indirect
+	github.com/wego/pkg/collection v0.1.11 // indirect
+	github.com/wego/pkg/common v0.1.18 // indirect
+	github.com/wego/pkg/env v0.1.1 // indirect
 	github.com/wego/pkg/pointer v0.1.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.15.0 // indirect

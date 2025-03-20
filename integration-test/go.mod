@@ -2,13 +2,12 @@ module github.com/wego/pkg/integration-test
 
 go 1.23.0
 
-
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.20.0
-	github.com/wego/pkg/database/postgres v0.1.13
-	github.com/wego/pkg/errors v0.2.2
+	github.com/wego/pkg/database/postgres v0.1.14
+	github.com/wego/pkg/errors v0.2.3
 	gorm.io/gorm v1.25.12
 )
 
@@ -89,9 +88,9 @@ require (
 	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
-	github.com/wego/pkg/collection v0.1.10 // indirect
-	github.com/wego/pkg/common v0.1.17 // indirect
-	github.com/wego/pkg/env v0.1.0 // indirect
+	github.com/wego/pkg/collection v0.1.11 // indirect
+	github.com/wego/pkg/common v0.1.18 // indirect
+	github.com/wego/pkg/env v0.1.1 // indirect
 	github.com/wego/pkg/pointer v0.1.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/collector/component v1.28.1 // indirect

@@ -2,15 +2,14 @@ module github.com/wego/pkg/logger
 
 go 1.23.0
 
-
 require (
 	github.com/antchfx/xmlquery v1.4.4
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.10.0
 	github.com/valyala/fastjson v1.6.4
-	github.com/wego/pkg/collection v0.1.10
-	github.com/wego/pkg/common v0.1.17
-	github.com/wego/pkg/errors v0.2.2
+	github.com/wego/pkg/collection v0.1.11
+	github.com/wego/pkg/common v0.1.18
+	github.com/wego/pkg/errors v0.2.3
 	go.uber.org/zap v1.27.0
 )
 
@@ -39,7 +38,7 @@ require (
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/wego/pkg/env v0.1.0 // indirect
+	github.com/wego/pkg/env v0.1.1 // indirect
 	github.com/wego/pkg/pointer v0.1.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect

@@ -2,13 +2,12 @@ module github.com/wego/pkg/database/postgres
 
 go 1.23.0
 
-
 require (
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.10.0
-	github.com/wego/pkg/common v0.1.17
+	github.com/wego/pkg/common v0.1.18
 	gopkg.in/DataDog/dd-trace-go.v1 v1.72.1
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12

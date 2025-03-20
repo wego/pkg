@@ -2,13 +2,12 @@ module github.com/wego/pkg/errors
 
 go 1.23.0
 
-
 require (
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/stretchr/testify v1.10.0
-	github.com/wego/pkg/common v0.1.17
-	github.com/wego/pkg/env v0.1.0
+	github.com/wego/pkg/common v0.1.18
+	github.com/wego/pkg/env v0.1.1
 	gorm.io/gorm v1.25.12
 )
 
@@ -40,7 +39,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/wego/pkg/collection v0.1.10
+	github.com/wego/pkg/collection v0.1.11
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
