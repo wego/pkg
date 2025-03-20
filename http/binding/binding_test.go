@@ -548,6 +548,13 @@ func (s *BindingSuite) Test_BindChangeRequest() {
 		expectedBody   string
 	}{
 		{
+			name:           "emptyBody",
+			idParam:        "1",
+			setupContext:   false,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "request body is empty",
+		},
+		{
 			name: "FromBody_BindError",
 			requestBody: `{
 				"number": [0],

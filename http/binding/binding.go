@@ -57,6 +57,9 @@ func BindQuery(c *gin.Context, ctxKey string, request interface{}) (err error) {
 
 // BindChangeRequest Bind general change request(Update/Delete)
 func BindChangeRequest(c *gin.Context, ctxKey string, request audit.IChangeRequest) (err error) {
+	if c.Request.Body == nil || c.Request.Body == http.NoBody {
+		return errNoContent
+	}
 	// try to get from context
 	if fromContext(c, ctxKey, request) {
 		return
