@@ -12,11 +12,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+        # actions/checkout@v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@v45
+        # tj-actions/changed-files@v45.0.9
+        uses: tj-actions/changed-files@a284dc1814e3fd07f2e34267fc8f81227ed29fb8
 
       - name: Get all changed packages
         id: updated_pkgs
@@ -47,14 +49,15 @@ jobs:
           IFS=" " read -r -a updated_pkgs <<<"$(tr ' ' '\n' <<<"${updated_pkgs[@]}" | sort -u | tr '\n' ' ')"
 
           echo "updated_pkgs=${updated_pkgs[*]}" >> $GITHUB_OUTPUT
-          has_changed_packages=false 
+          has_changed_packages=false
           if (( ${#updated_pkgs[@]} )); then
               has_changed_packages=true
           fi
           echo "has_changed_packages=$has_changed_packages" >> $GITHUB_OUTPUT
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        # actions/setup-go@v5.4.0
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b
         if: ${{ steps.updated_pkgs.outputs.has_changed_packages == 'true' }}
         with:
           go-version: ^1.20
