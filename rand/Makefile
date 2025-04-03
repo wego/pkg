@@ -32,7 +32,10 @@ clean: ## Clean mocks, test & log.
 	rm -f ./cover.out
 
 test: ## Clean, tests, logs for test, then run unit test.
-	go test ./... -race -cover -p $(num_of_pros)
+	go test ./... -race -cover -p $(num_of_pros); \
+    ./selector_test -r 10
+
+
 
 cover: ## Run unit test with data racing check & show coverage result.
 	go test ./... -p $(num_of_pros) -race -coverprofile ./cover.out && go tool cover -html=./cover.out
