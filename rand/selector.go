@@ -31,6 +31,7 @@ const (
 	splitmixMult2 = 0x94D049BB133111EB // Multiplication constant 2
 )
 
+// NewSelector creates a new Selector with the given percentage
 func NewSelector(percentage float64) Selector {
 	rs := &selector{}
 	rs.setThreshold(percentage)
