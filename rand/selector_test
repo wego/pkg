@@ -1,0 +1,128 @@
+#!/bin/bash
+
+# Print error message in RED and Bold and exit
+error() {
+  echo -e "\033[1;31m$*\033[0m" >&2
+  exit 1
+}
+
+# Print warning message in YELLOW and Bold
+warning() {
+  echo -e "\033[1;33m$*\033[0m" >&2
+}
+
+# info in GREEN and Bold
+info() {
+  echo -e "\033[1;32m$*\033[0m"
+}
+
+# Default values
+MIN_RUNS=10000
+MAX_RUNS=100000
+TEST_PATTERN="TestSelectorComprehensive"
+RUNS=0           # Will be set randomly between MIN_RUNS and MAX_RUNS
+VERBOSE=0        # Default to non-verbose output
+PROGRESS_INTERVAL=1000  # Show progress every 1000 iterations
+
+# Print usage information
+usage() {
+  echo "Usage: $0 [options]"
+  echo "Options:"
+  echo "  -m, --min MIN_RUNS      Minimum number of test runs (default: $MIN_RUNS)"
+  echo "  -M, --max MAX_RUNS      Maximum number of test runs (default: $MAX_RUNS)"
+  echo "  -r, --runs RUNS         Specific number of runs (overrides min/max)"
+  echo "  -p, --pattern PATTERN   Test pattern to match (default: $TEST_PATTERN)"
+  echo "  -v, --verbose           Show output from each test run"
+  echo "  -i, --interval INT      Show progress every INT iterations (default: $PROGRESS_INTERVAL)"
+  echo "  -h, --help              Show this help message"
+  exit 1
+}
+
+# Parse command line arguments
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -m|--min) MIN_RUNS="$2"; shift ;;
+    -M|--max) MAX_RUNS="$2"; shift ;;
+    -r|--runs) RUNS="$2"; shift ;;
+    -p|--pattern) TEST_PATTERN="$2"; shift ;;
+    -v|--verbose) VERBOSE=1 ;;
+    -i|--interval) PROGRESS_INTERVAL="$2"; shift ;;
+    -h|--help) usage ;;
+    *) warning "Unknown parameter: $1"; usage ;;
+  esac
+  shift
+done
+
+# Validate input
+if [ "$MIN_RUNS" -ge "$MAX_RUNS" ] && [ "$RUNS" -eq 0 ]; then
+  error "Error: Minimum runs must be less than maximum runs"
+fi
+
+# If RUNS is not specified, generate a random number between MIN_RUNS and MAX_RUNS
+if [ "$RUNS" -eq 0 ]; then
+  # Generate a larger random number - RANDOM has max of 32767
+  RANGE=$((MAX_RUNS - MIN_RUNS + 1))
+  RANDOM_MULTIPLIER=$((RANGE / 32767 + 1))
+  RUNS=$((MIN_RUNS + (RANDOM * RANDOM_MULTIPLIER) % RANGE))
+fi
+
+info "=== Test Statistical Analysis ==="
+info "Running test pattern '$TEST_PATTERN' $RUNS times"
+info "Starting at $(date)"
+
+# Track statistics
+PASSED=0
+FAILED=0
+START_TIME=$(date +%s)
+
+# Run the tests
+for (( i=1; i<=RUNS; i++ )); do
+  # Show progress periodically
+  if [ $((i % PROGRESS_INTERVAL)) -eq 0 ] || [ "$i" -eq 1 ] || [ "$i" -eq "$RUNS" ]; then
+    ELAPSED=$(( $(date +%s) - START_TIME ))
+    RUNS_PER_SEC=$(echo "scale=1; $i / $ELAPSED" | bc 2>/dev/null)
+    if [ -z "$RUNS_PER_SEC" ]; then
+      RUNS_PER_SEC="N/A" # Handle division by zero
+    else
+      RUNS_PER_SEC="$RUNS_PER_SEC/sec"
+    fi
+
+    PCT_COMPLETE=$(echo "scale=1; 100 * $i / $RUNS" | bc)
+    PCT_PASSED=$(echo "scale=2; 100 * $PASSED / $i" | bc 2>/dev/null || echo "0")
+
+    info "[$i/$RUNS] $PCT_COMPLETE% complete ($RUNS_PER_SEC), pass rate: $PCT_PASSED%"
+  fi
+
+  # Redirect output based on verbosity
+  if [ "$VERBOSE" -eq 1 ]; then
+    if go test -run="$TEST_PATTERN" -v; then
+      ((PASSED++))
+    else
+      ((FAILED++))
+    fi
+  else
+    if go test -run="$TEST_PATTERN" > /dev/null 2>&1; then
+      ((PASSED++))
+    else
+      ((FAILED++))
+    fi
+  fi
+done
+
+# Calculate statistics
+END_TIME=$(date +%s)
+TOTAL_TIME=$((END_TIME - START_TIME))
+PASS_RATE=$(echo "scale=4; 100 * $PASSED / $RUNS" | bc)
+FAILED_RATE=$(echo "scale=4; 100 * $FAILED / $RUNS" | bc)
+
+# Print summary
+info "\n=== Test Statistics Summary ==="
+info "Completed at $(date)"
+info "Total runs: $RUNS"
+info "Passed: $PASSED (${PASS_RATE}%)"
+info "Failed: $FAILED (${FAILED_RATE}%)"
+info "Total time: ${TOTAL_TIME}s ($(echo "scale=1; $RUNS / $TOTAL_TIME" | bc 2>/dev/null || echo "N/A") tests/sec)"
+# fail if failed rate is above 3%
+if (( $(echo "$FAILED_RATE > 3" | bc -l) )); then
+  error "Failed rate is above 3%"
+fi
