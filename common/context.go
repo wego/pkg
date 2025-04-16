@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+
 	"github.com/DataDog/datadog-go/statsd"
 )
 
@@ -33,7 +34,7 @@ func GetString(ctx context.Context, key ContextKey) (value string) {
 func GetBasic(ctx context.Context, key string) (value interface{}) {
 	if ctx != nil {
 		if basics, ok := ctx.Value(ctxBasics).(Basics); ok {
-			value, _ = basics[key]
+			value = basics[key]
 		}
 	}
 	return
@@ -90,7 +91,7 @@ func SetExtras(parent context.Context, extras Extras) context.Context {
 func GetExtra(ctx context.Context, key string) (value interface{}) {
 	if ctx != nil {
 		if extras, ok := ctx.Value(ctxExtras).(Extras); ok {
-			value, _ = extras[key]
+			value = extras[key]
 		}
 	}
 	return
