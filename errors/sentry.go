@@ -52,8 +52,8 @@ func capture(ctx context.Context, err error, level sentry.Level, info *ErrorData
 
 func enrichScope(ctx context.Context, scope *sentry.Scope, err error, info *ErrorData) {
 	// Prepare tags and extras to set
-	var tagsToSet map[string]string = make(map[string]string)
-	var extrasToSet map[string]any = make(map[string]any)
+	var tagsToSet = make(map[string]string)
+	var extrasToSet = make(map[string]any)
 
 	// Fetch error code
 	errorCode := fmt.Sprint(Code(err))
