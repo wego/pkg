@@ -1,13 +1,6 @@
 name: Auto Version Packages
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '**/*.go'
-      - '**/go.mod'
-      - '**/go.sum'
   workflow_dispatch:
     inputs:
       version_type:
