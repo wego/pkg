@@ -1,0 +1,41 @@
+name: Auto Version Packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.go'
+      - '**/go.mod'
+      - '**/go.sum'
+
+permissions:
+  contents: write # Required to create tags and push them
+
+jobs:
+  auto-version:
+    name: "Auto Version Changed Packages"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for tags
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run auto_version script
+        run: |
+          chmod +x ./auto_version
+          ./auto_version
+
+      - name: Verify tags were created
+        run: |
+          echo "Latest tags created:"
+          git tag --sort=-version:refname | head -10
