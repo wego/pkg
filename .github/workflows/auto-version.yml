@@ -8,6 +8,17 @@ on:
       - '**/*.go'
       - '**/go.mod'
       - '**/go.sum'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 permissions:
   contents: write # Required to create tags and push them
@@ -33,7 +44,32 @@ jobs:
       - name: Run auto_version script
         run: |
           chmod +x ./auto_version
-          ./auto_version
+          
+          # Determine version type from input or default to patch for automatic triggers
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version_type="${{ github.event.inputs.version_type }}"
+          else
+            version_type="patch"
+          fi
+          
+          echo "Using version type: $version_type"
+          
+          # Pass the appropriate flag to auto_version script
+          case "$version_type" in
+            "major")
+              ./auto_version --major
+              ;;
+            "minor")
+              ./auto_version --minor
+              ;;
+            "patch")
+              ./auto_version --patch
+              ;;
+            *)
+              echo "Invalid version type: $version_type"
+              exit 1
+              ;;
+          esac
 
       - name: Verify tags were created
         run: |
