@@ -528,3 +528,267 @@ func BenchmarkMaskFormURLEncodedParallel(b *testing.B) {
 		}
 	})
 }
+
+func TestMaskURLQueryParams(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name     string
+		rawURL   string
+		maskChar string
+		toMasks  []logger.MaskData
+		expected string
+	}{
+		{
+			name:     "mask single parameter with default mask character",
+			rawURL:   "https://example.com/webhook?email_address=test@example.com&amount=100",
+			maskChar: "",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?amount=100&email_address=%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A%2A",
+		},
+		{
+			name:     "mask multiple parameters with custom mask character",
+			rawURL:   "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100",
+			maskChar: "X",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"mobile_no"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?amount=100&email_address=XXXXXXXXXXXXXXXX&mobile_no=XXXXXXXXXX",
+		},
+		{
+			name:     "mask with partial showing - first and last chars",
+			rawURL:   "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890",
+			maskChar: "~",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  4,
+					CharsToIgnore:    []rune{'@'},
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"mobile_no"},
+					FirstCharsToShow: 3,
+					LastCharsToShow:  2,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?email_address=te~~%40~~~~~~~.com&mobile_no=123~~~~~90",
+		},
+		{
+			name:     "mask with different lengths - keep same length false",
+			rawURL:   "https://example.com/webhook?field1=verylongvalue&field2=short",
+			maskChar: "#",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"field1"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  2,
+					KeepSameLength:   false,
+				},
+				{
+					JSONKeys:         []string{"field2"},
+					FirstCharsToShow: 1,
+					LastCharsToShow:  1,
+					KeepSameLength:   false,
+				},
+			},
+			expected: "https://example.com/webhook?field1=ve%23ue&field2=s%23t",
+		},
+		{
+			name:     "no parameters to mask",
+			rawURL:   "https://example.com/webhook?amount=100&currency=USD",
+			maskChar: "*",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?amount=100&currency=USD",
+		},
+		{
+			name:     "parameter not found",
+			rawURL:   "https://example.com/webhook?name=john&age=30",
+			maskChar: "*",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?name=john&age=30",
+		},
+		{
+			name:     "invalid URL returns original",
+			rawURL:   "not-a-valid-url",
+			maskChar: "*",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "not-a-valid-url",
+		},
+		{
+			name:     "URL without query parameters",
+			rawURL:   "https://example.com/webhook",
+			maskChar: "*",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 0,
+					LastCharsToShow:  0,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook",
+		},
+		{
+			name:     "empty toMasks list",
+			rawURL:   "https://example.com/webhook?email_address=test@example.com",
+			maskChar: "*",
+			toMasks:  []logger.MaskData{},
+			expected: "https://example.com/webhook?email_address=test@example.com",
+		},
+		{
+			name:     "mask parameter with special characters and URL encoding",
+			rawURL:   "https://example.com/webhook?email_address=test%40example.com&mobile_no=%2B1234567890",
+			maskChar: "#",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"email_address"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  4,
+					CharsToIgnore:    []rune{'@'},
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"mobile_no"},
+					FirstCharsToShow: 1,
+					LastCharsToShow:  3,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?email_address=te%23%23%40%23%23%23%23%23%23%23.com&mobile_no=%2B%23%23%23%23%23%23%23890",
+		},
+		{
+			name:     "mask multiple values for same parameter",
+			rawURL:   "https://example.com/webhook?tags=sensitive1&tags=sensitive2&tags=public",
+			maskChar: "~",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"tags"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  1,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?tags=se~~~~~~~1&tags=se~~~~~~~2&tags=pu~~~c",
+		},
+		{
+			name:     "email restriction type test",
+			rawURL:   "https://example.com/webhook?user_id=test@example.com&account_id=12345",
+			maskChar: "~",
+			toMasks: []logger.MaskData{
+				{
+					JSONKeys:         []string{"user_id"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  4,
+					CharsToIgnore:    []rune{'@'},
+					RestrictionType:  logger.MaskRestrictionTypeEmail,
+					KeepSameLength:   true,
+				},
+				{
+					JSONKeys:         []string{"account_id"},
+					FirstCharsToShow: 2,
+					LastCharsToShow:  4,
+					RestrictionType:  logger.MaskRestrictionTypeEmail,
+					KeepSameLength:   true,
+				},
+			},
+			expected: "https://example.com/webhook?account_id=12345&user_id=te~~%40~~~~~~~.com",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := logger.MaskURLQueryParams(tc.rawURL, tc.maskChar, tc.toMasks)
+			assert.Equal(tc.expected, result)
+		})
+	}
+}
+
+func BenchmarkMaskURLQueryParams(b *testing.B) {
+	rawURL := "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
+	toMasks := []logger.MaskData{
+		{
+			JSONKeys:         []string{"email_address"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  4,
+			CharsToIgnore:    []rune{'@'},
+			KeepSameLength:   true,
+		},
+		{
+			JSONKeys:         []string{"mobile_no"},
+			FirstCharsToShow: 3,
+			LastCharsToShow:  2,
+			KeepSameLength:   true,
+		},
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = logger.MaskURLQueryParams(rawURL, "~", toMasks)
+	}
+}
+
+func BenchmarkMaskURLQueryParamsParallel(b *testing.B) {
+	rawURL := "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
+	toMasks := []logger.MaskData{
+		{
+			JSONKeys:         []string{"email_address"},
+			FirstCharsToShow: 2,
+			LastCharsToShow:  4,
+			CharsToIgnore:    []rune{'@'},
+			KeepSameLength:   true,
+		},
+		{
+			JSONKeys:         []string{"mobile_no"},
+			FirstCharsToShow: 3,
+			LastCharsToShow:  2,
+			KeepSameLength:   true,
+		},
+	}
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = logger.MaskURLQueryParams(rawURL, "~", toMasks)
+		}
+	})
+}

@@ -252,3 +252,40 @@ func MaskFormURLEncoded(form string, maskChar string, toMasks []MaskData) string
 
 	return r.Encode()
 }
+
+// MaskURLQueryParams masks sensitive query parameters in the URL with replacement
+func MaskURLQueryParams(rawURL, maskChar string, toMasks []MaskData) string {
+	maskChar = maskCharOrDefault(maskChar)
+
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+
+	query := u.Query()
+	// If there are no query parameters, return the original URL
+	if len(query) == 0 {
+		return rawURL
+	}
+
+	masked := false
+
+	for _, toMask := range toMasks {
+		for _, key := range toMask.JSONKeys {
+			if query.Has(key) {
+				values := query[key]
+				for i := range values {
+					query[key][i] = getMaskedValue(maskChar, values[i], toMask)
+				}
+				masked = true
+			}
+		}
+	}
+
+	if masked {
+		u.RawQuery = query.Encode()
+		return u.String()
+	}
+
+	return rawURL
+}

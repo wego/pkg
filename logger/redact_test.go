@@ -715,3 +715,106 @@ func BenchmarkRedactFormURLEncodedParallel(b *testing.B) {
 		}
 	})
 }
+
+func TestRedactURLQueryParams(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name            string
+		rawURL          string
+		replacement     string
+		sensitiveParams []string
+		expected        string
+	}{
+		{
+			name:            "redact single parameter with default replacement",
+			rawURL:          "https://example.com/webhook?email_address=test@example.com&amount=100",
+			replacement:     "",
+			sensitiveParams: []string{"email_address"},
+			expected:        "https://example.com/webhook?amount=100&email_address=%5BFiltered+by+Wego%5D",
+		},
+		{
+			name:            "redact multiple parameters with custom replacement",
+			rawURL:          "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100",
+			replacement:     "[REDACTED]",
+			sensitiveParams: []string{"email_address", "mobile_no"},
+			expected:        "https://example.com/webhook?amount=100&email_address=%5BREDACTED%5D&mobile_no=%5BREDACTED%5D",
+		},
+		{
+			name:            "no parameters to redact",
+			rawURL:          "https://example.com/webhook?amount=100&currency=USD",
+			replacement:     "[REDACTED]",
+			sensitiveParams: []string{"email_address", "mobile_no"},
+			expected:        "https://example.com/webhook?amount=100&currency=USD",
+		},
+		{
+			name:            "parameter not found",
+			rawURL:          "https://example.com/webhook?name=john&age=30",
+			replacement:     "[REDACTED]",
+			sensitiveParams: []string{"email_address"},
+			expected:        "https://example.com/webhook?name=john&age=30",
+		},
+		{
+			name:            "invalid URL returns original",
+			rawURL:          "not-a-valid-url",
+			replacement:     "[REDACTED]",
+			sensitiveParams: []string{"email_address"},
+			expected:        "not-a-valid-url",
+		},
+		{
+			name:            "URL without query parameters",
+			rawURL:          "https://example.com/webhook",
+			replacement:     "[REDACTED]",
+			sensitiveParams: []string{"email_address"},
+			expected:        "https://example.com/webhook",
+		},
+		{
+			name:            "empty sensitive parameters list",
+			rawURL:          "https://example.com/webhook?email_address=test@example.com",
+			replacement:     "[REDACTED]",
+			sensitiveParams: []string{},
+			expected:        "https://example.com/webhook?email_address=test@example.com",
+		},
+		{
+			name:            "redact parameter with special characters",
+			rawURL:          "https://example.com/webhook?email_address=test%40example.com&mobile_no=%2B1234567890",
+			replacement:     "***",
+			sensitiveParams: []string{"email_address", "mobile_no"},
+			expected:        "https://example.com/webhook?email_address=%2A%2A%2A&mobile_no=%2A%2A%2A",
+		},
+		{
+			name:            "redact PayFast webhook parameters",
+			rawURL:          "https://example.com/payfast/webhook?email_address=user@example.com&mobile_no=0821234567&amount_gross=100.00&signature=abc123",
+			replacement:     "[REDACTED]",
+			sensitiveParams: []string{"email_address", "mobile_no"},
+			expected:        "https://example.com/payfast/webhook?amount_gross=100.00&email_address=%5BREDACTED%5D&mobile_no=%5BREDACTED%5D&signature=abc123",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := logger.RedactURLQueryParams(tc.rawURL, tc.replacement, tc.sensitiveParams)
+			assert.Equal(tc.expected, result)
+		})
+	}
+}
+
+func BenchmarkRedactURLQueryParams(b *testing.B) {
+	rawURL := "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
+	sensitiveParams := []string{"email_address", "mobile_no"}
+
+	for i := 0; i < b.N; i++ {
+		_ = logger.RedactURLQueryParams(rawURL, "[Filtered by Wego]", sensitiveParams)
+	}
+}
+
+func BenchmarkRedactURLQueryParamsParallel(b *testing.B) {
+	rawURL := "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
+	sensitiveParams := []string{"email_address", "mobile_no"}
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = logger.RedactURLQueryParams(rawURL, "[Filtered by Wego]", sensitiveParams)
+		}
+	})
+}

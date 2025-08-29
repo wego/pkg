@@ -151,3 +151,35 @@ func RedactFormURLEncoded(form string, replacement string, keys []string) string
 
 	return formData.Encode()
 }
+
+// RedactURLQueryParams replaces sensitive query parameters in the URL
+func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) string {
+	replacement = replacementCharOrDefault(replacement)
+
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+
+	query := u.Query()
+	// If there are no query parameters, return the original URL
+	if len(query) == 0 {
+		return rawURL
+	}
+
+	masked := false
+
+	for _, param := range sensitiveParams {
+		if query.Has(param) {
+			query.Set(param, replacement)
+			masked = true
+		}
+	}
+
+	if masked {
+		u.RawQuery = query.Encode()
+		return u.String()
+	}
+
+	return rawURL
+}
