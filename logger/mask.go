@@ -262,7 +262,6 @@ func MaskQueryParams(rawQueryParams, maskChar string, toMasks []MaskData) string
 		return rawQueryParams
 	}
 
-	// If there are no query parameters, return the original URL
 	if len(queryParams) == 0 {
 		return rawQueryParams
 	}

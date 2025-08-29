@@ -161,7 +161,6 @@ func RedactQueryParams(rawQueryParams, replacement string, sensitiveParams []str
 		return rawQueryParams
 	}
 
-	// If there are no query parameters, return the original URL
 	if len(queryParams) == 0 {
 		return rawQueryParams
 	}
