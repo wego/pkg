@@ -721,100 +721,100 @@ func TestRedactURLQueryParams(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		rawURL          string
+		queryParams     string
 		replacement     string
 		sensitiveParams []string
 		expected        string
 	}{
 		{
 			name:            "redact single parameter with default replacement",
-			rawURL:          "https://example.com/webhook?email_address=test@example.com&amount=100",
+			queryParams:     "email_address=test@example.com&amount=100",
 			replacement:     "",
 			sensitiveParams: []string{"email_address"},
-			expected:        "https://example.com/webhook?amount=100&email_address=%5BFiltered+by+Wego%5D",
+			expected:        "amount=100&email_address=%5BFiltered+by+Wego%5D",
 		},
 		{
 			name:            "redact multiple parameters with custom replacement",
-			rawURL:          "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100",
+			queryParams:     "email_address=test@example.com&mobile_no=1234567890&amount=100",
 			replacement:     "[REDACTED]",
 			sensitiveParams: []string{"email_address", "mobile_no"},
-			expected:        "https://example.com/webhook?amount=100&email_address=%5BREDACTED%5D&mobile_no=%5BREDACTED%5D",
+			expected:        "amount=100&email_address=%5BREDACTED%5D&mobile_no=%5BREDACTED%5D",
 		},
 		{
 			name:            "no parameters to redact",
-			rawURL:          "https://example.com/webhook?amount=100&currency=USD",
+			queryParams:     "amount=100&currency=USD",
 			replacement:     "[REDACTED]",
 			sensitiveParams: []string{"email_address", "mobile_no"},
-			expected:        "https://example.com/webhook?amount=100&currency=USD",
+			expected:        "amount=100&currency=USD",
 		},
 		{
 			name:            "parameter not found",
-			rawURL:          "https://example.com/webhook?name=john&age=30",
+			queryParams:     "name=john&age=30",
 			replacement:     "[REDACTED]",
 			sensitiveParams: []string{"email_address"},
-			expected:        "https://example.com/webhook?name=john&age=30",
+			expected:        "name=john&age=30",
 		},
 		{
-			name:            "invalid URL returns original",
-			rawURL:          "not-a-valid-url",
+			name:            "invalid query params returns original",
+			queryParams:     "not-valid-query-params",
 			replacement:     "[REDACTED]",
 			sensitiveParams: []string{"email_address"},
-			expected:        "not-a-valid-url",
+			expected:        "not-valid-query-params",
 		},
 		{
-			name:            "URL without query parameters",
-			rawURL:          "https://example.com/webhook",
+			name:            "empty query parameters",
+			queryParams:     "",
 			replacement:     "[REDACTED]",
 			sensitiveParams: []string{"email_address"},
-			expected:        "https://example.com/webhook",
+			expected:        "",
 		},
 		{
 			name:            "empty sensitive parameters list",
-			rawURL:          "https://example.com/webhook?email_address=test@example.com",
+			queryParams:     "email_address=test@example.com",
 			replacement:     "[REDACTED]",
 			sensitiveParams: []string{},
-			expected:        "https://example.com/webhook?email_address=test@example.com",
+			expected:        "email_address=test@example.com",
 		},
 		{
 			name:            "redact parameter with special characters",
-			rawURL:          "https://example.com/webhook?email_address=test%40example.com&mobile_no=%2B1234567890",
-			replacement:     "***",
+			queryParams:     "email_address=test%40example.com&mobile_no=%2B1234567890",
+			replacement:     "[HIDDEN]",
 			sensitiveParams: []string{"email_address", "mobile_no"},
-			expected:        "https://example.com/webhook?email_address=%2A%2A%2A&mobile_no=%2A%2A%2A",
+			expected:        "email_address=%5BHIDDEN%5D&mobile_no=%5BHIDDEN%5D",
 		},
 		{
 			name:            "redact PayFast webhook parameters",
-			rawURL:          "https://example.com/payfast/webhook?email_address=user@example.com&mobile_no=0821234567&amount_gross=100.00&signature=abc123",
-			replacement:     "[REDACTED]",
+			queryParams:     "email_address=user@example.com&mobile_no=1234567890&amount_gross=100.00&merchant_key=abc123",
+			replacement:     "",
 			sensitiveParams: []string{"email_address", "mobile_no"},
-			expected:        "https://example.com/payfast/webhook?amount_gross=100.00&email_address=%5BREDACTED%5D&mobile_no=%5BREDACTED%5D&signature=abc123",
+			expected:        "amount_gross=100.00&email_address=%5BFiltered+by+Wego%5D&merchant_key=abc123&mobile_no=%5BFiltered+by+Wego%5D",
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(_ *testing.T) {
-			result := logger.RedactURLQueryParams(tc.rawURL, tc.replacement, tc.sensitiveParams)
+		t.Run(tc.name, func(t *testing.T) {
+			result := logger.RedactQueryParams(tc.queryParams, tc.replacement, tc.sensitiveParams)
 			assert.Equal(tc.expected, result)
 		})
 	}
 }
 
-func BenchmarkRedactURLQueryParams(b *testing.B) {
-	rawURL := "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
+func BenchmarkRedactQueryParams(b *testing.B) {
+	queryParams := "email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
 	sensitiveParams := []string{"email_address", "mobile_no"}
 
 	for i := 0; i < b.N; i++ {
-		_ = logger.RedactURLQueryParams(rawURL, "[Filtered by Wego]", sensitiveParams)
+		_ = logger.RedactQueryParams(queryParams, "[Filtered by Wego]", sensitiveParams)
 	}
 }
 
-func BenchmarkRedactURLQueryParamsParallel(b *testing.B) {
-	rawURL := "https://example.com/webhook?email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
+func BenchmarkRedactQueryParamsParallel(b *testing.B) {
+	queryParams := "email_address=test@example.com&mobile_no=1234567890&amount=100&currency=USD"
 	sensitiveParams := []string{"email_address", "mobile_no"}
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_ = logger.RedactURLQueryParams(rawURL, "[Filtered by Wego]", sensitiveParams)
+			_ = logger.RedactQueryParams(queryParams, "[Filtered by Wego]", sensitiveParams)
 		}
 	})
 }
