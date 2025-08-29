@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	xmlInput string = `<?xml version="1.0" encoding="utf-8"?>
+	xmlInput = `<?xml version="1.0" encoding="utf-8"?>
 	<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -792,7 +792,7 @@ func TestRedactURLQueryParams(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(_ *testing.T) {
 			result := logger.RedactQueryParams(tc.queryParams, tc.replacement, tc.sensitiveParams)
 			assert.Equal(tc.expected, result)
 		})
