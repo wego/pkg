@@ -738,7 +738,7 @@ func TestMaskURLQueryParams(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(_ *testing.T) {
 			result := logger.MaskURLQueryParams(tc.rawURL, tc.maskChar, tc.toMasks)
 			assert.Equal(tc.expected, result)
 		})

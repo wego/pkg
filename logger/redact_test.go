@@ -792,7 +792,7 @@ func TestRedactURLQueryParams(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(_ *testing.T) {
 			result := logger.RedactURLQueryParams(tc.rawURL, tc.replacement, tc.sensitiveParams)
 			assert.Equal(tc.expected, result)
 		})
