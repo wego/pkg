@@ -5,7 +5,7 @@ func Dedup[T comparable](in []T) (out []T) {
 	keys := make(map[T]bool)
 	out = make([]T, 0)
 	for _, v := range in {
-		if found, _ := keys[v]; !found {
+		if !keys[v] {
 			keys[v] = true
 			out = append(out, v)
 		}
@@ -177,6 +177,35 @@ func Values[M ~map[K]V, K comparable, V any](m M) []V {
 		vs = append(vs, v)
 	}
 	return vs
+}
+
+// Intersect returns a new slice containing elements that exist in both input slices.
+func Intersect[T comparable](slice1, slice2 []T) []T {
+	// create the map from the smaller slice, ensures slice1 is the smaller slice
+	if len(slice2) < len(slice1) {
+		slice1, slice2 = slice2, slice1
+	}
+
+	// Create a hash set (map) from the smaller slice for O(1) lookups.
+	lookupMap := make(map[T]struct{}, len(slice1))
+	for _, item := range slice1 {
+		lookupMap[item] = struct{}{}
+	}
+
+	// The intersection can't be larger than the smaller slice.
+	// Pre-allocating the capacity avoids re-allocations.
+	intersection := make([]T, 0, len(slice1))
+
+	// Iterate through the larger slice.
+	for _, item := range slice2 {
+		_, exists := lookupMap[item]
+		if exists {
+			intersection = append(intersection, item)
+			// remove the element from the lookupMap to ensure the result is unique
+			delete(lookupMap, item)
+		}
+	}
+	return intersection
 }
 
 // Copy copies the key-value pairs. When key is already in the dst map, it will be overwritten.
