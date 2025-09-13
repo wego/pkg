@@ -14,3 +14,19 @@ func ToNonZero[T any](value T) *T {
 	}
 	return &value
 }
+
+// UpdateSelective updates the value of the pointer if the value is not nil and not equal to the old value
+func UpdateSelective[T comparable](oldValue, newValue *T) *T {
+	if newValue == nil {
+		return oldValue
+	}
+
+	if oldValue == nil {
+		return newValue
+	}
+
+	if *oldValue == *newValue {
+		return oldValue
+	}
+	return newValue
+}
