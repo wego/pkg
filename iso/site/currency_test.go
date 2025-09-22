@@ -1,6 +1,9 @@
 package site
 
-import "testing"
+import (
+	"github.com/wego/pkg/currency"
+	"testing"
+)
 
 func TestCurrency(t *testing.T) {
 	tests := []struct {
@@ -13,25 +16,25 @@ func TestCurrency(t *testing.T) {
 		{
 			name:     "United States",
 			siteCode: US,
-			want:     "USD",
+			want:     currency.USD,
 			wantOk:   true,
 		},
 		{
 			name:     "United Kingdom",
 			siteCode: GB,
-			want:     "GBP",
+			want:     currency.GBP,
 			wantOk:   true,
 		},
 		{
 			name:     "Japan",
 			siteCode: JP,
-			want:     "JPY",
+			want:     currency.JPY,
 			wantOk:   true,
 		},
 		{
 			name:     "China",
 			siteCode: CN,
-			want:     "CNY",
+			want:     currency.CNY,
 			wantOk:   true,
 		},
 
@@ -39,19 +42,19 @@ func TestCurrency(t *testing.T) {
 		{
 			name:     "Germany",
 			siteCode: DE,
-			want:     "EUR",
+			want:     currency.EUR,
 			wantOk:   true,
 		},
 		{
 			name:     "France",
 			siteCode: FR,
-			want:     "EUR",
+			want:     currency.EUR,
 			wantOk:   true,
 		},
 		{
 			name:     "Italy",
 			siteCode: IT,
-			want:     "EUR",
+			want:     currency.EUR,
 			wantOk:   true,
 		},
 
@@ -59,19 +62,19 @@ func TestCurrency(t *testing.T) {
 		{
 			name:     "Puerto Rico",
 			siteCode: PR,
-			want:     "USD",
+			want:     currency.USD,
 			wantOk:   true,
 		},
 		{
 			name:     "Guam",
 			siteCode: GU,
-			want:     "USD",
+			want:     currency.USD,
 			wantOk:   true,
 		},
 		{
 			name:     "British Virgin Islands",
 			siteCode: VG,
-			want:     "USD",
+			want:     currency.USD,
 			wantOk:   true,
 		},
 
@@ -79,19 +82,19 @@ func TestCurrency(t *testing.T) {
 		{
 			name:     "Aruba",
 			siteCode: AW,
-			want:     "AWG",
+			want:     currency.AWG,
 			wantOk:   true,
 		},
 		{
 			name:     "Curaçao",
 			siteCode: CW,
-			want:     "ANG",
+			want:     currency.ANG,
 			wantOk:   true,
 		},
 		{
 			name:     "Sint Maarten",
 			siteCode: SX,
-			want:     "ANG",
+			want:     currency.ANG,
 			wantOk:   true,
 		},
 
@@ -99,19 +102,19 @@ func TestCurrency(t *testing.T) {
 		{
 			name:     "Bonaire, Sint Eustatius and Saba",
 			siteCode: BQ,
-			want:     "USD",
+			want:     currency.USD,
 			wantOk:   true,
 		},
 		{
 			name:     "Hong Kong",
 			siteCode: HK,
-			want:     "HKD",
+			want:     currency.HKD,
 			wantOk:   true,
 		},
 		{
 			name:     "Macao",
 			siteCode: MO,
-			want:     "MOP",
+			want:     currency.MOP,
 			wantOk:   true,
 		},
 
