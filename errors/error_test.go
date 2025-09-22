@@ -20,6 +20,48 @@ const (
 
 type testContextKey string
 
+// Custom context type that implements context.Context interface
+type customContext struct {
+	context.Context
+	customField string
+}
+
+// requestContext is a more realistic custom context that might be used in a web application
+type requestContext struct {
+	context.Context
+	requestID string
+	userID    string
+	traceID   string
+}
+
+func newRequestContext(parent context.Context, requestID, userID, traceID string) *requestContext {
+	// Set the basics and extras in the underlying context
+	ctx := common.SetBasics(parent, common.Basics{
+		"request_id": requestID,
+		"user_id":    userID,
+	})
+	ctx = common.SetExtras(ctx, common.Extras{
+		"trace_id": traceID,
+		"service":  "error-service",
+	})
+
+	return &requestContext{
+		Context:   ctx,
+		requestID: requestID,
+		userID:    userID,
+		traceID:   traceID,
+	}
+}
+
+// Additional methods for the custom context
+func (r *requestContext) GetRequestID() string {
+	return r.requestID
+}
+
+func (r *requestContext) GetUserID() string {
+	return r.userID
+}
+
 func TestNew(t *testing.T) {
 	childErr := New(Op(childOp), BadRequest, childErrMsg)
 
@@ -216,6 +258,9 @@ func Test_extras(t *testing.T) {
 	assert.Equal(wantExtras, err.extras())
 }
 
+// TestNew_WithContextParameter demonstrates how the New function handles context.Context parameters.
+// This test shows that any type implementing context.Context interface will be properly handled,
+// including custom context types that embed additional fields or methods.
 func TestNew_WithContextParameter(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -318,6 +363,71 @@ func TestNew_WithContextParameter(t *testing.T) {
 			},
 			expectedExtras: common.Extras{
 				"extra_key": "extra_value",
+			},
+		},
+		{
+			name: "custom context type implementing context.Context interface",
+			setupFunc: func() *Error {
+				baseCtx := context.Background()
+				baseCtx = common.SetBasics(baseCtx, common.Basics{
+					"request_id": "req-123",
+				})
+				baseCtx = common.SetExtras(baseCtx, common.Extras{
+					"trace_id": "trace-789",
+				})
+
+				customCtx := customContext{
+					Context:     baseCtx,
+					customField: "custom_value",
+				}
+
+				return New(Op("test.operation"), BadRequest, "test error", customCtx)
+			},
+			expectedBasics: common.Basics{
+				"request_id": "req-123", // Custom context types work with type switch
+			},
+			expectedExtras: common.Extras{
+				"trace_id": "trace-789", // Custom context types work with type switch
+			},
+		},
+		{
+			name: "realistic request context with nested errors",
+			setupFunc: func() *Error {
+				// Simulate a realistic web application scenario
+				reqCtx := newRequestContext(
+					context.Background(),
+					"req-web-456",
+					"user-789",
+					"trace-abc-def",
+				)
+
+				// Simulate a database error with its own context
+				dbCtx := common.SetBasics(context.Background(), common.Basics{
+					"database": "postgres",
+					"table":    "users",
+				})
+				dbCtx = common.SetExtras(dbCtx, common.Extras{
+					"query_duration": "150ms",
+				})
+
+				dbErr := New(Op("database.query"), NotFound, "user not found", dbCtx)
+
+				// Service layer error that wraps the database error
+				serviceErr := New(Op("user.service.get"), "failed to fetch user", dbErr, reqCtx)
+
+				// Controller layer error - demonstrates how context propagates up
+				return New(Op("user.controller.get"), BadRequest, "invalid user request", serviceErr)
+			},
+			expectedBasics: common.Basics{
+				"request_id": "req-web-456", // From request context
+				"user_id":    "user-789",    // From request context
+				"database":   "postgres",    // From database context
+				"table":      "users",       // From database context
+			},
+			expectedExtras: common.Extras{
+				"trace_id":       "trace-abc-def", // From request context
+				"service":        "error-service", // From request context
+				"query_duration": "150ms",         // From database context
 			},
 		},
 	}
