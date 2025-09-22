@@ -59,6 +59,26 @@ func Filter[T any](vs []T, f func(T) bool) []T {
 	return vsf
 }
 
+// First returns the first element of the slice matching the predicate f, or nil if no match is found
+func First[T any](vs []T, f func(T) bool) *T {
+	for _, v := range vs {
+		if f(v) {
+			return &v
+		}
+	}
+	return nil
+}
+
+// Last returns the last element matching the predicate f, or nil if no match is found
+func Last[T any](vs []T, f func(T) bool) *T {
+	for i := len(vs) - 1; i >= 0; i-- {
+		if f(vs[i]) {
+			return &vs[i]
+		}
+	}
+	return nil
+}
+
 // Map returns a new slice containing the results of applying the function f to each element in the original slice
 func Map[I, R any](vs []I, f func(I) R) []R {
 	vsm := make([]R, len(vs))
