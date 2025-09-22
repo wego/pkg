@@ -668,6 +668,123 @@ func Test_Contains(t *testing.T) {
 	}
 }
 
+func Test_First_and_Last(t *testing.T) {
+	type person struct {
+		name string
+		age  int
+	}
+
+	people := []person{
+		{"Alice", 25},
+		{"Bob", 30},
+		{"Charlie", 35},
+		{"David", 25},
+	}
+
+	numbers := []int{1, 2, 3, 4, 5, 2, 6}
+	strings := []string{"apple", "banana", "cherry", "date"}
+	emptyNumbers := []int{}
+
+	for _, test := range []struct {
+		name          string
+		description   string
+		predicate     interface{}
+		slice         interface{}
+		expectedFirst interface{}
+		expectedLast  interface{}
+	}{
+		{
+			name:          "person age 25",
+			description:   "find persons with age 25",
+			predicate:     func(p person) bool { return p.age == 25 },
+			slice:         people,
+			expectedFirst: &person{"Alice", 25},
+			expectedLast:  &person{"David", 25},
+		},
+		{
+			name:          "person age 40",
+			description:   "find persons with age 40 (none exist)",
+			predicate:     func(p person) bool { return p.age == 40 },
+			slice:         people,
+			expectedFirst: (*person)(nil),
+			expectedLast:  (*person)(nil),
+		},
+		{
+			name:          "even numbers",
+			description:   "find even numbers",
+			predicate:     func(n int) bool { return n%2 == 0 },
+			slice:         numbers,
+			expectedFirst: intPtr(2),
+			expectedLast:  intPtr(6),
+		},
+		{
+			name:          "numbers greater than 10",
+			description:   "find numbers greater than 10 (none exist)",
+			predicate:     func(n int) bool { return n > 10 },
+			slice:         numbers,
+			expectedFirst: (*int)(nil),
+			expectedLast:  (*int)(nil),
+		},
+		{
+			name:          "strings starting with c",
+			description:   "find strings starting with c",
+			predicate:     func(s string) bool { return s[0] == 'c' },
+			slice:         strings,
+			expectedFirst: stringPtr("cherry"),
+			expectedLast:  stringPtr("cherry"),
+		},
+		{
+			name:          "strings starting with z",
+			description:   "find strings starting with z (none exist)",
+			predicate:     func(s string) bool { return s[0] == 'z' },
+			slice:         strings,
+			expectedFirst: (*string)(nil),
+			expectedLast:  (*string)(nil),
+		},
+		{
+			name:          "empty slice",
+			description:   "find positive numbers in empty slice",
+			predicate:     func(n int) bool { return n > 0 },
+			slice:         emptyNumbers,
+			expectedFirst: (*int)(nil),
+			expectedLast:  (*int)(nil),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assertions := assert.New(t)
+
+			switch s := test.slice.(type) {
+			case []person:
+				pred := test.predicate.(func(person) bool)
+				first := collection.First(s, pred)
+				last := collection.Last(s, pred)
+				assertions.Equal(test.expectedFirst, first)
+				assertions.Equal(test.expectedLast, last)
+			case []int:
+				pred := test.predicate.(func(int) bool)
+				first := collection.First(s, pred)
+				last := collection.Last(s, pred)
+				assertions.Equal(test.expectedFirst, first)
+				assertions.Equal(test.expectedLast, last)
+			case []string:
+				pred := test.predicate.(func(string) bool)
+				first := collection.First(s, pred)
+				last := collection.Last(s, pred)
+				assertions.Equal(test.expectedFirst, first)
+				assertions.Equal(test.expectedLast, last)
+			}
+		})
+	}
+}
+
+func intPtr(i int) *int {
+	return &i
+}
+
+func stringPtr(s string) *string {
+	return &s
+}
+
 func TestCopy(t *testing.T) {
 	for _, test := range []struct {
 		name     string
