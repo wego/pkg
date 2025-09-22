@@ -215,3 +215,119 @@ func Test_extras(t *testing.T) {
 	}
 	assert.Equal(wantExtras, err.extras())
 }
+
+func TestError_ContextHandling(t *testing.T) {
+	tests := []struct {
+		name              string
+		setupFunc         func() *Error
+		expectedBasics    common.Basics
+		expectedExtras    common.Extras
+		expectContextNil  bool
+		expectChildCtxNil bool
+	}{
+		{
+			name: "context with multiple layers and overrides",
+			setupFunc: func() *Error {
+				ctx := context.Background()
+				ctx = common.SetBasics(ctx, common.Basics{
+					"request_id": "req-123",
+					"user_id":    "user-456",
+				})
+				ctx = common.SetExtras(ctx, common.Extras{
+					"trace_id": "trace-789",
+					"span_id":  "span-abc",
+				})
+
+				childCtx := common.SetBasics(ctx, common.Basics{
+					"user_id":    "user-override", // This should override parent
+					"session_id": "session-def",   // This should be added
+				})
+				childCtx = common.SetExtras(childCtx, common.Extras{
+					"span_id":   "span-override", // This should override parent
+					"operation": "child-op",      // This should be added
+				})
+
+				childErr := New(Op("child.operation"), BadRequest, "child error").
+					WithContext(childCtx)
+
+				return New(Op("parent.operation"), "parent error", childErr).
+					WithContext(ctx)
+			},
+			expectedBasics: common.Basics{
+				"request_id": "req-123",      // From parent, unchanged
+				"user_id":    "user-override", // From child, overridden
+				"session_id": "session-def",  // From child, new
+			},
+			expectedExtras: common.Extras{
+				"trace_id":  "trace-789",      // From parent, unchanged
+				"span_id":   "span-override",  // From child, overridden
+				"operation": "child-op",       // From child, new
+			},
+			expectContextNil:  false,
+			expectChildCtxNil: true,
+		},
+		{
+			name: "context without child error",
+			setupFunc: func() *Error {
+				ctx := context.Background()
+				ctx = common.SetBasics(ctx, common.Basics{"key": "value"})
+				ctx = common.SetExtras(ctx, common.Extras{"extra": "data"})
+
+				return New(Op("test.operation"), BadRequest, "test error").
+					WithContext(ctx)
+			},
+			expectedBasics: common.Basics{"key": "value"},
+			expectedExtras: common.Extras{"extra": "data"},
+			expectContextNil: false,
+		},
+		{
+			name: "empty context",
+			setupFunc: func() *Error {
+				ctx := context.Background()
+				return New(Op("test.operation"), BadRequest, "test error").
+					WithContext(ctx)
+			},
+			expectedBasics:   nil,
+			expectedExtras:   nil,
+			expectContextNil: false, // WithContext always creates ctx map
+		},
+		{
+			name: "no context set",
+			setupFunc: func() *Error {
+				return New(Op("test.operation"), BadRequest, "test error")
+			},
+			expectedBasics:   nil,
+			expectedExtras:   nil,
+			expectContextNil: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			err := tt.setupFunc()
+
+			assert.Equal(tt.expectedBasics, err.basics())
+			assert.Equal(tt.expectedExtras, err.extras())
+
+			if tt.expectContextNil {
+				assert.Nil(err.ctx)
+			} else {
+				assert.NotNil(err.ctx)
+				if tt.expectedBasics != nil {
+					assert.Contains(err.ctx, "basics")
+				}
+				if tt.expectedExtras != nil {
+					assert.Contains(err.ctx, "extras")
+				}
+			}
+
+			if tt.expectChildCtxNil {
+				childErrTyped, ok := err.Err.(*Error)
+				if ok {
+					assert.Nil(childErrTyped.ctx, "child error context should be cleared after propagation")
+				}
+			}
+		})
+	}
+}
