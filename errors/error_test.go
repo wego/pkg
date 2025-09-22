@@ -216,6 +216,127 @@ func Test_extras(t *testing.T) {
 	assert.Equal(wantExtras, err.extras())
 }
 
+func TestNew_WithContextParameter(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupFunc      func() *Error
+		expectedBasics common.Basics
+		expectedExtras common.Extras
+	}{
+		{
+			name: "context passed directly to New function",
+			setupFunc: func() *Error {
+				ctx := context.Background()
+				ctx = common.SetBasics(ctx, common.Basics{
+					"request_id": "req-123",
+					"user_id":    "user-456",
+				})
+				ctx = common.SetExtras(ctx, common.Extras{
+					"trace_id": "trace-789",
+				})
+
+				return New(Op("test.operation"), BadRequest, "test error", ctx)
+			},
+			expectedBasics: common.Basics{
+				"request_id": "req-123",
+				"user_id":    "user-456",
+			},
+			expectedExtras: common.Extras{
+				"trace_id": "trace-789",
+			},
+		},
+		{
+			name: "context with child error - both via New parameter",
+			setupFunc: func() *Error {
+				childCtx := context.Background()
+				childCtx = common.SetBasics(childCtx, common.Basics{
+					"session_id": "session-def",
+					"user_id":    "user-child",
+				})
+				childCtx = common.SetExtras(childCtx, common.Extras{
+					"operation": "child-op",
+				})
+
+				parentCtx := context.Background()
+				parentCtx = common.SetBasics(parentCtx, common.Basics{
+					"request_id": "req-123",
+					"user_id":    "user-parent",
+				})
+				parentCtx = common.SetExtras(parentCtx, common.Extras{
+					"trace_id": "trace-789",
+				})
+
+				childErr := New(Op("child.operation"), BadRequest, "child error", childCtx)
+				return New(Op("parent.operation"), "parent error", childErr, parentCtx)
+			},
+			expectedBasics: common.Basics{
+				"request_id": "req-123",
+				"session_id": "session-def",
+				"user_id":    "user-child", // Child context overrides parent (propagation happens first)
+			},
+			expectedExtras: common.Extras{
+				"trace_id":  "trace-789",
+				"operation": "child-op",
+			},
+		},
+		{
+			name: "empty context passed to New",
+			setupFunc: func() *Error {
+				ctx := context.Background()
+				return New(Op("test.operation"), BadRequest, "test error", ctx)
+			},
+			expectedBasics: nil,
+			expectedExtras: nil,
+		},
+		{
+			name: "mixed context methods - New parameter and WithContext",
+			setupFunc: func() *Error {
+				// Context via New parameter
+				newCtx := context.Background()
+				newCtx = common.SetBasics(newCtx, common.Basics{
+					"from_new": "value1",
+					"override": "from_new",
+				})
+
+				// Context via WithContext (should not override existing)
+				withCtx := context.Background()
+				withCtx = common.SetBasics(withCtx, common.Basics{
+					"from_with": "value2",
+					"override":  "from_with",
+				})
+				withCtx = common.SetExtras(withCtx, common.Extras{
+					"extra_key": "extra_value",
+				})
+
+				return New(Op("test.operation"), BadRequest, "test error", newCtx).
+					WithContext(withCtx)
+			},
+			expectedBasics: common.Basics{
+				"from_new":  "value1",
+				"override":  "from_new", // New parameter should take precedence
+				"from_with": "value2",   // Additional keys from WithContext should be added
+			},
+			expectedExtras: common.Extras{
+				"extra_key": "extra_value",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			err := tt.setupFunc()
+
+			assert.Equal(tt.expectedBasics, err.basics())
+			assert.Equal(tt.expectedExtras, err.extras())
+
+			if tt.expectedBasics != nil || tt.expectedExtras != nil {
+				assert.NotNil(err.ctx)
+			}
+		})
+	}
+}
+
 func TestError_ContextHandling(t *testing.T) {
 	tests := []struct {
 		name              string

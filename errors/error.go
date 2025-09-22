@@ -78,6 +78,8 @@ func New(args ...interface{}) *Error {
 		case error:
 			e.Err = arg
 			e.propagateContexts()
+		case context.Context:
+			_ = e.WithContext(arg.(context.Context))
 		case string:
 			e.msg = arg
 		}
