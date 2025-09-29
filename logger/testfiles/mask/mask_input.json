@@ -31,6 +31,7 @@
 				]
 			}
 		],
+		"test7": ["some value", "another value"],
 		"id": "pay_mbabizu24mvu3mela5njyhpit4",
 		"requested_on": "2019-08-24T14:15:22Z",
 		"source": {
