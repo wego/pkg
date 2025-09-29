@@ -168,6 +168,12 @@ func maskSingleProperty(obj *fastjson.Value, key string, maskChar string, toMask
 	}
 }
 
+// setMaskedValue sets a masked string value on an object property.
+func setMaskedValue(obj *fastjson.Value, key string, maskedVal string) {
+	replacement := fastjson.MustParse(`"` + maskedVal + `"`)
+	obj.Set(key, replacement)
+}
+
 // maskArrayAtPath handles patterns ["property", "[]"] or ["prop1", "prop2", "[]"]
 // where array key comes at the end. It navigates to the property path then masks
 // all contents of the array found there.
@@ -176,7 +182,7 @@ func maskArrayAtPath(obj *fastjson.Value, keys []string, maskChar string, toMask
 	nestedObj := obj.Get(propertyKeys...)
 
 	if nestedObj != nil && nestedObj.Type() == fastjson.TypeArray {
-		maskArrayContents(nestedObj, maskChar, toMask)
+		maskAllStringValues(nestedObj, maskChar, toMask)
 	}
 }
 
@@ -189,27 +195,24 @@ func navigateDeeper(obj *fastjson.Value, keys []string, maskChar string, toMask 
 	}
 }
 
-// maskArrayContents masks all string values within an array, handling both
-// direct string values and nested objects/arrays recursively.
-func maskArrayContents(arrayObj *fastjson.Value, maskChar string, toMask MaskData) {
-	arr := arrayObj.GetArray()
-	for i, item := range arr {
+// maskAllStringValues masks all string values within an array.
+// Non-string items (objects, numbers, etc.) are left unchanged.
+func maskAllStringValues(obj *fastjson.Value, maskChar string, toMask MaskData) {
+	if obj == nil || obj.Type() != fastjson.TypeArray {
+		return
+	}
+
+	arrayItems := obj.GetArray()
+	for index, item := range arrayItems {
 		if item.Type() == fastjson.TypeString {
 			value := getJSONValue(item)
 			if value != "" {
 				maskedVal := getMaskedValue(maskChar, value, toMask)
-				setArrayItemMaskedValue(arrayObj, i, maskedVal)
+				setArrayItemMaskedValue(obj, index, maskedVal)
 			}
-		} else {
-			maskAllStringValues(item, maskChar, toMask)
 		}
+		// Non-string items are ignored and left unchanged
 	}
-}
-
-// setMaskedValue sets a masked string value on an object property.
-func setMaskedValue(obj *fastjson.Value, key string, maskedVal string) {
-	replacement := fastjson.MustParse(`"` + maskedVal + `"`)
-	obj.Set(key, replacement)
 }
 
 // setArrayItemMaskedValue sets a masked string value at a specific array index.
@@ -228,27 +231,6 @@ func getJSONValue(jsonVal *fastjson.Value) string {
 	}
 
 	return val
-}
-
-func maskAllStringValues(obj *fastjson.Value, maskChar string, toMask MaskData) {
-	if obj == nil || obj.Type() != fastjson.TypeArray {
-		return
-	}
-
-	arr := obj.GetArray()
-	for i, item := range arr {
-		if item.Type() == fastjson.TypeString {
-			value := getJSONValue(item)
-			if value != "" {
-				maskedVal := getMaskedValue(maskChar, value, toMask)
-				replacement := fastjson.MustParse(`"` + maskedVal + `"`)
-				obj.SetArrayItem(i, replacement)
-			}
-		} else {
-			// Recursively handle nested arrays
-			maskAllStringValues(item, maskChar, toMask)
-		}
-	}
 }
 
 func maskCharOrDefault(maskChar string) string {
