@@ -75,3 +75,12 @@ func Test_IsNotEmpty(t *testing.T) {
 	assert.True(strings.IsNotEmpty("str"))
 	assert.True(strings.IsNotEmpty(" str "))
 }
+
+func Test_PointerValue(t *testing.T) {
+	assert := assert.New(t)
+	assert.Equal("", strings.PointerValue(nil))
+	assert.Equal("", strings.PointerValue(pointer.To("")))
+	assert.Equal("  ", strings.PointerValue(pointer.To("  ")))
+	assert.Equal("str", strings.PointerValue(pointer.To("str")))
+	assert.Equal(" str ", strings.PointerValue(pointer.To(" str ")))
+}
