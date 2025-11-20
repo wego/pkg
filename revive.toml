@@ -30,6 +30,7 @@ warningCode = 1
 [rule.if-return]
 [rule.increment-decrement]
 [rule.var-naming]
+arguments = [[], [], [{ skipPackageNameChecks = true }]]
 # [rule.package-comments]
 [rule.range]
 [rule.receiver-naming]
