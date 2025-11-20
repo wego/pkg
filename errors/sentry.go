@@ -11,33 +11,17 @@ import (
 	"github.com/wego/pkg/env"
 )
 
-// ErrorData carries optional extra data to attach to the error event
-type ErrorData struct {
-	Extra map[string]any
-	Tags  map[string]string
+// CaptureError captures an error to sentry & set level as error
+func CaptureError(ctx context.Context, err error) {
+	capture(ctx, err, sentry.LevelError)
 }
 
-// CaptureError captures an error to sentry & set level as error.
-// It is backward compatible: info is an optional parameter.
-func CaptureError(ctx context.Context, err error, info ...*ErrorData) {
-	var ei *ErrorData
-	if len(info) > 0 {
-		ei = info[0]
-	}
-	capture(ctx, err, sentry.LevelError, ei)
+// CaptureWarning captures an error to sentry & set level as warning
+func CaptureWarning(ctx context.Context, err error) {
+	capture(ctx, err, sentry.LevelWarning)
 }
 
-// CaptureWarning captures an error to sentry & set level as warning.
-// It is backward compatible: info is an optional parameter.
-func CaptureWarning(ctx context.Context, err error, info ...*ErrorData) {
-	var ei *ErrorData
-	if len(info) > 0 {
-		ei = info[0]
-	}
-	capture(ctx, err, sentry.LevelWarning, ei)
-}
-
-func capture(ctx context.Context, err error, level sentry.Level, info *ErrorData) {
+func capture(ctx context.Context, err error, level sentry.Level) {
 	if !env.IsProduction() && !env.IsStaging() {
 		return
 	}
@@ -45,12 +29,12 @@ func capture(ctx context.Context, err error, level sentry.Level, info *ErrorData
 	hub := getHub(ctx)
 	hub.WithScope(func(scope *sentry.Scope) {
 		scope.SetLevel(level)
-		enrichScope(ctx, scope, err, info)
+		enrichScope(ctx, scope, err)
 		hub.CaptureException(err)
 	})
 }
 
-func enrichScope(ctx context.Context, scope *sentry.Scope, err error, info *ErrorData) {
+func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 	// Prepare tags and extras to set
 	var tagsToSet = make(map[string]string)
 	var extrasToSet = make(map[string]any)
@@ -79,15 +63,6 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error, info *Erro
 
 		// Merge e.extras() into extrasToSet
 		maps.Copy(extrasToSet, e.extras())
-	}
-
-	// If any info is provided, add them to the event scope
-	if info != nil {
-		// Merge info.Extra into extrasToSet
-		maps.Copy(extrasToSet, info.Extra)
-
-		// Merge info.Tags into tagsToSet
-		maps.Copy(tagsToSet, info.Tags)
 	}
 
 	// Get the request ID from the context
