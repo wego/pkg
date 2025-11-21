@@ -43,7 +43,7 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 	errorCode := fmt.Sprint(Code(err))
 	tagsToSet[SentryErrorCode] = errorCode
 
-	// Fingeprinting is handed over to the SDK ({{default}} is the default fingerprint), with the additional error code field to add a dimension of uniqueness
+	// Fingerprinting is handed over to the SDK ({{default}} is the default fingerprint), with the additional error code field to add a dimension of uniqueness
 	fingerprint := []string{"{{default}}", errorCode}
 
 	// If the error is an Error type, we can enrich the scope with the basics and extras
@@ -62,6 +62,7 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 		extrasToSet[SentryOperations] = ops
 
 		// Merge e.extras() into extrasToSet
+		// Note: maps.Copy overwrites existing keys in the destination map.
 		maps.Copy(extrasToSet, e.extras())
 	}
 
