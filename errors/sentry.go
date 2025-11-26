@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"maps"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/wego/pkg/env"
 )
@@ -33,37 +35,46 @@ func capture(ctx context.Context, err error, level sentry.Level) {
 }
 
 func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
-	errorCode := fmt.Sprint(Code(err))
-	scope.SetTag(SentryErrorCode, errorCode)
-	fingerprint := []string{errorCode, err.Error()}
+	// Prepare tags and extras to set
+	var tagsToSet = make(map[string]string)
+	var extrasToSet = make(map[string]any)
 
+	// Fetch error code
+	errorCode := fmt.Sprint(Code(err))
+	tagsToSet[SentryErrorCode] = errorCode
+
+	// Fingerprinting is handed over to the SDK ({{default}} is the default fingerprint), with the additional error code field to add a dimension of uniqueness
+	fingerprint := []string{"{{default}}", errorCode}
+
+	// If the error is an Error type, we can enrich the scope with the basics and extras
 	e, ok := err.(*Error)
 	if ok {
+		// For each basic key-value pair, set it as a tag
 		for key, value := range e.basics() {
 			if tag, err := json.Marshal(value); err == nil {
-				scope.SetTag(key, string(tag))
-				fingerprint = append(fingerprint, key)
+				tagsToSet[key] = string(tag)
 			}
 		}
 
-		// extra is not searchable in sentry
+		// For each operation, set it as an extra
+		// Note: extra is not searchable in Sentry
 		ops := ops(e)
-		scope.SetExtra(SentryOperations, ops)
-		for _, o := range ops {
-			fingerprint = append(fingerprint, string(o))
-		}
+		extrasToSet[SentryOperations] = ops
 
-		for k, v := range e.extras() {
-			scope.SetExtra(k, v)
-		}
+		// Merge e.extras() into extrasToSet
+		// Note: maps.Copy overwrites existing keys in the destination map.
+		maps.Copy(extrasToSet, e.extras())
 	}
 
+	// Get the request ID from the context
 	reqID, ok := ctx.Value(SentryRequestID).(string)
 	if ok {
-		scope.SetTag(SentryRequestID, reqID)
-		fingerprint = append(fingerprint, reqID)
+		tagsToSet[SentryRequestID] = reqID
 	}
 
+	// Finally, update the scope with the tags, extras and fingerprint
+	scope.SetTags(tagsToSet)
+	scope.SetExtras(extrasToSet)
 	scope.SetFingerprint(fingerprint)
 }
 
