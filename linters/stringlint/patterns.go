@@ -144,10 +144,10 @@ func checkLenComparison(pass *analysis.Pass, binExpr *ast.BinaryExpr) *checkResu
 		switch op {
 		case token.LSS: // 0 < len(s) means not empty.
 			op = token.GTR
+		case token.LEQ: // 0 <= len(s) means len(s) >= 0.
+			op = token.GEQ
 		case token.GTR: // 0 > len(s) means empty (always false, but handle it).
 			op = token.LSS
-		case token.LEQ: // 0 <= len(s) always true for len.
-			return nil
 		case token.GEQ: // 0 >= len(s) means empty.
 			op = token.LEQ
 		}

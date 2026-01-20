@@ -20,6 +20,10 @@ func lenChecks(s string) {
 		println("len gte 1")
 	}
 
+	if wegostrings.IsNotEmpty(s) { // want `use wegostrings.IsNotEmpty\(s\) instead of direct comparison`
+		println("len gte 1 reversed")
+	}
+
 	if wegostrings.IsEmpty(s) { // want `use wegostrings.IsEmpty\(s\) instead of direct comparison`
 		println("len lt 1")
 	}

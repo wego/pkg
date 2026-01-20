@@ -62,8 +62,14 @@ stringlint ./...
 | `len(s) == 0` | `wegostrings.IsEmpty(s)` |
 | `len(s) != 0` | `wegostrings.IsNotEmpty(s)` |
 | `len(s) > 0` | `wegostrings.IsNotEmpty(s)` |
+| `len(s) >= 1` | `wegostrings.IsNotEmpty(s)` |
+| `len(s) < 1` | `wegostrings.IsEmpty(s)` |
+| `len(s) <= 0` | `wegostrings.IsEmpty(s)` |
 | `*ptr == ""` | `wegostrings.IsEmptyP(ptr)` |
 | `*ptr != ""` | `wegostrings.IsNotEmptyP(ptr)` |
+
+Reversed comparisons with the literal on the left are also detected, for example:
+`0 == len(s)`, `0 != len(s)`, `0 < len(s)`, `0 >= len(s)`, `1 <= len(s)`.
 
 ## Import Convention
 
