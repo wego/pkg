@@ -4,7 +4,11 @@ A Go analyzer that detects direct string comparison patterns and recommends usin
 
 ## Installation
 
-### As a golangci-lint module plugin
+### Automatic way (recommended)
+
+This follows golangci-lint's "Automatic Way" module plugin flow.
+
+Requirements: Go and git.
 
 1. Create `.custom-gcl.yml` in your project:
 
@@ -21,21 +25,22 @@ plugins:
 golangci-lint custom
 ```
 
-3. Configure in `.golangci.yml`:
+3. Configure the plugin in `.golangci.yml`:
 
 ```yaml
+version: "2"
+
 linters:
   enable:
     - stringlint
-
-linters-settings:
-  custom:
-    stringlint:
-      type: module
-      description: "Enforces wego/pkg/strings usage"
+  settings:
+    custom:
+      stringlint:
+        type: "module"
+        description: "Enforces wego/pkg/strings usage"
 ```
 
-4. Run:
+4. Run the resulting custom binary:
 
 ```bash
 ./custom-gcl run ./...
