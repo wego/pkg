@@ -11,7 +11,7 @@ func init() {
 
 // New is the entry point for the golangci-lint module plugin system.
 // The signature must be: func New(any) (register.LinterPlugin, error).
-func New(conf any) (register.LinterPlugin, error) {
+func New(_ any) (register.LinterPlugin, error) {
 	// conf contains settings from .golangci.yml if any.
 	// Currently no configuration options are supported.
 	return plugin{}, nil
