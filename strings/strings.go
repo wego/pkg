@@ -43,3 +43,11 @@ func IsNotEmptyP(s *string) bool {
 func IsNotEmpty(s string) bool {
 	return len(s) > 0
 }
+
+// PointerValue returns the string value from the pointer or empty string if nil
+func PointerValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
