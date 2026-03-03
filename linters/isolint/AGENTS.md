@@ -17,7 +17,8 @@ golangci-lint module plugin that flags raw ISO code string literals (`"USD"`, `"
 go test -v ./...    # run all tests
 go build ./...      # compile
 go vet ./...        # static analysis
-revive ./...        # lint (catches unused params, etc.)
+revive ./...                            # lint (catches unused params, etc.)
+golangci-lint run --enable-only revive  # alternative: revive via golangci-lint
 ```
 
 ## Testing
