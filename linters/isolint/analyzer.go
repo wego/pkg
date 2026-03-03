@@ -32,7 +32,8 @@ var Analyzer = &analysis.Analyzer{
 
 func run(pass *analysis.Pass) (any, error) {
 	// Skip packages that define the constants themselves.
-	if skipPackages[pass.Pkg.Path()] {
+	// pass.Pkg may be nil under LoadModeSyntax in golangci-lint.
+	if pass.Pkg != nil && skipPackages[pass.Pkg.Path()] {
 		return nil, nil
 	}
 
