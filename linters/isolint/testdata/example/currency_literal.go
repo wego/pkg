@@ -63,17 +63,13 @@ func getCurrency() string {
 	return "HKD" // want `use currency\.HKD instead of "HKD"`
 }
 
-func lowercaseCurrencyChecks() {
-	// Lowercase should also be caught
-	x := "usd" // want `use currency\.USD instead of "usd"`
-	_ = x
+func lowercaseAndMixedCaseCurrency() {
+	// Lowercase is not flagged — only uppercase is linted
+	_ = "usd"
+	_ = "sgd"
 
-	y := "sgd" // want `use currency\.SGD instead of "sgd"`
-	_ = y
-
-	// Mixed case should NOT be caught
-	z := "Usd"
-	_ = z
+	// Mixed case is not flagged
+	_ = "Usd"
 }
 
 // Ensure currency package is used (for compilation)

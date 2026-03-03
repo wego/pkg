@@ -19,11 +19,11 @@ func TestIsCurrencyCode(t *testing.T) {
 		{"THB", true},
 		{"VND", true},
 
-		// Lowercase (also caught)
-		{"usd", true},
-		{"eur", true},
-		{"sgd", true},
-		{"jpy", true},
+		// Lowercase — not flagged (only uppercase is linted)
+		{"usd", false},
+		{"eur", false},
+		{"sgd", false},
+		{"jpy", false},
 
 		// Edge currency codes
 		{"XAU", true},  // Gold
@@ -77,11 +77,11 @@ func TestIsSiteCode(t *testing.T) {
 		{"TH", true},
 		{"VN", true},
 
-		// Lowercase (also caught)
-		{"sg", true},
-		{"us", true},
-		{"jp", true},
-		{"gb", true},
+		// Lowercase — not flagged (only uppercase is linted)
+		{"sg", false},
+		{"us", false},
+		{"jp", false},
+		{"gb", false},
 
 		// Edge site codes — site.Currency() only covers sites with a currency mapping
 		{"AQ", false}, // Antarctica — no currency mapping
@@ -124,8 +124,6 @@ func TestCurrencyConstName(t *testing.T) {
 		{"EUR", "currency.EUR"},
 		{"SGD", "currency.SGD"},
 		{"JPY", "currency.JPY"},
-		{"usd", "currency.USD"}, // Lowercase input normalizes to uppercase constant
-		{"sgd", "currency.SGD"},
 	}
 
 	for _, tt := range tests {
@@ -147,8 +145,6 @@ func TestSiteConstName(t *testing.T) {
 		{"US", "site.US"},
 		{"JP", "site.JP"},
 		{"GB", "site.GB"},
-		{"sg", "site.SG"}, // Lowercase input normalizes to uppercase constant
-		{"us", "site.US"},
 	}
 
 	for _, tt := range tests {

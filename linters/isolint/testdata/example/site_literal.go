@@ -28,7 +28,7 @@ func siteChecks() {
 	}
 
 	// Function arguments
-	println("ID") // want `use site\.ID instead of "ID"`
+	println("AE") // want `use site\.AE instead of "AE"`
 
 	// Map keys
 	m := map[string]int{
@@ -59,17 +59,13 @@ func getSite() string {
 	return "HK" // want `use site\.HK instead of "HK"`
 }
 
-func lowercaseSiteChecks() {
-	// Lowercase should also be caught
-	x := "sg" // want `use site\.SG instead of "sg"`
-	_ = x
+func lowercaseAndMixedCaseSite() {
+	// Lowercase is not flagged — only uppercase is linted
+	_ = "sg"
+	_ = "us"
 
-	y := "us" // want `use site\.US instead of "us"`
-	_ = y
-
-	// Mixed case should NOT be caught
-	z := "Sg"
-	_ = z
+	// Mixed case is not flagged
+	_ = "Sg"
 }
 
 // Ensure site package is used (for compilation)

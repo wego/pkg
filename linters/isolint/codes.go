@@ -8,38 +8,31 @@ import (
 	"github.com/wego/pkg/iso/site"
 )
 
-// IsCurrencyCode reports whether s is a known ISO 4217 currency code,
-// matching either exact uppercase ("USD") or exact lowercase ("usd").
-// Mixed case ("Usd") is not matched.
+// IsCurrencyCode reports whether s is a known uppercase ISO 4217 currency
+// code (e.g. "USD"). Lowercase ("usd") and mixed case ("Usd") are not
+// matched — only uppercase strings are considered intentional ISO references.
 func IsCurrencyCode(s string) bool {
 	if len(s) != 3 {
 		return false
 	}
-	if isAllUpper(s) {
-		return currency.IsISO4217(s)
+	if !isAllUpper(s) {
+		return false
 	}
-	if isAllLower(s) {
-		return currency.IsISO4217(strings.ToUpper(s))
-	}
-	return false
+	return currency.IsISO4217(s)
 }
 
-// IsSiteCode reports whether s is a known ISO 3166-1 alpha-2 site code,
-// matching either exact uppercase ("SG") or exact lowercase ("sg").
-// Mixed case ("Sg") is not matched.
+// IsSiteCode reports whether s is a known uppercase ISO 3166-1 alpha-2 site
+// code (e.g. "SG"). Lowercase ("sg") and mixed case ("Sg") are not matched
+// — only uppercase strings are considered intentional ISO references.
 func IsSiteCode(s string) bool {
 	if len(s) != 2 {
 		return false
 	}
-	if isAllUpper(s) {
-		_, found := site.Currency(s)
-		return found
+	if !isAllUpper(s) {
+		return false
 	}
-	if isAllLower(s) {
-		_, found := site.Currency(strings.ToUpper(s))
-		return found
-	}
-	return false
+	_, found := site.Currency(s)
+	return found
 }
 
 // NormalizeCurrencyCode returns the canonical uppercase form of a currency code.
@@ -53,13 +46,13 @@ func NormalizeSiteCode(code string) string {
 }
 
 // CurrencyConstName returns the qualified constant name for a currency code,
-// e.g., "USD" or "usd" -> "currency.USD".
+// e.g., "USD" -> "currency.USD".
 func CurrencyConstName(code string) string {
 	return fmt.Sprintf("currency.%s", NormalizeCurrencyCode(code))
 }
 
 // SiteConstName returns the qualified constant name for a site code,
-// e.g., "SG" or "sg" -> "site.SG".
+// e.g., "SG" -> "site.SG".
 func SiteConstName(code string) string {
 	return fmt.Sprintf("site.%s", NormalizeSiteCode(code))
 }
@@ -74,12 +67,3 @@ func isAllUpper(s string) bool {
 	return len(s) > 0
 }
 
-// isAllLower reports whether s contains only lowercase ASCII letters.
-func isAllLower(s string) bool {
-	for i := 0; i < len(s); i++ {
-		if s[i] < 'a' || s[i] > 'z' {
-			return false
-		}
-	}
-	return len(s) > 0
-}
