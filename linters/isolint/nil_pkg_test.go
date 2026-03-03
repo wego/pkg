@@ -35,7 +35,7 @@ func f() {
 		Files:    []*ast.File{file},
 		Pkg:      nil, // simulate LoadModeSyntax with nil Pkg
 		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: ins},
-		Report:   func(d analysis.Diagnostic) {},
+		Report:   func(analysis.Diagnostic) {},
 	}
 
 	// Must not panic.
