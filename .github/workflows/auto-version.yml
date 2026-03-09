@@ -1,0 +1,70 @@
+name: Auto Version Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write # Required to create tags and push them
+
+jobs:
+  auto-version:
+    name: "Auto Version Changed Packages"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          fetch-depth: 0 # Fetch all history for tags
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run auto_version script
+        run: |
+          chmod +x ./auto_version
+          
+          # Determine version type from input or default to patch for automatic triggers
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version_type="${{ github.event.inputs.version_type }}"
+          else
+            version_type="patch"
+          fi
+          
+          echo "Using version type: $version_type"
+          
+          # Pass the appropriate flag to auto_version script
+          case "$version_type" in
+            "major")
+              ./auto_version --major
+              ;;
+            "minor")
+              ./auto_version --minor
+              ;;
+            "patch")
+              ./auto_version --patch
+              ;;
+            *)
+              echo "Invalid version type: $version_type"
+              exit 1
+              ;;
+          esac
+
+      - name: Verify tags were created
+        run: |
+          echo "Latest tags created:"
+          git tag --sort=-version:refname | head -10
