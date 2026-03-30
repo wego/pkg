@@ -1,0 +1,21 @@
+package example
+
+import wegostrings "github.com/wego/pkg/strings"
+
+func pointerChecks(ptr *string) {
+	// These should trigger warnings with P-suffix functions
+	if *ptr == "" { // want `use wegostrings.IsEmptyP\(ptr\) instead of direct comparison`
+		println("ptr empty")
+	}
+
+	if *ptr != "" { // want `use wegostrings.IsNotEmptyP\(ptr\) instead of direct comparison`
+		println("ptr not empty")
+	}
+
+	if "" == *ptr { // want `use wegostrings.IsEmptyP\(ptr\) instead of direct comparison`
+		println("ptr empty reversed")
+	}
+}
+
+// Ensure wegostrings package is used (for golden file)
+var _ = wegostrings.IsEmptyP

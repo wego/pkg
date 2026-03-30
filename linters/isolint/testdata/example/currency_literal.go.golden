@@ -1,0 +1,76 @@
+package example
+
+import "github.com/wego/pkg/currency"
+
+func currencyChecks() {
+	// Comparisons
+	var code string
+	if code == currency.USD { // want `use currency\.USD instead of "USD"`
+		println("match")
+	}
+	if currency.EUR == code { // want `use currency\.EUR instead of "EUR"`
+		println("match")
+	}
+	if code != currency.SGD { // want `use currency\.SGD instead of "SGD"`
+		println("no match")
+	}
+
+	// Assignments
+	x := currency.JPY // want `use currency\.JPY instead of "JPY"`
+	_ = x
+
+	// Var declarations
+	var y = currency.GBP // want `use currency\.GBP instead of "GBP"`
+	_ = y
+
+	// Switch/case
+	switch code {
+	case currency.THB: // want `use currency\.THB instead of "THB"`
+		println("thai baht")
+	case currency.VND: // want `use currency\.VND instead of "VND"`
+		println("dong")
+	}
+
+	// Function arguments
+	println(currency.IDR) // want `use currency\.IDR instead of "IDR"`
+
+	// Map keys
+	m := map[string]int{
+		currency.AUD: 1, // want `use currency\.AUD instead of "AUD"`
+		currency.NZD: 2, // want `use currency\.NZD instead of "NZD"`
+	}
+	_ = m[currency.CAD] // want `use currency\.CAD instead of "CAD"`
+
+	// Slice literals
+	codes := []string{
+		currency.MYR, // want `use currency\.MYR instead of "MYR"`
+		currency.PHP, // want `use currency\.PHP instead of "PHP"`
+	}
+	_ = codes
+
+	// Struct fields
+	type config struct {
+		Currency string
+	}
+	c := config{Currency: currency.INR} // want `use currency\.INR instead of "INR"`
+	_ = c
+
+	// Return values (via helper)
+	_ = getCurrency()
+}
+
+func getCurrency() string {
+	return currency.HKD // want `use currency\.HKD instead of "HKD"`
+}
+
+func lowercaseAndMixedCaseCurrency() {
+	// Lowercase is not flagged — only uppercase is linted
+	_ = "usd"
+	_ = "sgd"
+
+	// Mixed case is not flagged
+	_ = "Usd"
+}
+
+// Ensure currency package is used (for compilation)
+var _ = currency.USD

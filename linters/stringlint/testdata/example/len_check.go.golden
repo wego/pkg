@@ -1,0 +1,37 @@
+package example
+
+import wegostrings "github.com/wego/pkg/strings"
+
+func lenChecks(s string) {
+	// These should trigger warnings
+	if wegostrings.IsEmpty(s) { // want `use wegostrings.IsEmpty\(s\) instead of direct comparison`
+		println("len empty")
+	}
+
+	if wegostrings.IsNotEmpty(s) { // want `use wegostrings.IsNotEmpty\(s\) instead of direct comparison`
+		println("len not empty")
+	}
+
+	if wegostrings.IsNotEmpty(s) { // want `use wegostrings.IsNotEmpty\(s\) instead of direct comparison`
+		println("len greater")
+	}
+
+	if wegostrings.IsNotEmpty(s) { // want `use wegostrings.IsNotEmpty\(s\) instead of direct comparison`
+		println("len gte 1")
+	}
+
+	if wegostrings.IsNotEmpty(s) { // want `use wegostrings.IsNotEmpty\(s\) instead of direct comparison`
+		println("len gte 1 reversed")
+	}
+
+	if wegostrings.IsEmpty(s) { // want `use wegostrings.IsEmpty\(s\) instead of direct comparison`
+		println("len lt 1")
+	}
+
+	if wegostrings.IsEmpty(s) { // want `use wegostrings.IsEmpty\(s\) instead of direct comparison`
+		println("reversed")
+	}
+}
+
+// Ensure wegostrings package is used (for golden file)
+var _ = wegostrings.IsEmpty
