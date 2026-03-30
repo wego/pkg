@@ -14,7 +14,7 @@ const (
 	ultronExFileName        = "ultronex.{{env}}.log"
 	partnerRequestsFileName = "partner_requests.{{env}}.log"
 	requestsFileName        = "requests.{{env}}.log"
-	promoCodeEventsFileName = "promocode_events.log"
+	promoCodeEventsFileName = "promocode_events.{{env}}.log"
 	defaultReplacement      = "[Filtered by Wego]"
 	defaultMaskChar         = "*"
 	arrayKey                = "[]"
