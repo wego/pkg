@@ -76,7 +76,7 @@ func LogRequest(log *Request) {
 
 // LogPromoCodeEvent logs a promo-code event to a local file.
 // The event is logged as a flat JSON object (key/value pairs).
-func LogPromoCodeEvent(fields map[string]interface{}) {
+func LogPromoCodeEvent(fields map[string]any) {
 	logger := loggers[logTypePromoCodeEvent]
 	if logger == nil || len(fields) == 0 {
 		return
