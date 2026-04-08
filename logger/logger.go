@@ -74,9 +74,24 @@ func LogRequest(log *Request) {
 	}
 }
 
+// LogPromoCodeEvent logs a promo-code event to a local file.
+// The event is logged as a flat JSON object (key/value pairs).
+func LogPromoCodeEvent(fields map[string]any) {
+	logger := loggers[logTypePromoCodeEvent]
+	if logger == nil || len(fields) == 0 {
+		return
+	}
+
+	zapFields := make([]zap.Field, 0, len(fields))
+	for key, value := range fields {
+		zapFields = append(zapFields, zap.Any(key, value))
+	}
+	logger.Info("", zapFields...)
+}
+
 // Init initializes loggers
 func Init() error {
-	loggers = make(map[logType]*zap.Logger, 2)
+	loggers = make(map[logType]*zap.Logger, 4)
 
 	uLog, err := initLogger(ultronExFileName)
 	if err != nil {
@@ -95,6 +110,12 @@ func Init() error {
 		return errors.New("cannot init request logger", err)
 	}
 	loggers[logTypeRequest] = rLog
+
+	pcLog, err := initLogger(promoCodeEventsFileName)
+	if err != nil {
+		return errors.New("cannot init promo code event logger", err)
+	}
+	loggers[logTypePromoCodeEvent] = pcLog
 	return nil
 }
 
