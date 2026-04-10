@@ -1,6 +1,10 @@
 package ecies_test
 
 import (
+	"crypto/elliptic"
+	"encoding/base64"
+	"encoding/hex"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,5 +63,45 @@ func Test_PublicKeyFromHex_Error(t *testing.T) {
 	pub, err = ecies.PublicKeyFromHex(hex, curve)
 	assert.Error(err)
 	assert.Contains(err.Error(), "invalid key length")
+	assert.Nil(pub)
+}
+
+// invalidP521Bytes returns uncompressed P521 public key bytes (0x04 || X || Y)
+// with X=1, Y=1 which is not on the P521 curve.
+func invalidP521Bytes() []byte {
+	size := (elliptic.P521().Params().BitSize + 7) / 8 // 66
+	b := make([]byte, 1+2*size)
+	b[0] = 0x04
+	big.NewInt(1).FillBytes(b[1 : size+1])
+	big.NewInt(1).FillBytes(b[size+1:])
+	return b
+}
+
+func Test_PublicKeyFromBytes_InvalidCurvePoint(t *testing.T) {
+	assert := assert.New(t)
+
+	pub, err := ecies.PublicKeyFromBytes(invalidP521Bytes(), elliptic.P521())
+	assert.Error(err)
+	assert.Contains(err.Error(), "point is not on the curve")
+	assert.Nil(pub)
+}
+
+func Test_PublicKeyFromBase64_InvalidCurvePoint(t *testing.T) {
+	assert := assert.New(t)
+
+	b64 := base64.StdEncoding.EncodeToString(invalidP521Bytes())
+	pub, err := ecies.PublicKeyFromBase64(b64, elliptic.P521())
+	assert.Error(err)
+	assert.Contains(err.Error(), "point is not on the curve")
+	assert.Nil(pub)
+}
+
+func Test_PublicKeyFromHex_InvalidCurvePoint(t *testing.T) {
+	assert := assert.New(t)
+
+	h := hex.EncodeToString(invalidP521Bytes())
+	pub, err := ecies.PublicKeyFromHex(h, elliptic.P521())
+	assert.Error(err)
+	assert.Contains(err.Error(), "point is not on the curve")
 	assert.Nil(pub)
 }

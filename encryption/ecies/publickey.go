@@ -36,11 +36,15 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 		return nil, fmt.Errorf("invalid key length")
 	}
 
+	x := new(big.Int).SetBytes(b[1 : size+1])
+	y := new(big.Int).SetBytes(b[size+1:])
+	if !curve.IsOnCurve(x, y) {
+		return nil, fmt.Errorf("point is not on the curve")
+	}
+
 	return &PublicKey{
 		curve: curve,
-		Point: &Point{
-			X: new(big.Int).SetBytes(b[1 : size+1]),
-			Y: new(big.Int).SetBytes(b[size+1:])},
+		Point: &Point{X: x, Y: y},
 	}, nil
 }
 
