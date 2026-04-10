@@ -66,17 +66,22 @@ func Test_PublicKeyFromHex_Error(t *testing.T) {
 	assert.Nil(pub)
 }
 
-// invalidP521Bytes returns uncompressed P521 public key bytes (0x04 || X || Y)
-// with X=1, Y=1 which is not on the P521 curve.
+// invalidP521Bytes builds a well-formed uncompressed public key (0x04 || X || Y)
+// whose coordinates (1, 1) are NOT on the P521 curve.
+// This simulates corrupted or malicious encrypted payloads where the embedded
+// ephemeral public key has valid length but invalid curve coordinates.
+// Go 1.24+ panics in crypto/elliptic.ScalarMult for such points (PAY-2108).
 func invalidP521Bytes() []byte {
-	size := (elliptic.P521().Params().BitSize + 7) / 8 // 66
+	size := (elliptic.P521().Params().BitSize + 7) / 8 // 66 bytes
 	b := make([]byte, 1+2*size)
-	b[0] = 0x04
+	b[0] = 0x04 // uncompressed point prefix
 	big.NewInt(1).FillBytes(b[1 : size+1])
 	big.NewInt(1).FillBytes(b[size+1:])
 	return b
 }
 
+// Test_PublicKeyFromBytes_InvalidCurvePoint verifies that off-curve points are
+// rejected at parse time rather than causing a panic in downstream ScalarMult.
 func Test_PublicKeyFromBytes_InvalidCurvePoint(t *testing.T) {
 	assert := assert.New(t)
 
@@ -86,6 +91,8 @@ func Test_PublicKeyFromBytes_InvalidCurvePoint(t *testing.T) {
 	assert.Nil(pub)
 }
 
+// Test_PublicKeyFromBase64_InvalidCurvePoint ensures the validation propagates
+// through the base64 parsing path (PublicKeyFromBase64 -> PublicKeyFromBytes).
 func Test_PublicKeyFromBase64_InvalidCurvePoint(t *testing.T) {
 	assert := assert.New(t)
 
@@ -96,6 +103,8 @@ func Test_PublicKeyFromBase64_InvalidCurvePoint(t *testing.T) {
 	assert.Nil(pub)
 }
 
+// Test_PublicKeyFromHex_InvalidCurvePoint ensures the validation propagates
+// through the hex parsing path (PublicKeyFromHex -> PublicKeyFromBytes).
 func Test_PublicKeyFromHex_InvalidCurvePoint(t *testing.T) {
 	assert := assert.New(t)
 

@@ -38,6 +38,11 @@ func PublicKeyFromBytes(b []byte, curve elliptic.Curve) (*PublicKey, error) {
 
 	x := new(big.Int).SetBytes(b[1 : size+1])
 	y := new(big.Int).SetBytes(b[size+1:])
+
+	// Reject points not on the curve to prevent crypto/elliptic.ScalarMult panics
+	// introduced in Go 1.24+. Without this check, corrupted or malicious payloads
+	// with valid-length but off-curve coordinates cause a panic in ECDH computation.
+	// See PAY-2108.
 	if !curve.IsOnCurve(x, y) {
 		return nil, fmt.Errorf("point is not on the curve")
 	}
