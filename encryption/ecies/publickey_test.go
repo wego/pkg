@@ -1,6 +1,10 @@
 package ecies_test
 
 import (
+	"crypto/elliptic"
+	"encoding/base64"
+	"encoding/hex"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,5 +63,54 @@ func Test_PublicKeyFromHex_Error(t *testing.T) {
 	pub, err = ecies.PublicKeyFromHex(hex, curve)
 	assert.Error(err)
 	assert.Contains(err.Error(), "invalid key length")
+	assert.Nil(pub)
+}
+
+// invalidP521Bytes builds a well-formed uncompressed public key (0x04 || X || Y)
+// whose coordinates (1, 1) are NOT on the P521 curve.
+// This simulates corrupted or malicious encrypted payloads where the embedded
+// ephemeral public key has valid length but invalid curve coordinates.
+// Go 1.24+ panics in crypto/elliptic.ScalarMult for such points (PAY-2108).
+func invalidP521Bytes() []byte {
+	size := (elliptic.P521().Params().BitSize + 7) / 8 // 66 bytes
+	b := make([]byte, 1+2*size)
+	b[0] = 0x04 // uncompressed point prefix
+	big.NewInt(1).FillBytes(b[1 : size+1])
+	big.NewInt(1).FillBytes(b[size+1:])
+	return b
+}
+
+// Test_PublicKeyFromBytes_InvalidCurvePoint verifies that off-curve points are
+// rejected at parse time rather than causing a panic in downstream ScalarMult.
+func Test_PublicKeyFromBytes_InvalidCurvePoint(t *testing.T) {
+	assert := assert.New(t)
+
+	pub, err := ecies.PublicKeyFromBytes(invalidP521Bytes(), elliptic.P521())
+	assert.Error(err)
+	assert.Contains(err.Error(), "point is not on the curve")
+	assert.Nil(pub)
+}
+
+// Test_PublicKeyFromBase64_InvalidCurvePoint ensures the validation propagates
+// through the base64 parsing path (PublicKeyFromBase64 -> PublicKeyFromBytes).
+func Test_PublicKeyFromBase64_InvalidCurvePoint(t *testing.T) {
+	assert := assert.New(t)
+
+	b64 := base64.StdEncoding.EncodeToString(invalidP521Bytes())
+	pub, err := ecies.PublicKeyFromBase64(b64, elliptic.P521())
+	assert.Error(err)
+	assert.Contains(err.Error(), "point is not on the curve")
+	assert.Nil(pub)
+}
+
+// Test_PublicKeyFromHex_InvalidCurvePoint ensures the validation propagates
+// through the hex parsing path (PublicKeyFromHex -> PublicKeyFromBytes).
+func Test_PublicKeyFromHex_InvalidCurvePoint(t *testing.T) {
+	assert := assert.New(t)
+
+	h := hex.EncodeToString(invalidP521Bytes())
+	pub, err := ecies.PublicKeyFromHex(h, elliptic.P521())
+	assert.Error(err)
+	assert.Contains(err.Error(), "point is not on the curve")
 	assert.Nil(pub)
 }
