@@ -1,14 +1,14 @@
 # isolint
 
-golangci-lint module plugin that flags uppercase ISO code string literals (`"USD"`, `"SG"`) and recommends `currency.USD` / `site.SG` package constants instead. Lowercase strings (`"usd"`, `"sg"`) are ignored — only uppercase is considered an intentional ISO reference. Suppress remaining false positives with `//nolint:isolint`.
+golangci-lint module plugin that flags uppercase ISO code string literals (`"USD"`, `"SG"`) and recommends `currency.USD` / `site.SG` package constants instead. Lowercase strings (`"usd"`, `"sg"`) are ignored — only uppercase is considered an intentional ISO reference. Configurable via [`Settings.SkipFields`](analyzer.go) for domain collisions (e.g. card scheme `"MC"` vs Monaco). Suppress remaining false positives with `//nolint:isolint`.
 
 ## Structure
 
-- `analyzer.go` — entry point; walks `*ast.BasicLit` nodes with `inspector.WithStack` for parent context
+- `analyzer.go` — entry point; walks `*ast.BasicLit` nodes with `inspector.WithStack` for parent context. Defines `Settings`, `NewAnalyzer`, and the `-skip-fields` flag.
 - `codes.go` — delegates to `currency.IsISO4217()` and `site.Currency()` for code validation (uppercase only)
 - `report.go` — diagnostic messages and `SuggestedFix` text edits
-- `plugin.go` — golangci-lint module plugin registration
-- `cmd/isolint/` — standalone CLI
+- `plugin.go` — golangci-lint module plugin registration; decodes YAML settings via `register.DecodeSettings[Settings]`
+- `cmd/isolint/` — standalone CLI; settings reach the analyzer via `-skip-fields`
 - `testdata/` — separate Go module with test fixtures and `.golden` files
 
 ## Commands
@@ -38,6 +38,7 @@ See [docs/decisions.md](docs/decisions.md) for rationale behind each decision.
 - **Code validation delegates to source packages** — `currency.IsISO4217()` and `site.Currency()`, no hardcoded maps
 - **Skips definition packages** — [`skipPackages`](analyzer.go) in `analyzer.go`
 - **Skips import paths and call arguments** — [`skipMethods`](analyzer.go) in `analyzer.go`
+- **Skips configured field assignments** — [`Settings.SkipFields`](analyzer.go) handles domain collisions like card scheme `"MC"`
 - **Load mode is `LoadModeSyntax`** — only needs string literal values, not type info
 
 ## Performance

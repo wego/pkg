@@ -22,6 +22,10 @@ Rule 2 is the crucial one. It means any `.go` file in `testdata/` that does _not
 | [`testdata/example/valid.go`](../testdata/example/valid.go)                       | Negative test — code that resembles flaggable patterns but must NOT be flagged                |
 | [`testdata/example/valid_contexts.go`](../testdata/example/valid_contexts.go)     | Negative test — call-expression contexts (ORM, HTTP, filter methods) that must NOT be flagged |
 | `testdata/example/*.go.golden`                                                    | Expected auto-fix output for positive test files                                              |
+| [`testdata/skipfields/skip_fields.go`](../testdata/skipfields/skip_fields.go)     | Negative test — assignments to a configured skip field must NOT be flagged                    |
+| [`testdata/skipfields/still_flags.go`](../testdata/skipfields/still_flags.go)     | Positive test — same package, same value, but assigned to a different field is still flagged  |
+
+The `./skipfields` package runs under a dedicated `TestAnalyzerWithSkipFields` driver that constructs an analyzer with `Settings{SkipFields: ["CardSchemes"]}` via [`isolint.NewAnalyzer`](../analyzer.go). Because each `analystest.Run` call constructs its own analyzer, configured fixtures are isolated from `./example`'s zero-config assertions.
 
 ### Why `valid.go` and `valid_contexts.go` matter
 

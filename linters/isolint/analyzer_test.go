@@ -17,3 +17,10 @@ func TestAnalyzerWithFixes(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, isolint.Analyzer, "./example")
 }
+
+func TestAnalyzerWithSkipFields(t *testing.T) {
+	analyzer := isolint.NewAnalyzer(isolint.Settings{
+		SkipFields: []string{"CardSchemes"},
+	})
+	analysistest.Run(t, analysistest.TestData(), analyzer, "./skipfields")
+}

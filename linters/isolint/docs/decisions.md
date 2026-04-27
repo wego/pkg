@@ -27,6 +27,23 @@ Import paths like `import "io"` are syntactically `*ast.BasicLit` strings. The l
 
 String arguments to ORM, HTTP, and filter methods (e.g. `db.Select("SG")`, `c.Query("TH")`) are skipped. The linter inspects the parent `*ast.CallExpr` and checks the callee name against [`skipMethods`](../analyzer.go). To skip a new method, add its name there.
 
+### Field-name skip ([`Settings.SkipFields`](../analyzer.go))
+
+Uppercase 2- and 3-letter strings sometimes collide with ISO codes by accident — most notably card scheme abbreviations like `"MC"` (MasterCard, also Monaco) and `"AX"` (American Express, also Åland Islands). When a literal is assigned to a struct field whose name appears in [`Settings.SkipFields`](../analyzer.go), the linter skips it.
+
+Two assignment shapes are recognized syntactically — no type information is needed:
+
+- Single-target `*ast.AssignStmt` whose sole `Lhs` element is a `*ast.SelectorExpr` (covers `a.CardSchemes = pq.StringArray{"MC"}`). Tuple assignments (`len(Lhs) > 1`) fall through to the default flag behavior because the analyzer cannot correlate which RHS literal belongs to which LHS target without type information.
+- `*ast.KeyValueExpr` whose `Key` is an `*ast.Ident` (covers `Foo{CardSchemes: pq.StringArray{"MC"}}`)
+
+Bare local variables that happen to share a skip-field name (e.g. `CardSchemes := "MC"`) are intentionally NOT skipped — a local variable is not a struct field, and broadening to plain identifiers would silently expand the linter's blind spot beyond the documented design.
+
+The walk in [`isAssignToSkipField`](../analyzer.go) stops at function boundaries (`*ast.FuncLit`/`*ast.FuncDecl`) so a literal beyond a closure boundary is no longer treated as part of the original assignment.
+
+**Why not type-based?** Matching by the destination field's _type_ (e.g. "skip everything assigned to a `pq.StringArray`") would require `pass.TypesInfo`, which forces escalation to `LoadModeTypesInfo`. That has a project-wide cost (see below) and is also coarser — a real `pq.StringArray` of site codes would also be skipped. Field-name targeting is precise and stays within `LoadModeSyntax`.
+
+**Why not a flat value allowlist (e.g. `allow-values: [MC]`)?** A global allowlist suppresses the same literal everywhere, including in genuine country contexts. Field-name targeting suppresses it only where the field semantics warrant it, leaving the linter useful elsewhere.
+
 ## `LoadModeSyntax`
 
 This is the cheapest load mode — the type-checker never runs. The linter only needs string literal values, not type information, so `LoadModeSyntax` is sufficient.
@@ -43,9 +60,10 @@ Guards in the callback are ordered by cost (cheapest first):
 2. `len(lit.Value)` — length check (integer)
 3. [`isImportPath`](../analyzer.go) — stack walk (already loaded)
 4. [`isArgToSkipMethod`](../analyzer.go) — stack walk + string comparison
-5. `strconv.Unquote` — first allocation
-6. Code validation — delegates to `currency`/`site` packages
-7. `fmt.Sprintf` — only on the reporting path
+5. [`isAssignToSkipField`](../analyzer.go) — stack walk + string comparison; no-ops when `SkipFields` is empty
+6. `strconv.Unquote` — first allocation
+7. Code validation — delegates to `currency`/`site` packages
+8. `fmt.Sprintf` — only on the reporting path
 
 This ordering ensures the hot path (non-string, wrong-length, import-path literals) exits before any allocation occurs.
 
