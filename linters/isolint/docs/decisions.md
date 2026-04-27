@@ -33,8 +33,10 @@ Uppercase 2- and 3-letter strings sometimes collide with ISO codes by accident �
 
 Two assignment shapes are recognized syntactically — no type information is needed:
 
-- `*ast.AssignStmt` whose `Lhs[0]` is a `*ast.SelectorExpr` (covers `a.CardSchemes = pq.StringArray{"MC"}`)
+- Single-target `*ast.AssignStmt` whose sole `Lhs` element is a `*ast.SelectorExpr` (covers `a.CardSchemes = pq.StringArray{"MC"}`). Tuple assignments (`len(Lhs) > 1`) fall through to the default flag behavior because the analyzer cannot correlate which RHS literal belongs to which LHS target without type information.
 - `*ast.KeyValueExpr` whose `Key` is an `*ast.Ident` (covers `Foo{CardSchemes: pq.StringArray{"MC"}}`)
+
+Bare local variables that happen to share a skip-field name (e.g. `CardSchemes := "MC"`) are intentionally NOT skipped — a local variable is not a struct field, and broadening to plain identifiers would silently expand the linter's blind spot beyond the documented design.
 
 The walk in [`isAssignToSkipField`](../analyzer.go) stops at function boundaries (`*ast.FuncLit`/`*ast.FuncDecl`) so a literal beyond a closure boundary is no longer treated as part of the original assignment.
 
@@ -58,9 +60,10 @@ Guards in the callback are ordered by cost (cheapest first):
 2. `len(lit.Value)` — length check (integer)
 3. [`isImportPath`](../analyzer.go) — stack walk (already loaded)
 4. [`isArgToSkipMethod`](../analyzer.go) — stack walk + string comparison
-5. `strconv.Unquote` — first allocation
-6. Code validation — delegates to `currency`/`site` packages
-7. `fmt.Sprintf` — only on the reporting path
+5. [`isAssignToSkipField`](../analyzer.go) — stack walk + string comparison; no-ops when `SkipFields` is empty
+6. `strconv.Unquote` — first allocation
+7. Code validation — delegates to `currency`/`site` packages
+8. `fmt.Sprintf` — only on the reporting path
 
 This ordering ensures the hot path (non-string, wrong-length, import-path literals) exits before any allocation occurs.
 

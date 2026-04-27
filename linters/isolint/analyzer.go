@@ -224,12 +224,15 @@ func isArgToSkipMethod(stack []ast.Node) bool {
 //
 // Two assignment shapes are recognized:
 //
-//	x.Field = ...                 // AssignStmt with SelectorExpr LHS
+//	x.Field = ...                 // AssignStmt with single SelectorExpr LHS
 //	StructType{Field: ...}        // KeyValueExpr inside a CompositeLit
 //
 // In both shapes the literal may be nested inside a CompositeLit RHS
 // (e.g. pq.StringArray{"MC"}), so the stack is walked from the top down
-// to find the nearest enclosing assignment.
+// to find the nearest enclosing assignment. Tuple assignments
+// (len(Lhs) > 1) are intentionally not handled — without type information
+// the analyzer cannot correlate which RHS literal belongs to which LHS
+// target, so it falls through and flags every literal as usual.
 func isAssignToSkipField(stack []ast.Node, skipFields map[string]bool) bool {
 	if len(skipFields) == 0 {
 		return false
@@ -246,10 +249,11 @@ func isAssignToSkipField(stack []ast.Node, skipFields map[string]bool) bool {
 			// A KeyValueExpr binds the field; no need to keep walking.
 			return false
 		case *ast.AssignStmt:
-			for _, lhs := range parent.Lhs {
-				if name, ok := fieldNameFromLHS(lhs); ok && skipFields[name] {
-					return true
-				}
+			if len(parent.Lhs) != 1 {
+				return false
+			}
+			if name, ok := fieldNameFromLHS(parent.Lhs[0]); ok && skipFields[name] {
+				return true
 			}
 			return false
 		case *ast.FuncLit, *ast.FuncDecl:
@@ -268,18 +272,16 @@ func identName(expr ast.Expr) (string, bool) {
 	return id.Name, true
 }
 
-// fieldNameFromLHS extracts a field name from an assignment LHS expression.
-// For x.Field it returns "Field"; for plain identifiers it returns the
-// identifier name (covers cases where the LHS is itself a struct field
-// shadowed by a local var, which is rare but cheap to handle).
+// fieldNameFromLHS extracts a struct field name from an assignment LHS.
+// Only *ast.SelectorExpr (e.g. a.CardSchemes) is matched — bare identifiers
+// are local variables, not struct fields, and a literal assigned to a local
+// var that happens to share a skip-field name should still be flagged.
 func fieldNameFromLHS(expr ast.Expr) (string, bool) {
-	switch e := expr.(type) {
-	case *ast.SelectorExpr:
-		return e.Sel.Name, true
-	case *ast.Ident:
-		return e.Name, true
+	sel, ok := expr.(*ast.SelectorExpr)
+	if !ok {
+		return "", false
 	}
-	return "", false
+	return sel.Sel.Name, true
 }
 
 // callName extracts the method or function name from a call expression.

@@ -28,3 +28,23 @@ func bareLiterals() {
 	y := "USD" // want `use currency\.USD instead of "USD"`
 	_ = y
 }
+
+// The skip is single-target. Tuple assignments (len(Lhs) > 1) fall through
+// to the default flag behavior — even when one of the LHS targets is in
+// the skip list, the linter cannot reliably correlate which RHS literal
+// belongs to which LHS without type information, so it flags everything.
+func tupleAssign() {
+	a := &cardAvailability{}
+	a.CardSchemes, a.IssuerCountries = stringArray{"MC"}, stringArray{"SG"} // want `use site\.MC instead of "MC"` `use site\.SG instead of "SG"`
+}
+
+// The skip is targeted at struct-field assignments. A bare local variable
+// that happens to share its name with a configured skip field is NOT a
+// struct field — it should still flag.
+func localVarShadowing() {
+	CardSchemes := "MC" // want `use site\.MC instead of "MC"`
+	_ = CardSchemes
+
+	var IssuerCountries = "SG" // want `use site\.SG instead of "SG"`
+	_ = IssuerCountries
+}
