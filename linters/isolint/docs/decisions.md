@@ -27,6 +27,21 @@ Import paths like `import "io"` are syntactically `*ast.BasicLit` strings. The l
 
 String arguments to ORM, HTTP, and filter methods (e.g. `db.Select("SG")`, `c.Query("TH")`) are skipped. The linter inspects the parent `*ast.CallExpr` and checks the callee name against [`skipMethods`](../analyzer.go). To skip a new method, add its name there.
 
+### Field-name skip ([`Settings.SkipFields`](../analyzer.go))
+
+Uppercase 2- and 3-letter strings sometimes collide with ISO codes by accident — most notably card scheme abbreviations like `"MC"` (MasterCard, also Monaco) and `"AX"` (American Express, also Åland Islands). When a literal is assigned to a struct field whose name appears in [`Settings.SkipFields`](../analyzer.go), the linter skips it.
+
+Two assignment shapes are recognized syntactically — no type information is needed:
+
+- `*ast.AssignStmt` whose `Lhs[0]` is a `*ast.SelectorExpr` (covers `a.CardSchemes = pq.StringArray{"MC"}`)
+- `*ast.KeyValueExpr` whose `Key` is an `*ast.Ident` (covers `Foo{CardSchemes: pq.StringArray{"MC"}}`)
+
+The walk in [`isAssignToSkipField`](../analyzer.go) stops at function boundaries (`*ast.FuncLit`/`*ast.FuncDecl`) so a literal beyond a closure boundary is no longer treated as part of the original assignment.
+
+**Why not type-based?** Matching by the destination field's _type_ (e.g. "skip everything assigned to a `pq.StringArray`") would require `pass.TypesInfo`, which forces escalation to `LoadModeTypesInfo`. That has a project-wide cost (see below) and is also coarser — a real `pq.StringArray` of site codes would also be skipped. Field-name targeting is precise and stays within `LoadModeSyntax`.
+
+**Why not a flat value allowlist (e.g. `allow-values: [MC]`)?** A global allowlist suppresses the same literal everywhere, including in genuine country contexts. Field-name targeting suppresses it only where the field semantics warrant it, leaving the linter useful elsewhere.
+
 ## `LoadModeSyntax`
 
 This is the cheapest load mode — the type-checker never runs. The linter only needs string literal values, not type information, so `LoadModeSyntax` is sufficient.

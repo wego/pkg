@@ -108,6 +108,49 @@ if code == currency.USD { ... }
 if siteCode == site.SG { ... }
 ```
 
+## Configuration
+
+### `skip-fields`
+
+Some uppercase 2- or 3-letter strings collide with ISO codes by accident. The
+canonical example is the card scheme abbreviation `"MC"` (MasterCard), which
+shares its form with the ISO 3166-1 alpha-2 code for Monaco. To avoid manual
+`//nolint:isolint` on every site, configure `skip-fields` with the struct field
+names that hold these domain values. The linter then skips literals assigned to
+those fields, in either of these shapes:
+
+```go
+a.CardSchemes = pq.StringArray{"MC"}                          // receiver-field assignment
+_ = entity.CardAvailability{CardSchemes: pq.StringArray{"MC"}} // composite-literal field
+```
+
+Assignments to other fields are still flagged — the skip is field-scoped, not a
+global value allowlist.
+
+#### As a golangci-lint module plugin
+
+```yaml
+version: "2"
+
+linters:
+  enable:
+    - isolint
+  settings:
+    custom:
+      isolint:
+        type: module
+        description: "Enforces currency/site package constant usage"
+        settings:
+          skip-fields:
+            - CardSchemes
+```
+
+#### As a standalone CLI
+
+```bash
+isolint -skip-fields=CardSchemes,IssuerCountries ./...
+```
+
 ## Auto-fix
 
 The linter provides suggested fixes that can be applied automatically:

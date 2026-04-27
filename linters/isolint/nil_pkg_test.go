@@ -39,7 +39,7 @@ func f() {
 	}
 
 	// Must not panic.
-	_, err = run(pass)
+	_, err = run(pass, nil)
 	if err != nil {
 		t.Fatalf("run() returned unexpected error: %v", err)
 	}
