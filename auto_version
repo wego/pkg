@@ -45,8 +45,21 @@ for remote in $(git remote); do
   git pull "$remote" "$current_branch"
 done
 
+module_root="github.com/wego/pkg"
+
 for dir in $(find . -name 'go.mod' -exec dirname {} \; | sort -u); do
   pkg=$(echo "$dir" | sed 's/\.\///')
+
+  # Only tag modules whose go.mod declares the canonical repo path.
+  # Auxiliary go.mod files (e.g. linter testdata fixtures, example modules)
+  # use unrelated module paths and must not be released.
+  declared_module=$(awk '/^module[[:space:]]/ { print $2; exit }' "$dir/go.mod")
+  expected_module="$module_root/$pkg"
+  if [[ "$declared_module" != "$expected_module" ]]; then
+    echo "skipping $pkg (module path \"$declared_module\" is not \"$expected_module\")"
+    continue
+  fi
+
   latest_version=$(git tag --sort=-v:refname -l "$pkg/v*" | head -1 | sed 's/.*\///')
 
   current_version=$latest_version
