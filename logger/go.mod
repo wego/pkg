@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/antchfx/xmlquery v1.4.4
 	github.com/spf13/viper v1.20.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/valyala/fastjson v1.6.4
 	github.com/wego/pkg/collection v0.1.11
 	github.com/wego/pkg/common v0.1.18
