@@ -1,0 +1,51 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directories:
+      - "/audit"
+      - "/collection"
+      - "/common"
+      - "/currency"
+      - "/database/clauses"
+      - "/database/postgres"
+      - "/datetime"
+      - "/encoding"
+      - "/encryption"
+      - "/env"
+      - "/errors"
+      - "/host"
+      - "/http"
+      - "/http/auth"
+      - "/http/binding"
+      - "/http/header"
+      - "/http/jwt"
+      - "/http/middleware"
+      - "/http/wegin"
+      - "/integration-test"
+      - "/iso"
+      - "/iso/country"
+      - "/iso/site"
+      - "/linters/isolint"
+      - "/linters/stringlint"
+      - "/localization"
+      - "/logger"
+      - "/mocktest"
+      - "/pointer"
+      - "/rand"
+      - "/retry"
+      - "/secretsmanager"
+      - "/snowflake"
+      - "/strings"
+      - "/to"
+    schedule:
+      interval: "weekly"
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
+        group-by: "dependency-name"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
