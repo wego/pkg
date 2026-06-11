@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/wego/pkg/strings v0.1.1
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.1
 )
 
 require (

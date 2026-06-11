@@ -8,7 +8,7 @@ require (
 	github.com/spf13/viper v1.20.0
 	github.com/wego/pkg/database/postgres v0.1.14
 	github.com/wego/pkg/errors v0.2.3
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.1
 )
 
 require (

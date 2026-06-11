@@ -6,7 +6,7 @@ require (
 	github.com/casbin/casbin/v2 v2.104.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/wego/pkg/errors v0.2.3
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.1
 )
 
 require (

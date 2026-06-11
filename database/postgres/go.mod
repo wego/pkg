@@ -10,7 +10,7 @@ require (
 	github.com/wego/pkg/common v0.1.18
 	gopkg.in/DataDog/dd-trace-go.v1 v1.72.1
 	gorm.io/driver/postgres v1.5.11
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.1
 )
 
 require (
