@@ -1,5 +1,5 @@
-github.com/bojanz/currency v1.3.0 h1:HlgIxAaD7xMCk1RtjR5b7UKG3d5BBTPZORSPAWefhro=
-github.com/bojanz/currency v1.3.0/go.mod h1:jNoZiJyRTqoU5DFoa+n+9lputxPUDa8Fz8BdDrW06Go=
+github.com/bojanz/currency v1.4.4 h1:EJjt1pZYR2BwBJxFQWXndAs/ZK56Lfs+ZBDLow8ISvs=
+github.com/bojanz/currency v1.4.4/go.mod h1:hv7AAJ5jNRvE/SXaJe74uBPg6syV21imy4yKP7fi9GM=
 github.com/cockroachdb/apd/v3 v3.2.1 h1:U+8j7t0axsIgvQUqthuNm82HIrYXodOV2iWLWtEaIwg=
 github.com/cockroachdb/apd/v3 v3.2.1/go.mod h1:klXJcjp+FffLTHlhIG69tezTDvdP065naDsHzKhYSqc=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
