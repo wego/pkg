@@ -39,6 +39,11 @@ updates:
       - "/to"
     schedule:
       interval: "weekly"
+    # Major-version bumps frequently introduce breaking changes. Only auto-propose
+    # minor/patch updates; majors must be bumped deliberately with testing.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       go-dependencies:
         patterns:
@@ -49,3 +54,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
