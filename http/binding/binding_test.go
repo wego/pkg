@@ -27,7 +27,7 @@ var (
 	testQueryEndpoint         = "/test/query"
 	testChangeRequestEndpoint = "/test/cr"
 	testIDEndpoint            = "/test"
-	testUriEndpoint           = "/test/:id/child/:child_id"
+	testURIEndpoint           = "/test/:id/child/:child_id"
 	ctxKey                    = "testRequest"
 	anotherCtxKey             = "anotherTestRequest"
 )
@@ -49,7 +49,7 @@ type testChangeStruct struct {
 	audit.ChangeRequest
 }
 
-type testUriStruct struct {
+type testURIStruct struct {
 	ID      string `uri:"id" json:"id"`
 	ChildID string `uri:"child_id" json:"child_id"`
 	Name    string `json:"name"`
@@ -118,12 +118,12 @@ func bindIDHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, id)
 }
 
-func bindUriHandler(c *gin.Context) {
-	var t testUriStruct
-	ctxKeyUri := "keyUri"
+func bindURIHandler(c *gin.Context) {
+	var t testURIStruct
+	ctxKeyURI := "keyUri"
 	ctxKeyBody := "keyBody"
 
-	if err := binding.BindURI(c, ctxKeyUri, &t); err != nil {
+	if err := binding.BindURI(c, ctxKeyURI, &t); err != nil {
 		c.AbortWithStatusJSON(errors.Code(err), err)
 		return
 	}
@@ -778,7 +778,7 @@ func (s *BindingSuite) Test_BindURI() {
 			req, err := http.NewRequest(http.MethodPatch, path, strings.NewReader(tc.requestBody))
 			s.NoError(err)
 
-			s.router.PATCH(testUriEndpoint, bindUriHandler)
+			s.router.PATCH(testURIEndpoint, bindURIHandler)
 			r := httptest.NewRecorder()
 			s.router.ServeHTTP(r, req)
 
