@@ -12,7 +12,7 @@ require (
 )
 
 require (
-	github.com/bojanz/currency v1.3.0 // indirect
+	github.com/bojanz/currency v1.4.4 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect

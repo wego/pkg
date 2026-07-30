@@ -3,7 +3,7 @@ module github.com/wego/pkg/currency
 go 1.19
 
 require (
-	github.com/bojanz/currency v1.3.0
+	github.com/bojanz/currency v1.4.4
 	github.com/stretchr/testify v1.10.0
 )
 
