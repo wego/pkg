@@ -2,7 +2,6 @@ module github.com/wego/pkg/secretsmanager
 
 go 1.23.0
 
-
 require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/sergi/go-diff v1.3.1
@@ -11,7 +10,7 @@ require (
 
 require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 )
 
 require (
