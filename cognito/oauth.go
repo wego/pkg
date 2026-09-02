@@ -73,6 +73,23 @@ type Config struct {
 	// OpenBrowser launches the authorize URL. Nil uses the OS default opener.
 	OpenBrowser func(string) error
 
+	// NoBrowser suppresses the browser launch. Login reports the authorize URL
+	// through PromptURL instead and then waits on the loopback listener exactly
+	// as it otherwise would, for a headless shell, a terminal on a remote host,
+	// or an operator who would rather open the URL themselves.
+	//
+	// The redirect still lands on CallbackAddr, so when the browser runs on a
+	// different machine than the CLI that port has to be reachable from it —
+	// usually `ssh -L <port>:localhost:<port>`. Suppressing the launch does not
+	// move where the code is delivered.
+	NoBrowser bool
+
+	// PromptURL receives the authorize URL in place of a browser launch, so the
+	// caller decides how to surface it: print it, render a QR code, hand it to
+	// another process. Required when NoBrowser is set — a sign-in whose URL the
+	// operator never sees cannot complete — and ignored otherwise.
+	PromptURL func(url string) error
+
 	// HTTPClient calls the token endpoint. Nil uses a client with a timeout.
 	HTTPClient *http.Client
 
@@ -106,8 +123,8 @@ func Login(ctx context.Context, cfg Config) (*TokenSet, error) {
 	}
 	defer server.shutdown()
 
-	if err := cfg.openBrowserAt(cfg.buildAuthorizeURL(state, generateChallenge(verifier))); err != nil {
-		return nil, fmt.Errorf("open browser for sign-in: %w", err)
+	if err := cfg.presentAuthorizeURL(cfg.buildAuthorizeURL(state, generateChallenge(verifier))); err != nil {
+		return nil, err
 	}
 
 	code, callbackState, err := server.wait(ctx, defaultCallbackTimeout)
@@ -317,6 +334,9 @@ func (c Config) validateForLogin() error {
 	if wegostrings.IsBlank(c.CallbackAddr) {
 		return errors.New("local callback address is not configured")
 	}
+	if c.NoBrowser && c.PromptURL == nil {
+		return errors.New("no-browser sign-in needs Config.PromptURL: with no browser launched and no way to report the url, the operator has nothing to open")
+	}
 	return nil
 }
 
@@ -337,6 +357,24 @@ func (c Config) now() time.Time {
 }
 
 // openBrowserAt sends the operator to rawURL.
+// presentAuthorizeURL gets the operator to the authorize URL, by launching a
+// browser or, under NoBrowser, by handing the URL to PromptURL.
+func (c Config) presentAuthorizeURL(rawURL string) error {
+	if c.NoBrowser {
+		if err := c.PromptURL(rawURL); err != nil {
+			return fmt.Errorf("present the sign-in url: %w", err)
+		}
+
+		return nil
+	}
+
+	if err := c.openBrowserAt(rawURL); err != nil {
+		return fmt.Errorf("open browser for sign-in: %w", err)
+	}
+
+	return nil
+}
+
 func (c Config) openBrowserAt(rawURL string) error {
 	if c.OpenBrowser != nil {
 		return c.OpenBrowser(rawURL)

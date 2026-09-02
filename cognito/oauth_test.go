@@ -650,3 +650,65 @@ func mustFreeAddr(t *testing.T) string {
 	require.NoError(t, ln.Close())
 	return addr
 }
+
+// TestLogin_NoBrowser covers the headless path: the caller suppresses the
+// launch and surfaces the URL itself, and the sign-in still completes on the
+// loopback listener. Suppressing the launch must not change anything else —
+// the same PKCE and state parameters have to be sent, because a URL an
+// operator pastes by hand is the same URL a browser would have been given.
+func TestLogin_NoBrowser(t *testing.T) {
+	ts := newTokenServer(t, nil)
+
+	// The fake browser doubles as the prompt: it records the URL and drives the
+	// callback, which is exactly what an operator pasting the URL would cause.
+	prompt := newFakeBrowser()
+
+	cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+	cfg.NoBrowser = true
+	cfg.PromptURL = prompt.open
+	cfg.OpenBrowser = func(string) error {
+		t.Error("NoBrowser must not launch a browser")
+
+		return nil
+	}
+
+	got, err := cognito.Login(context.Background(), cfg)
+	require.NoError(t, err)
+	require.Equal(t, testAccessValue, got.AccessToken)
+
+	authorizeURL, err := url.Parse(prompt.capturedURL())
+	require.NoError(t, err, "PromptURL must receive a usable authorize url")
+
+	aq := authorizeURL.Query()
+	assert.Equal(t, cfg.ClientID, aq.Get("client_id"))
+	assert.Equal(t, cfg.RedirectURI, aq.Get("redirect_uri"))
+	assert.Equal(t, "S256", aq.Get("code_challenge_method"), "plain PKCE must never be used")
+	assert.NotEmpty(t, aq.Get("code_challenge"))
+	assert.NotEmpty(t, aq.Get("state"), "state is CSRF protection and must always be sent")
+}
+
+func TestLogin_NoBrowserRequiresPromptURL(t *testing.T) {
+	cfg := baseConfig(t, "https://unused.test/oauth2/token", mustFreeAddr(t))
+	cfg.NoBrowser = true
+	cfg.PromptURL = nil
+
+	_, err := cognito.Login(context.Background(), cfg)
+
+	require.Error(t, err, "a login with no browser and no way to report the url cannot complete")
+	assert.Contains(t, err.Error(), "PromptURL",
+		"the error must name the field that is missing")
+}
+
+func TestLogin_NoBrowserPromptFailurePropagates(t *testing.T) {
+	wantErr := errors.New("no tty to print to")
+
+	cfg := baseConfig(t, "https://unused.test/oauth2/token", mustFreeAddr(t))
+	cfg.NoBrowser = true
+	cfg.PromptURL = func(string) error { return wantErr }
+
+	_, err := cognito.Login(context.Background(), cfg)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, wantErr, "a prompt failure must reach the caller unwrapped in meaning")
+	assert.NotContains(t, err.Error(), "open browser", "the browser path was not taken")
+}
