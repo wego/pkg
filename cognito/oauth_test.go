@@ -712,3 +712,54 @@ func TestLogin_NoBrowserPromptFailurePropagates(t *testing.T) {
 	assert.ErrorIs(t, err, wantErr, "a prompt failure must reach the caller unwrapped in meaning")
 	assert.NotContains(t, err.Error(), "open browser", "the browser path was not taken")
 }
+
+// TestLogin_RejectsAnUnusableExpiresIn pins that a token response with no
+// usable expires_in fails loudly.
+//
+// Accepting it silently is worse than failing: ExpiresAt would land on exactly
+// now(), IsExpired subtracts a leeway on top, and a login that had just
+// succeeded would read as already expired — sending the operator back through
+// sign-in on their very next command with no indication why.
+func TestLogin_RejectsAnUnusableExpiresIn(t *testing.T) {
+	tests := []struct {
+		name            string
+		givenExpiresIn  any
+		wantErrContains string
+	}{
+		{
+			name:            "expires_in omitted entirely",
+			givenExpiresIn:  nil,
+			wantErrContains: "expires_in",
+		},
+		{
+			name:            "expires_in zero",
+			givenExpiresIn:  0,
+			wantErrContains: "expires_in",
+		},
+		{
+			name:            "expires_in negative",
+			givenExpiresIn:  -1,
+			wantErrContains: "expires_in",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body := goodTokenBody(t, testOperatorEmail)
+			delete(body, "expires_in")
+			if tt.givenExpiresIn != nil {
+				body["expires_in"] = tt.givenExpiresIn
+			}
+
+			ts := newTokenServer(t, jsonHandler(http.StatusOK, body))
+			browser := newFakeBrowser()
+			cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+			cfg.OpenBrowser = browser.open
+
+			_, err := cognito.Login(context.Background(), cfg)
+
+			require.Error(t, err, "an unusable expires_in must not produce a session")
+			assert.Contains(t, err.Error(), tt.wantErrContains)
+		})
+	}
+}

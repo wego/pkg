@@ -235,6 +235,13 @@ func (c Config) postToken(ctx context.Context, form url.Values, fallbackRefresh 
 		return nil, errors.New("token response is missing id_token")
 	case wegostrings.IsBlank(refresh):
 		return nil, errors.New("token response is missing refresh_token")
+	case parsed.ExpiresIn <= 0:
+		// Silently accepting this is worse than failing. ExpiresAt would land on
+		// exactly now(), and IsExpired subtracts a leeway on top, so a login that
+		// just succeeded would read as already expired and the next command would
+		// refresh or send the operator back through sign-in. Refusing here names
+		// the real problem instead.
+		return nil, errors.New("token response has no usable expires_in")
 	}
 
 	return &TokenSet{
