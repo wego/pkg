@@ -2,11 +2,10 @@ module github.com/wego/pkg/common
 
 go 1.23.0
 
-
 require (
 	github.com/Ardesco/credit-card-generator v0.0.0-20201208233833-a7202c328b75
 	github.com/DataDog/datadog-go v4.8.3+incompatible
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/wego/pkg/pointer v0.1.2
 )
 
