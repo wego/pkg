@@ -102,7 +102,7 @@ func callbackHandler(results chan<- callbackResult) http.HandlerFunc {
 				message += ": " + desc
 			}
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, failureHTML)
+			_, _ = fmt.Fprint(w, failureHTML)
 			deliver(results, callbackResult{err: fmt.Errorf("authorization server rejected the sign-in: %s", message)})
 			return
 		}
@@ -110,12 +110,12 @@ func callbackHandler(results chan<- callbackResult) http.HandlerFunc {
 		code := query.Get("code")
 		if wegostrings.IsBlank(code) {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, failureHTML)
+			_, _ = fmt.Fprint(w, failureHTML)
 			deliver(results, callbackResult{err: errors.New("the sign-in redirect carried no authorization code")})
 			return
 		}
 
-		fmt.Fprint(w, successHTML)
+		_, _ = fmt.Fprint(w, successHTML)
 		deliver(results, callbackResult{code: code, state: query.Get("state")})
 	}
 }
