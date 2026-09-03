@@ -347,12 +347,40 @@ func (c Config) validateForLogin() error {
 	return nil
 }
 
-// httpClient is the client to call the token endpoint with.
+// httpClient is the client to call the token endpoint with. It never follows
+// redirects, whoever supplied it.
+//
+// The returned client is a COPY, so a caller-supplied HTTPClient is neither
+// mutated nor able to reinstate redirect-following. That override is
+// deliberate: the token request carries the authorization code, the PKCE
+// verifier and the client id on sign-in and the refresh token on renewal, and
+// Go's default policy follows up to ten redirects, re-sending the body
+// verbatim on a 307 or 308. One redirect would therefore hand a complete
+// credential set to whatever host the response named. It is also an injection
+// route inwards, since the body that came back would be parsed as the session
+// to use.
+//
+// A redirect from the token endpoint has no legitimate meaning here: TokenURL
+// is a Cognito domain the operator configured, and Cognito answers it
+// directly. Refusing turns the redirect into the error it should be.
 func (c Config) httpClient() *http.Client {
-	if c.HTTPClient != nil {
-		return c.HTTPClient
+	base := c.HTTPClient
+	if base == nil {
+		base = &http.Client{Timeout: defaultHTTPTimeout}
 	}
-	return &http.Client{Timeout: defaultHTTPTimeout}
+
+	refusing := *base
+	refusing.CheckRedirect = refuseRedirect
+
+	return &refusing
+}
+
+// refuseRedirect stops the client at the redirect response instead of
+// following it. Returning ErrUseLastResponse rather than an error of our own
+// hands postToken the 3xx itself, which its status check then reports with the
+// endpoint and status an operator needs to debug the misconfiguration.
+func refuseRedirect(_ *http.Request, _ []*http.Request) error {
+	return http.ErrUseLastResponse
 }
 
 // now is the current time, from the injected clock when there is one.
