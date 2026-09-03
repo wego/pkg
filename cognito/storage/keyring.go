@@ -12,18 +12,46 @@ import (
 	"github.com/wego/pkg/cognito"
 )
 
+// Layout.
+//
 // A Cognito JWT - the access token especially - can exceed the 4 KiB
 // command-line cap zalando/go-keyring runs into on macOS, where it shells out
-// to /usr/bin/security. So each field gets its own keychain entry, keeping
-// every individual write well under that ceiling.
+// to /usr/bin/security (see keyring_darwin.go, which refuses any command over
+// 4096 bytes). After the library's base64 expansion that leaves roughly 3 KB
+// of secret per entry, and a whole token set does not reliably fit. So each
+// field keeps its own entry.
 //
-// Entries are accounted as "<namespace>/<field>".
+// That rules out getting atomicity by writing one entry, and a keychain has no
+// transaction. Instead each token set is written into one of two SLOTS, and a
+// separate pointer entry names the slot that counts. Save fills the inactive
+// slot and then moves the pointer, which is one small write and the only write
+// that changes what Load sees. A failure anywhere before it leaves the pointer
+// and the live slot untouched, so a torn write costs the new session, never
+// the old one.
+//
+// Two slots rather than a counter keeps the entry count fixed and means a
+// re-login never writes over the entries the current session is read from.
+//
+// Entries are accounted as "<namespace>/current" for the pointer and
+// "<namespace>/<slot>/<field>" for the token fields.
 const (
 	fieldAccess  = "access"
 	fieldID      = "id"
 	fieldRefresh = "refresh"
 	fieldMeta    = "meta"
+	// fieldCurrent is the pointer entry naming the live slot. Committing a
+	// token set is exactly one write of this entry.
+	fieldCurrent = "current"
 )
+
+// The two slots a token set alternates between.
+const (
+	slotA = "a"
+	slotB = "b"
+)
+
+// tokenFields are the per-field entries that make up one stored token set.
+var tokenFields = []string{fieldAccess, fieldID, fieldRefresh, fieldMeta}
 
 // keyringBackend is the slice of zalando/go-keyring this package depends on.
 // Naming it lets tests substitute a fake instead of prompting a real keychain.
@@ -73,10 +101,10 @@ func (k *keyringStore) Load(namespace string) (*cognito.TokenSet, error) {
 		return nil, err
 	}
 
-	// Gate on the access token: its absence means "not signed in", which is a
-	// normal state rather than a failure. Once it is present, anything else
-	// missing is a real inconsistency and must be reported.
-	access, err := k.backend.Get(k.service, account(namespace, fieldAccess))
+	// Gate on the pointer: its absence means "not signed in", which is a normal
+	// state rather than a failure. Once it is present, anything the slot it
+	// names is missing is a real inconsistency and must be reported.
+	slot, err := k.backend.Get(k.service, pointerAccount(namespace))
 	if errors.Is(err, keyring.ErrNotFound) {
 		return nil, nil
 	}
@@ -84,15 +112,26 @@ func (k *keyringStore) Load(namespace string) (*cognito.TokenSet, error) {
 		return nil, fmt.Errorf("read the keychain: %w (is the system keychain unlocked?)", err)
 	}
 
-	idToken, err := k.read(namespace, fieldID)
+	if slot != slotA && slot != slotB {
+		// Nothing here writes any other value, so this entry was tampered with
+		// or written by a version that stored something else. Guessing which
+		// slot was meant would be worse than refusing.
+		return nil, fmt.Errorf("keychain names an unknown token slot %q for %q", slot, namespace)
+	}
+
+	access, err := k.read(namespace, slot, fieldAccess)
 	if err != nil {
 		return nil, err
 	}
-	refresh, err := k.read(namespace, fieldRefresh)
+	idToken, err := k.read(namespace, slot, fieldID)
 	if err != nil {
 		return nil, err
 	}
-	rawMeta, err := k.read(namespace, fieldMeta)
+	refresh, err := k.read(namespace, slot, fieldRefresh)
+	if err != nil {
+		return nil, err
+	}
+	rawMeta, err := k.read(namespace, slot, fieldMeta)
 	if err != nil {
 		return nil, err
 	}
@@ -111,6 +150,11 @@ func (k *keyringStore) Load(namespace string) (*cognito.TokenSet, error) {
 }
 
 // Save writes tokens under namespace, replacing anything already there.
+//
+// It is atomic from Load's point of view: the fields go into the slot that is
+// not live, and only the final pointer write makes them the session. If any
+// write fails, the previous session is still whole and still what Load
+// returns.
 func (k *keyringStore) Save(namespace string, tokens *cognito.TokenSet) error {
 	if err := k.validate(namespace); err != nil {
 		return err
@@ -124,49 +168,119 @@ func (k *keyringStore) Save(namespace string, tokens *cognito.TokenSet) error {
 		return fmt.Errorf("encode token metadata: %w", err)
 	}
 
-	// The access token is written LAST because Load gates on it: a write cut
-	// short partway through then reads as "not signed in", which is
-	// recoverable, rather than as a half-populated token set, which is not.
-	entries := []struct {
-		field string
-		value string
-	}{
-		{field: fieldRefresh, value: tokens.RefreshToken},
-		{field: fieldID, value: tokens.IDToken},
-		{field: fieldMeta, value: string(meta)},
-		{field: fieldAccess, value: tokens.AccessToken},
+	live, err := k.currentSlot(namespace)
+	if err != nil {
+		return err
 	}
 
-	for _, entry := range entries {
-		if err := k.backend.Set(k.service, account(namespace, entry.field), entry.value); err != nil {
-			return fmt.Errorf("write %s to the keychain: %w (is the system keychain unlocked?)", entry.field, err)
+	next := otherSlot(live)
+
+	values := map[string]string{
+		fieldAccess:  tokens.AccessToken,
+		fieldID:      tokens.IDToken,
+		fieldRefresh: tokens.RefreshToken,
+		fieldMeta:    string(meta),
+	}
+
+	// Ordering is irrelevant now: nothing written here is reachable until the
+	// pointer moves. tokenFields is used rather than ranging the map so the
+	// write sequence is deterministic, which keeps failures reproducible.
+	for _, field := range tokenFields {
+		if err := k.backend.Set(k.service, fieldAccount(namespace, next, field), values[field]); err != nil {
+			return fmt.Errorf("write %s to the keychain: %w (is the system keychain unlocked?)", field, err)
 		}
 	}
+
+	// The commit.
+	if err := k.backend.Set(k.service, pointerAccount(namespace), next); err != nil {
+		return fmt.Errorf("commit the session to the keychain: %w (is the system keychain unlocked?)", err)
+	}
+
+	// The old slot is now unreachable. Clearing it keeps a superseded token set
+	// out of the keychain, but the session is already committed, so a failure
+	// here is not the caller's problem and must not fail the sign-in.
+	k.clearSlot(namespace, live)
 
 	return nil
 }
 
+// currentSlot reports the live slot, or "" when nothing is stored. An
+// unrecognised value is treated as "nothing live": Save's job is to establish a
+// good session, and it can do that without deciding what the bad value meant.
+// Load is where a corrupt pointer is reported.
+func (k *keyringStore) currentSlot(namespace string) (string, error) {
+	slot, err := k.backend.Get(k.service, pointerAccount(namespace))
+	if errors.Is(err, keyring.ErrNotFound) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("read the current token slot: %w (is the system keychain unlocked?)", err)
+	}
+
+	if slot != slotA && slot != slotB {
+		return "", nil
+	}
+
+	return slot, nil
+}
+
+// otherSlot returns the slot to write next. An empty live slot means nothing is
+// stored, so either is free and slotA keeps a first login predictable.
+func otherSlot(live string) string {
+	if live == slotA {
+		return slotB
+	}
+
+	return slotA
+}
+
+// clearSlot removes one slot's field entries, best effort. Callers use it for a
+// slot nothing points at any more.
+func (k *keyringStore) clearSlot(namespace, slot string) {
+	if slot == "" {
+		return
+	}
+
+	for _, field := range tokenFields {
+		_ = k.backend.Delete(k.service, fieldAccount(namespace, slot, field))
+	}
+}
+
 // Delete removes every entry under namespace. Entries already gone are fine:
 // the desired end state is "signed out", so signing out twice must succeed.
+//
+// The pointer goes FIRST, for the same reason Save moves it last: once it is
+// gone the operator is signed out, even if a later delete fails and leaves
+// orphaned field entries behind.
 func (k *keyringStore) Delete(namespace string) error {
 	if err := k.validate(namespace); err != nil {
 		return err
 	}
 
-	for _, field := range []string{fieldAccess, fieldID, fieldRefresh, fieldMeta} {
-		err := k.backend.Delete(k.service, account(namespace, field))
-		if err != nil && !errors.Is(err, keyring.ErrNotFound) {
-			return fmt.Errorf("delete %s from the keychain: %w (is the system keychain unlocked?)", field, err)
+	err := k.backend.Delete(k.service, pointerAccount(namespace))
+	if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+		return fmt.Errorf("delete the current token slot from the keychain: %w (is the system keychain unlocked?)", err)
+	}
+
+	// Both slots, not just the live one: a torn Save can leave fields in the
+	// inactive slot, and signing out should not leave a token set behind.
+	for _, slot := range []string{slotA, slotB} {
+		for _, field := range tokenFields {
+			err := k.backend.Delete(k.service, fieldAccount(namespace, slot, field))
+			if err != nil && !errors.Is(err, keyring.ErrNotFound) {
+				return fmt.Errorf("delete %s from the keychain: %w (is the system keychain unlocked?)", field, err)
+			}
 		}
 	}
 
 	return nil
 }
 
-// read fetches one entry, treating a missing one as an error: callers only
-// reach it after the access-token gate has confirmed a login exists.
-func (k *keyringStore) read(namespace, field string) (string, error) {
-	value, err := k.backend.Get(k.service, account(namespace, field))
+// read fetches one field of one slot, treating a missing entry as an error:
+// callers only reach it after the pointer has confirmed a committed session,
+// so anything absent is an inconsistency rather than a logged-out state.
+func (k *keyringStore) read(namespace, slot, field string) (string, error) {
+	value, err := k.backend.Get(k.service, fieldAccount(namespace, slot, field))
 	if err != nil {
 		return "", fmt.Errorf("read %s from the keychain: %w", field, err)
 	}
@@ -184,7 +298,12 @@ func (k *keyringStore) validate(namespace string) error {
 	return nil
 }
 
-// account is the keychain account name for one field of one namespace.
-func account(namespace, field string) string {
-	return namespace + "/" + field
+// pointerAccount is the keychain account name of a namespace's commit pointer.
+func pointerAccount(namespace string) string {
+	return namespace + "/" + fieldCurrent
+}
+
+// fieldAccount is the keychain account name for one field of one slot.
+func fieldAccount(namespace, slot, field string) string {
+	return namespace + "/" + slot + "/" + field
 }
