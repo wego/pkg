@@ -234,13 +234,12 @@ var iso4217Currencies = map[string]bool{
 	YER: true, ZAR: true, ZMW: true, ZWG: true, ZWL: true,
 }
 
-// https://www.checkout.com/docs/payments/accept-payments/format-the-payment-amount
+// https://www.checkout.com/docs/payments/accept-payments/format-the-amount-value
 const defaultCurrencyFactor float64 = 100
 
 var currencyFactors = map[string]float64{
 	// Currencies have full value
 	BIF: 1, // Burundian Franc
-	CLF: 1, // Chilean Unidad de Fomentos
 	DJF: 1, // Djiboutian Franc
 	GNF: 1, // Guinean Franc
 	ISK: 1, // Icelandic Krona
