@@ -83,7 +83,7 @@ require (
 	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
-	github.com/wego/pkg/pointer v0.1.2 // indirect
+	github.com/wego/pkg/pointer v0.1.3 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/collector/component v1.28.1 // indirect
 	go.opentelemetry.io/collector/pdata v1.28.1 // indirect

@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/wego/pkg/audit v0.1.4
 	github.com/wego/pkg/errors v0.2.3
 )
@@ -48,7 +48,7 @@ require (
 	github.com/wego/pkg/collection v0.1.11 // indirect
 	github.com/wego/pkg/common v0.1.18 // indirect
 	github.com/wego/pkg/env v0.1.1 // indirect
-	github.com/wego/pkg/pointer v0.1.2 // indirect
+	github.com/wego/pkg/pointer v0.1.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.15.0 // indirect
 	golang.org/x/crypto v0.54.0 // indirect

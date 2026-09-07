@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/go-playground/validator/v10 v10.25.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/wego/pkg/common v0.1.18
 	github.com/wego/pkg/env v0.1.1
 	gorm.io/gorm v1.25.12
@@ -24,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/spf13/viper v1.20.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/wego/pkg/pointer v0.1.2 // indirect
+	github.com/wego/pkg/pointer v0.1.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 )

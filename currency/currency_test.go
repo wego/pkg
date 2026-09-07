@@ -294,9 +294,9 @@ func Test_FormatAmount(t *testing.T) {
 func Test_GetCurrencyFactor(t *testing.T) {
 	assertions := assert.New(t)
 
-	factorOf100 := []string{"AED", "USD", "PHP", "qwerty", "1234", "SAR"}
+	factorOf100 := []string{"AED", "USD", "PHP", "qwerty", "1234", "SAR", "CLF"}
 	factorOf1000 := []string{"BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND"}
-	factorOfOne := []string{"BIF", "CLF", "DJF", "GNF", "ISK", "JPY", "KMF",
+	factorOfOne := []string{"BIF", "DJF", "GNF", "ISK", "JPY", "KMF",
 		"KRW", "PYG", "RWF", "UGX", "VUV", "VND", "XAF", "XOF", "XPF"}
 
 	for _, cur := range factorOf100 {
