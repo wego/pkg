@@ -1,11 +1,15 @@
 package postgres
 
-import "github.com/jackc/pgconn"
+import (
+	"errors"
+
+	"github.com/jackc/pgx/v5/pgconn"
+)
 
 // IsLockError checks if the error is a lock error
 func IsLockError(err error) bool {
-	pgErr, ok := err.(*pgconn.PgError)
-	if !ok {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
 		return false
 	}
 
@@ -16,8 +20,8 @@ func IsLockError(err error) bool {
 
 // IsUniqueConstraintError checks if the error is a unique constraint error
 func IsUniqueConstraintError(err error) bool {
-	pgErr, ok := err.(*pgconn.PgError)
-	if !ok {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
 		return false
 	}
 
