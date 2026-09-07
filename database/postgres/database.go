@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/spf13/viper"
 	"github.com/wego/pkg/common"
 	sqlTrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"

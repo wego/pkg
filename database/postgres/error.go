@@ -1,6 +1,6 @@
 package postgres
 
-import "github.com/jackc/pgconn"
+import "github.com/jackc/pgx/v5/pgconn"
 
 // IsLockError checks if the error is a lock error
 func IsLockError(err error) bool {

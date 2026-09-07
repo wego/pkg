@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/wego/pkg/database/postgres"
 )
