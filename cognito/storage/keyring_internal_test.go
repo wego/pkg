@@ -1,7 +1,10 @@
 package storage
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -226,10 +229,10 @@ func TestKeyringStore_LoadFailures(t *testing.T) {
 		{
 			// Fields present but never committed: the sign-in was torn before
 			// the pointer moved, so the operator is simply not signed in.
-			name: "an uncommitted slot reads as not logged in",
+			name: "an uncommitted generation reads as not logged in",
 			givenSetup: func(f *fakeKeyring) {
-				f.putField(slotA, fieldAccess, "access-value")
-				f.putField(slotA, fieldID, "id-value")
+				f.putField(testGeneration, fieldAccess, "access-value")
+				f.putField(testGeneration, fieldID, "id-value")
 			},
 			wantNil: true,
 		},
@@ -283,36 +286,59 @@ func TestKeyringStore_SaveCommitsWithOnePointerWrite(t *testing.T) {
 	assert.Equal(t, 1, countWrites(backend.writes, testNamespace+"/"+fieldCurrent),
 		"the commit must be a single pointer write")
 
-	for _, field := range []string{fieldAccess, fieldID, fieldRefresh, fieldMeta} {
-		assert.Contains(t, backend.writes, testNamespace+"/"+slotA+"/"+field,
+	generation := backend.liveGeneration(t)
+	for _, field := range tokenFields {
+		assert.Contains(t, backend.writes, testNamespace+"/"+generation+"/"+field,
 			"each field keeps its own entry, to stay under the 4 KiB cap")
 	}
 }
 
-// TestKeyringStore_SaveAlternatesSlots covers why there are two slots: a
-// re-login must not overwrite the entries the current session is still being
-// read from, or a torn write would corrupt the live session rather than an
-// unused copy.
-func TestKeyringStore_SaveAlternatesSlots(t *testing.T) {
+// TestKeyringStore_SaveNeverReusesAGeneration covers the property both
+// round-4 findings turn on. A name that can come round again lets two writers
+// collide and lets a pointer cycle back to a value a reader started on.
+func TestKeyringStore_SaveNeverReusesAGeneration(t *testing.T) {
 	backend := newFakeKeyring()
 	store := &keyringStore{service: testService, backend: backend}
 
-	require.NoError(t, store.Save(testNamespace, sampleTokens()))
-	assert.Equal(t, slotA, backend.value(fieldCurrent))
+	seen := map[string]bool{}
 
-	second := sampleTokens()
-	second.AccessToken = "second-access"
-	require.NoError(t, store.Save(testNamespace, second))
-	assert.Equal(t, slotB, backend.value(fieldCurrent))
+	for i := range 6 {
+		tokens := sampleTokens()
+		tokens.AccessToken = fmt.Sprintf("access-%d", i)
+		require.NoError(t, store.Save(testNamespace, tokens))
 
-	third := sampleTokens()
-	third.AccessToken = "third-access"
-	require.NoError(t, store.Save(testNamespace, third))
-	assert.Equal(t, slotA, backend.value(fieldCurrent), "slots alternate rather than growing")
+		generation := backend.liveGeneration(t)
+		assert.False(t, seen[generation], "generation %q was reused", generation)
+		seen[generation] = true
 
-	got, err := store.Load(testNamespace)
-	require.NoError(t, err)
-	assert.Equal(t, "third-access", got.AccessToken)
+		got, err := store.Load(testNamespace)
+		require.NoError(t, err)
+		assert.Equal(t, tokens.AccessToken, got.AccessToken, "the newest session must be the live one")
+	}
+
+	assert.Len(t, seen, 6)
+}
+
+// TestKeyringStore_SaveReapsTheGenerationBeforeLast covers cleanup. The
+// generation directly replaced is kept, because a Load may still be reading
+// it; the one before that cannot have a reader who started after its
+// replacement committed, so it goes.
+func TestKeyringStore_SaveReapsTheGenerationBeforeLast(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+
+	require.NoError(t, store.Save(testNamespace, session("first")))
+	first := backend.liveGeneration(t)
+
+	require.NoError(t, store.Save(testNamespace, session("second")))
+	second := backend.liveGeneration(t)
+
+	require.NoError(t, store.Save(testNamespace, session("third")))
+
+	assert.Empty(t, backend.entries[testService+"|"+testNamespace+"/"+first+"/"+fieldAccess],
+		"the generation before last must be cleared")
+	assert.NotEmpty(t, backend.entries[testService+"|"+testNamespace+"/"+second+"/"+fieldAccess],
+		"the generation just replaced is kept for an in-flight Load")
 }
 
 // TestKeyringStore_TornResaveLeavesThePreviousSession is the regression test
@@ -351,18 +377,29 @@ func TestKeyringStore_TornResaveLeavesThePreviousSession(t *testing.T) {
 		"a torn re-login must leave the previous session exactly, never a mixture of the two")
 }
 
-// TestKeyringStore_LoadRejectsAnUnknownSlot covers a pointer naming a slot that
-// is not one of the two. That cannot arise from this code, so it means the
-// entry was tampered with or written by another version, and guessing which
-// slot was meant would be worse than refusing.
-func TestKeyringStore_LoadRejectsAnUnknownSlot(t *testing.T) {
-	backend := newFakeKeyring()
-	backend.put(fieldCurrent, "somewhere-else")
-	store := &keyringStore{service: testService, backend: backend}
+// TestKeyringStore_LoadRejectsAnUnreadablePointer covers a pointer entry this
+// code did not write. Guessing what it meant would be worse than refusing.
+func TestKeyringStore_LoadRejectsAnUnreadablePointer(t *testing.T) {
+	tests := []struct {
+		name       string
+		givenValue string
+		wantErr    string
+	}{
+		{name: "not json", givenValue: "somewhere-else", wantErr: "parse the token pointer"},
+		{name: "json naming no generation", givenValue: `{"current":""}`, wantErr: "names no generation"},
+	}
 
-	_, err := store.Load(testNamespace)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "slot")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			backend := newFakeKeyring()
+			backend.put(fieldCurrent, tt.givenValue)
+			store := &keyringStore{service: testService, backend: backend}
+
+			_, err := store.Load(testNamespace)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantErr)
+		})
+	}
 }
 
 // countWrites reports how many times account appears in a write log.
@@ -420,12 +457,14 @@ func TestKeyringStore_BackendFailuresAreReported(t *testing.T) {
 // must clear the slot a torn Save left behind as well as the live one.
 func TestKeyringStore_DeleteToleratesMissingEntries(t *testing.T) {
 	backend := newFakeKeyring()
-	backend.putField(slotA, fieldAccess, "access-value")
-	backend.putField(slotB, fieldRefresh, "orphaned-refresh")
+	backend.putField("gen-current", fieldAccess, "access-value")
+	backend.putField("gen-previous", fieldRefresh, "superseded-refresh")
+	backend.putPointer("gen-current", "gen-previous")
 	store := &keyringStore{service: testService, backend: backend}
 
 	require.NoError(t, store.Delete(testNamespace))
-	assert.Empty(t, backend.entries, "no token material may survive a sign-out, in either slot")
+	assert.Empty(t, backend.entries,
+		"no token material may survive a sign-out, in either generation the pointer knows")
 }
 
 // TestKeyringStore_FailedCommitKeepsThePreviousSession covers the last write.
@@ -456,32 +495,39 @@ func TestKeyringStore_FailedCommitKeepsThePreviousSession(t *testing.T) {
 	assert.Equal(t, sampleTokens(), got, "an uncommitted session must not become the live one")
 }
 
-// TestKeyringStore_SaveReportsAnUnreadablePointer covers a keychain that
-// cannot be read at all. Save must not proceed on a guess about which slot is
-// live: writing to the wrong one would overwrite the session it is meant to
-// protect.
-func TestKeyringStore_SaveReportsAnUnreadablePointer(t *testing.T) {
+// TestKeyringStore_SaveStillSignsInWhenThePointerCannotBeRead covers a
+// keychain that cannot be read at all.
+//
+// Under the old two-slot layout Save HAD to read the pointer, because it wrote
+// to whichever slot the live one was not using; an unreadable pointer
+// therefore had to fail rather than risk overwriting the live session. A fresh
+// generation collides with nothing, so the read is now only an optimisation
+// for reaping, and a sign-in can succeed without it.
+func TestKeyringStore_SaveStillSignsInWhenThePointerCannotBeRead(t *testing.T) {
 	backend := newFakeKeyring()
 	backend.getErr = errors.New("keychain is locked")
 	store := &keyringStore{service: testService, backend: backend}
 
-	err := store.Save(testNamespace, sampleTokens())
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "slot")
-	assert.Empty(t, backend.writes, "nothing may be written when the live slot is unknown")
+	require.NoError(t, store.Save(testNamespace, sampleTokens()),
+		"an unreadable pointer must not block establishing a session")
+
+	backend.getErr = nil
+
+	got, err := store.Load(testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, sampleTokens(), got)
 }
 
-// TestKeyringStore_SaveOverAnUnknownSlotStillSignsIn covers a pointer holding
-// a value this code never writes. Load refuses it, but Save's job is to
+// TestKeyringStore_SaveOverAnUnreadablePointerStillSignsIn covers a pointer
+// holding a value this code never wrote. Load refuses it, but Save's job is to
 // establish a good session and it can do that without deciding what the bad
 // value meant.
-func TestKeyringStore_SaveOverAnUnknownSlotStillSignsIn(t *testing.T) {
+func TestKeyringStore_SaveOverAnUnreadablePointerStillSignsIn(t *testing.T) {
 	backend := newFakeKeyring()
 	backend.put(fieldCurrent, "somewhere-else")
 	store := &keyringStore{service: testService, backend: backend}
 
 	require.NoError(t, store.Save(testNamespace, sampleTokens()))
-	assert.Equal(t, slotA, backend.value(fieldCurrent))
 
 	got, err := store.Load(testNamespace)
 	require.NoError(t, err)
@@ -501,7 +547,7 @@ func TestKeyringStore_DeleteReportsAPointerFailure(t *testing.T) {
 
 	err := store.Delete(testNamespace)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "slot")
+	assert.Contains(t, err.Error(), "token pointer")
 }
 
 func TestKeyringStore_BlankServiceIsRejected(t *testing.T) {
@@ -538,6 +584,35 @@ type fakeKeyring struct {
 	deleteErr    error
 	// onGet fires once, on the next Get, before the read happens.
 	onGet func(account string)
+	// onSet fires on every Set, before the write happens, so a test can drive
+	// a second writer into the middle of one Save.
+	onSet func(account string)
+}
+
+// clearOnSet disarms the write hook. A hook that drives a nested Save MUST
+// call this before doing so: the nested writes re-enter the hook, and guarding
+// with sync.Once instead deadlocks, because Once.Do cannot be re-entered.
+func (f *fakeKeyring) clearOnSet() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.onSet = nil
+}
+
+// clearOnGet disarms the read hook, for the same reason as clearOnSet.
+func (f *fakeKeyring) clearOnGet() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.onGet = nil
+}
+
+// takeOnSet returns the write hook, if any.
+func (f *fakeKeyring) takeOnSet() func(string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.onSet
 }
 
 // takeOnGet returns the hook, if any. It does NOT clear it: the hook decides
@@ -555,6 +630,11 @@ func newFakeKeyring() *fakeKeyring {
 }
 
 func (f *fakeKeyring) Set(service, user, password string) error {
+	// Outside the lock, like onGet, so a hook can run a whole Save.
+	if hook := f.takeOnSet(); hook != nil {
+		hook(user)
+	}
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.setErr != nil {
@@ -617,13 +697,39 @@ func (f *fakeKeyring) putField(slot, field, value string) {
 	f.entries[testService+"|"+testNamespace+"/"+slot+"/"+field] = value
 }
 
-// putCommitted seeds a committed session in slotA, field by field, so a test
-// can then remove or corrupt exactly one part of it.
+// testGeneration is a fixed generation name for seeding, standing in for the
+// random one Save would mint.
+const testGeneration = "gen0"
+
+// putCommitted seeds a committed session under testGeneration, field by field,
+// so a test can then remove or corrupt exactly one part of it.
 func (f *fakeKeyring) putCommitted(fields map[string]string) {
 	for field, value := range fields {
-		f.putField(slotA, field, value)
+		f.putField(testGeneration, field, value)
 	}
-	f.put(fieldCurrent, slotA)
+	f.putPointer(testGeneration, "")
+}
+
+// putPointer seeds the commit record directly.
+func (f *fakeKeyring) putPointer(current, previous string) {
+	raw, err := json.Marshal(keyringPointer{Current: current, Previous: previous})
+	if err != nil {
+		panic(err)
+	}
+	f.put(fieldCurrent, string(raw))
+}
+
+// liveGeneration reads the committed generation name straight out of the fake.
+func (f *fakeKeyring) liveGeneration(t *testing.T) string {
+	t.Helper()
+
+	raw := f.value(fieldCurrent)
+	require.NotEmpty(t, raw, "no pointer entry was written")
+
+	var pointer keyringPointer
+	require.NoError(t, json.Unmarshal([]byte(raw), &pointer))
+
+	return pointer.Current
 }
 
 // value reads an entry under testNamespace, bypassing the store under test.
@@ -659,14 +765,13 @@ func TestKeyringStore_LoadSurvivesAConcurrentCommit(t *testing.T) {
 
 	// Commit the replacement the moment this Load starts reading fields, which
 	// is exactly the window the race lives in.
-	var once sync.Once
 	backend.onGet = func(account string) {
 		if account == testNamespace+"/"+fieldCurrent {
 			return // the pointer read itself; let it through
 		}
-		once.Do(func() {
-			require.NoError(t, store.Save(testNamespace, replacement))
-		})
+
+		backend.clearOnGet()
+		require.NoError(t, store.Save(testNamespace, replacement))
 	}
 
 	got, err := store.Load(testNamespace)
@@ -720,4 +825,177 @@ func TestKeyringStore_LoadReportsARealInconsistency(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "id", "the missing field must be named")
 	assert.NotContains(t, err.Error(), "replaced")
+}
+
+// sessionIsWhole asserts a loaded token set came entirely from one session.
+// A set pairing one login's access token with another's id and refresh tokens
+// is the specific corruption these tests exist to prevent: the id token
+// supplies the operator identity that admin writes are audited against, so a
+// mismatched pair can attribute a production change to the wrong person.
+func sessionIsWhole(t *testing.T, got *cognito.TokenSet, sessions map[string]*cognito.TokenSet) {
+	t.Helper()
+	require.NotNil(t, got)
+
+	for name, want := range sessions {
+		if got.AccessToken != want.AccessToken {
+			continue
+		}
+
+		assert.Equal(t, want.IDToken, got.IDToken, "id token must come from the same session as the access token (%s)", name)
+		assert.Equal(t, want.RefreshToken, got.RefreshToken, "refresh token must come from the same session as the access token (%s)", name)
+		assert.Equal(t, want.ExpiresAt, got.ExpiresAt, "expiry must come from the same session as the access token (%s)", name)
+
+		return
+	}
+
+	t.Fatalf("loaded access token %q belongs to no known session", got.AccessToken)
+}
+
+func session(tag string) *cognito.TokenSet {
+	return &cognito.TokenSet{
+		AccessToken:  tag + "-access",
+		IDToken:      tag + "-id",
+		RefreshToken: tag + "-refresh",
+		ExpiresAt:    testExpiry,
+	}
+}
+
+// TestKeyringStore_ConcurrentSavesNeverCommitAHybrid is the first regression
+// named in review round 4.
+//
+// Two pay-admin processes overlapping a login and a refresh both used to read
+// the same live slot, both compute the same "other" slot, and interleave their
+// field writes into it. Both then committed, leaving one slot holding one
+// session's access token beside another's id and refresh tokens.
+func TestKeyringStore_ConcurrentSavesNeverCommitAHybrid(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+
+	seed, first, second := session("seed"), session("first"), session("second")
+	require.NoError(t, store.Save(testNamespace, seed))
+
+	// The second writer runs to completion inside the first writer's very first
+	// field write, which is the schedule that produced the hybrid.
+	// Fire once the first writer has already stored its access token but
+	// before its id token, so the second writer's whole session lands in
+	// between. Firing earlier lets the first writer simply overwrite
+	// everything, which is consistent and proves nothing.
+	backend.onSet = func(account string) {
+		if !strings.HasSuffix(account, "/"+fieldID) {
+			return
+		}
+
+		backend.clearOnSet()
+		require.NoError(t, store.Save(testNamespace, second))
+	}
+
+	require.NoError(t, store.Save(testNamespace, first))
+
+	backend.onSet = nil
+
+	got, err := store.Load(testNamespace)
+	require.NoError(t, err)
+	sessionIsWhole(t, got, map[string]*cognito.TokenSet{"seed": seed, "first": first, "second": second})
+}
+
+// TestKeyringStore_LoadIsNotFooledByPointerReuse is the second regression named
+// in review round 4, the A->B->A schedule.
+//
+// Load re-reads the pointer after a failed field read and retried only when it
+// had changed. With two reusable slots the pointer could cycle back to the one
+// Load started on, so a changed generation looked unchanged and Load returned
+// fields belonging to a session it never selected.
+func TestKeyringStore_LoadIsNotFooledByPointerReuse(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+
+	seed, first, second := session("seed"), session("first"), session("second")
+	require.NoError(t, store.Save(testNamespace, seed))
+
+	// Two commits land after Load has chosen its generation and read part of
+	// it. Under slot reuse the second commit lands back on the first slot.
+	// Fire after Load has read the access token but before the rest, so the
+	// commits land inside one read of one generation.
+	backend.onGet = func(account string) {
+		if !strings.HasSuffix(account, "/"+fieldID) {
+			return
+		}
+
+		backend.clearOnGet()
+		require.NoError(t, store.Save(testNamespace, first))
+		require.NoError(t, store.Save(testNamespace, second))
+	}
+
+	got, err := store.Load(testNamespace)
+	require.NoError(t, err)
+	sessionIsWhole(t, got, map[string]*cognito.TokenSet{"seed": seed, "first": first, "second": second})
+}
+
+// TestKeyringStore_LoadReportsAPointerFailureDuringRetry covers the branch
+// where the pointer read that decides retry-or-report itself fails. Reporting
+// that beats retrying blindly or claiming the namespace is inconsistent.
+func TestKeyringStore_LoadReportsAPointerFailureDuringRetry(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+	require.NoError(t, store.Save(testNamespace, sampleTokens()))
+
+	// Break the field read, then break the keychain outright so the retry
+	// check cannot establish whether the generation moved.
+	generation := backend.liveGeneration(t)
+	delete(backend.entries, testService+"|"+testNamespace+"/"+generation+"/"+fieldID)
+
+	backend.onGet = func(account string) {
+		if !strings.HasSuffix(account, "/"+fieldID) {
+			return
+		}
+
+		backend.clearOnGet()
+		backend.mu.Lock()
+		backend.getErr = errors.New("keychain is locked")
+		backend.mu.Unlock()
+	}
+
+	_, err := store.Load(testNamespace)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "keychain")
+}
+
+// TestKeyringStore_SaveReportsACommitEncodingFailure is not reachable through
+// the public API -- keyringPointer always marshals -- so the pointer encoder is
+// exercised directly to prove the record round-trips exactly.
+func TestKeyringStore_PointerRoundTrips(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+
+	require.NoError(t, store.Save(testNamespace, session("one")))
+	first := backend.liveGeneration(t)
+
+	require.NoError(t, store.Save(testNamespace, session("two")))
+
+	pointer, err := store.readPointer(testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, backend.liveGeneration(t), pointer.Current)
+	assert.Equal(t, first, pointer.Previous, "the record must remember what it replaced, so Delete can reap it")
+}
+
+// TestKeyringStore_SaveReportsAFieldWriteFailure covers the write loop's error
+// path with the generation layout, and that a failure leaves the live session
+// untouched.
+func TestKeyringStore_SaveReportsAFieldWriteFailure(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+	require.NoError(t, store.Save(testNamespace, session("live")))
+
+	backend.okWrites = 0
+	backend.failSetAfter = 0
+
+	err := store.Save(testNamespace, session("doomed"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "keychain")
+
+	backend.failSetAfter = -1
+
+	got, err := store.Load(testNamespace)
+	require.NoError(t, err)
+	assert.Equal(t, session("live"), got, "a failed write must not disturb the live session")
 }
