@@ -536,6 +536,18 @@ type fakeKeyring struct {
 	okWrites     int
 	getErr       error
 	deleteErr    error
+	// onGet fires once, on the next Get, before the read happens.
+	onGet func(account string)
+}
+
+// takeOnGet returns the hook, if any. It does NOT clear it: the hook decides
+// which account it wants to fire on, so consuming it on the first unrelated
+// read would silently disarm the test.
+func (f *fakeKeyring) takeOnGet() func(string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.onGet
 }
 
 func newFakeKeyring() *fakeKeyring {
@@ -558,6 +570,12 @@ func (f *fakeKeyring) Set(service, user, password string) error {
 }
 
 func (f *fakeKeyring) Get(service, user string) (string, error) {
+	// onGet runs OUTSIDE the lock and before the read, so a hook can drive a
+	// whole Save through this same backend without deadlocking.
+	if hook := f.takeOnGet(); hook != nil {
+		hook(user)
+	}
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.getErr != nil {
@@ -613,4 +631,93 @@ func (f *fakeKeyring) value(field string) string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.entries[testService+"|"+testNamespace+"/"+field]
+}
+
+// TestKeyringStore_LoadSurvivesAConcurrentCommit is the regression for a race
+// the two-slot commit introduced.
+//
+// Load reads the pointer, then reads that slot's four fields one at a time.
+// Between those reads another pay-admin process can finish a login or a
+// refresh, commit the replacement slot and clear the one this Load already
+// chose, so the read failed with "secret not found in keyring" even though a
+// perfectly good session existed the whole time.
+//
+// Two overlapping processes is ordinary: a shell running a command while a
+// refresh fires, or two terminals against the same namespace.
+func TestKeyringStore_LoadSurvivesAConcurrentCommit(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+
+	require.NoError(t, store.Save(testNamespace, sampleTokens()))
+
+	replacement := &cognito.TokenSet{
+		AccessToken:  "refreshed-access",
+		IDToken:      "refreshed-id",
+		RefreshToken: "refreshed-refresh",
+		ExpiresAt:    testExpiry.Add(time.Hour),
+	}
+
+	// Commit the replacement the moment this Load starts reading fields, which
+	// is exactly the window the race lives in.
+	var once sync.Once
+	backend.onGet = func(account string) {
+		if account == testNamespace+"/"+fieldCurrent {
+			return // the pointer read itself; let it through
+		}
+		once.Do(func() {
+			require.NoError(t, store.Save(testNamespace, replacement))
+		})
+	}
+
+	got, err := store.Load(testNamespace)
+	require.NoError(t, err, "a concurrent commit must not fail a Load that was already in flight")
+	require.NotNil(t, got)
+
+	// Either session is a correct answer; a mixture is not.
+	assert.Contains(t, []string{sampleTokens().AccessToken, replacement.AccessToken}, got.AccessToken)
+	if got.AccessToken == replacement.AccessToken {
+		assert.Equal(t, replacement.RefreshToken, got.RefreshToken, "the two sessions must not mix")
+		assert.Equal(t, replacement.IDToken, got.IDToken)
+	} else {
+		assert.Equal(t, sampleTokens().RefreshToken, got.RefreshToken, "the two sessions must not mix")
+	}
+}
+
+// TestKeyringStore_LoadGivesUpOnEndlessCommits covers the retry bound. A
+// namespace being rewritten faster than it can be read is not something a
+// retry can fix, so Load must report it rather than spin.
+func TestKeyringStore_LoadGivesUpOnEndlessCommits(t *testing.T) {
+	backend := newFakeKeyring()
+	store := &keyringStore{service: testService, backend: backend}
+	require.NoError(t, store.Save(testNamespace, sampleTokens()))
+
+	// Commit a fresh session on every field read, so the pointer has always
+	// moved by the time the retry check looks.
+	backend.onGet = func(account string) {
+		if account == testNamespace+"/"+fieldCurrent {
+			return
+		}
+
+		next := sampleTokens()
+		next.AccessToken = "rewritten"
+		_ = store.Save(testNamespace, next)
+	}
+
+	_, err := store.Load(testNamespace)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "replaced")
+}
+
+// TestKeyringStore_LoadReportsARealInconsistency pins the other side of the
+// retry: when the pointer has NOT moved, a missing field is a genuinely broken
+// namespace and must be reported, not retried into a generic timeout.
+func TestKeyringStore_LoadReportsARealInconsistency(t *testing.T) {
+	backend := newFakeKeyring()
+	backend.putCommitted(map[string]string{fieldAccess: "access-value"})
+	store := &keyringStore{service: testService, backend: backend}
+
+	_, err := store.Load(testNamespace)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "id", "the missing field must be named")
+	assert.NotContains(t, err.Error(), "replaced")
 }

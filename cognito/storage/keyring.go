@@ -50,6 +50,12 @@ const (
 	slotB = "b"
 )
 
+// loadAttempts is how many times Load will re-read after a concurrent commit
+// moves the pointer out from under it. Each retry needs another process to
+// commit a whole session in the gap, so three is far past what a real overlap
+// produces and still terminates.
+const loadAttempts = 3
+
 // tokenFields are the per-field entries that make up one stored token set.
 var tokenFields = []string{fieldAccess, fieldID, fieldRefresh, fieldMeta}
 
@@ -96,29 +102,81 @@ func NewKeyring(service string) Store {
 
 // Load returns the tokens stored under namespace, or (nil, nil) if the
 // operator is not signed in.
+//
+// A token set is read across five keychain entries, so a concurrent commit can
+// move the pointer and clear the slot midway through. That is not an error and
+// must not surface as one: Load re-reads the pointer and starts again on the
+// slot that is now live, which is the ordinary case of a second pay-admin
+// process finishing a login or a refresh while this one reads.
 func (k *keyringStore) Load(namespace string) (*cognito.TokenSet, error) {
 	if err := k.validate(namespace); err != nil {
 		return nil, err
 	}
 
-	// Gate on the pointer: its absence means "not signed in", which is a normal
-	// state rather than a failure. Once it is present, anything the slot it
-	// names is missing is a real inconsistency and must be reported.
+	for range loadAttempts {
+		slot, err := k.liveSlot(namespace)
+		if err != nil || slot == "" {
+			// No pointer means not signed in, which is (nil, nil).
+			return nil, err
+		}
+
+		tokens, err := k.readSlot(namespace, slot)
+		if err == nil {
+			return tokens, nil
+		}
+
+		// The read failed. If the pointer has moved since it was chosen, this
+		// slot was superseded and cleared under us, so try the new one. If it
+		// has not, the namespace really is inconsistent and the original error
+		// is the honest one to report.
+		moved, checkErr := k.slotMoved(namespace, slot)
+		if checkErr != nil {
+			return nil, checkErr
+		}
+
+		if !moved {
+			return nil, err
+		}
+	}
+
+	// Every attempt lost the same race, which needs a sustained run of commits
+	// against one namespace. Report it rather than looping.
+	return nil, fmt.Errorf("the keychain session for %q was replaced %d times while being read", namespace, loadAttempts)
+}
+
+// liveSlot returns the slot the pointer names, or "" when nothing is stored.
+func (k *keyringStore) liveSlot(namespace string) (string, error) {
 	slot, err := k.backend.Get(k.service, pointerAccount(namespace))
 	if errors.Is(err, keyring.ErrNotFound) {
-		return nil, nil
+		return "", nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("read the keychain: %w (is the system keychain unlocked?)", err)
+		return "", fmt.Errorf("read the keychain: %w (is the system keychain unlocked?)", err)
 	}
 
 	if slot != slotA && slot != slotB {
 		// Nothing here writes any other value, so this entry was tampered with
 		// or written by a version that stored something else. Guessing which
 		// slot was meant would be worse than refusing.
-		return nil, fmt.Errorf("keychain names an unknown token slot %q for %q", slot, namespace)
+		return "", fmt.Errorf("keychain names an unknown token slot %q for %q", slot, namespace)
 	}
 
+	return slot, nil
+}
+
+// slotMoved reports whether the pointer now names a slot other than the one a
+// read was using.
+func (k *keyringStore) slotMoved(namespace, slot string) (bool, error) {
+	current, err := k.liveSlot(namespace)
+	if err != nil {
+		return false, err
+	}
+
+	return current != slot, nil
+}
+
+// readSlot assembles the token set held in one slot.
+func (k *keyringStore) readSlot(namespace, slot string) (*cognito.TokenSet, error) {
 	access, err := k.read(namespace, slot, fieldAccess)
 	if err != nil {
 		return nil, err
