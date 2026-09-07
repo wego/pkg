@@ -218,3 +218,151 @@ func TestPostToken_RefusesRedirects(t *testing.T) {
 		})
 	}
 }
+
+// TestCodeFromRedirect covers pulling the authorization code out of the URL an
+// operator pasted back.
+//
+// This is the sign-in path for a machine with no browser AND no way to forward
+// the callback port: Cognito redirects to a loopback URL nothing is listening
+// on, the browser shows a connection error, and the address bar holds the code.
+func TestCodeFromRedirect(t *testing.T) {
+	tests := []struct {
+		name       string
+		givenInput string
+		wantCode   string
+		wantState  string
+		wantErr    string
+	}{
+		{
+			name:       "a pasted redirect yields its code and state",
+			givenInput: "http://localhost:8100/callback?code=abc123&state=xyz789",
+			wantCode:   "abc123",
+			wantState:  "xyz789",
+		},
+		{
+			name:       "surrounding whitespace from a copy is tolerated",
+			givenInput: "  http://localhost:8100/callback?code=abc123&state=xyz789\n",
+			wantCode:   "abc123",
+			wantState:  "xyz789",
+		},
+		{
+			name:       "https and an unexpected host are accepted; the state check is the guard",
+			givenInput: "https://example.test/cb?state=xyz789&code=abc123",
+			wantCode:   "abc123",
+			wantState:  "xyz789",
+		},
+		{
+			name:       "percent-encoded values are decoded",
+			givenInput: "http://localhost:8100/callback?code=a%2Fb%2Bc&state=s%3D1",
+			wantCode:   "a/b+c",
+			wantState:  "s=1",
+		},
+		{name: "nothing pasted", givenInput: "   ", wantErr: "nothing was pasted"},
+		{
+			// The commonest mistake: copying the path but not the query.
+			name:       "a url with no query says what is missing",
+			givenInput: "http://localhost:8100/callback",
+			wantErr:    "no query",
+		},
+		{
+			name:       "a bare code is refused because it carries no state",
+			givenInput: "abc123",
+			wantErr:    "no query",
+		},
+		{
+			name:       "a denied sign-in reports the provider's error",
+			givenInput: "http://localhost:8100/callback?error=access_denied&error_description=User+denied",
+			wantErr:    "access_denied",
+		},
+		{
+			name:       "a denied sign-in includes the description when there is one",
+			givenInput: "http://localhost:8100/callback?error=access_denied&error_description=User+denied",
+			wantErr:    "User denied",
+		},
+		{
+			name:       "a query with state but no code is refused",
+			givenInput: "http://localhost:8100/callback?state=xyz789",
+			wantErr:    "no authorization code",
+		},
+		{
+			// Without state there is nothing to bind the code to this attempt.
+			name:       "a query with code but no state is refused",
+			givenInput: "http://localhost:8100/callback?code=abc123",
+			wantErr:    "no state",
+		},
+		{
+			name:       "an unparsable url is reported",
+			givenInput: "http://[::1",
+			wantErr:    "parse",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, state, err := codeFromRedirect(tt.givenInput)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+				assert.Empty(t, code)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantCode, code)
+			assert.Equal(t, tt.wantState, state)
+		})
+	}
+}
+
+// TestValidateForLogin_PasteBack covers the config rules the paste-back path
+// adds: it needs somewhere to show the URL, and it does NOT need a callback
+// port, since nothing binds one.
+func TestValidateForLogin_PasteBack(t *testing.T) {
+	base := func() Config {
+		return Config{
+			AuthorizeURL: "https://cognito.test/oauth2/authorize",
+			TokenURL:     "https://cognito.test/oauth2/token",
+			ClientID:     "client",
+			RedirectURI:  "http://localhost:8100/callback",
+		}
+	}
+
+	t.Run("paste-back without PromptURL is refused", func(t *testing.T) {
+		cfg := base()
+		cfg.ReadRedirect = func() (string, error) { return "", nil }
+
+		require.ErrorContains(t, cfg.validateForLogin(), "PromptURL")
+	})
+
+	t.Run("paste-back needs no callback address", func(t *testing.T) {
+		cfg := base()
+		cfg.ReadRedirect = func() (string, error) { return "", nil }
+		cfg.PromptURL = func(string) error { return nil }
+
+		require.NoError(t, cfg.validateForLogin(), "nothing binds a port on this path")
+	})
+
+	t.Run("the listener path still needs a callback address", func(t *testing.T) {
+		require.ErrorContains(t, base().validateForLogin(), "callback address")
+	})
+}
+
+// TestPresentAuthorizeURL_PasteBackImpliesThePrompt pins the coupling: setting
+// ReadRedirect must not leave a browser being launched, or the operator gets a
+// browser AND a paste prompt for the same sign-in.
+func TestPresentAuthorizeURL_PasteBackImpliesThePrompt(t *testing.T) {
+	var prompted, opened string
+
+	cfg := Config{
+		PromptURL:    func(u string) error { prompted = u; return nil },
+		OpenBrowser:  func(u string) error { opened = u; return nil },
+		ReadRedirect: func() (string, error) { return "", nil },
+	}
+
+	require.NoError(t, cfg.presentAuthorizeURL("https://cognito.test/authorize?state=s"))
+
+	assert.Equal(t, "https://cognito.test/authorize?state=s", prompted)
+	assert.Empty(t, opened, "no browser may be launched on the paste-back path")
+}

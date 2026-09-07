@@ -86,9 +86,32 @@ type Config struct {
 
 	// PromptURL receives the authorize URL in place of a browser launch, so the
 	// caller decides how to surface it: print it, render a QR code, hand it to
-	// another process. Required when NoBrowser is set — a sign-in whose URL the
-	// operator never sees cannot complete — and ignored otherwise.
+	// another process. Required when NoBrowser or ReadRedirect is set — a
+	// sign-in whose URL the operator never sees cannot complete — and ignored
+	// otherwise.
 	PromptURL func(url string) error
+
+	// ReadRedirect turns the sign-in into a paste-back exchange: instead of a
+	// loopback listener receiving the redirect, the caller returns the URL the
+	// browser was redirected to and Login reads the code out of it.
+	//
+	// This is the only path that works with NO browser on this machine AND no
+	// way to reach its callback port. Cognito redirects to a loopback URL that
+	// nothing is listening on, the browser shows a connection error, and the
+	// address bar holds ?code=...&state=... for the operator to copy back.
+	//
+	// Cognito has no device authorization grant (RFC 8628): its discovery
+	// document advertises no device_authorization_endpoint, /oauth2/device_
+	// authorization is 404, and the token endpoint answers a device_code grant
+	// with unsupported_grant_type. So this is the substitute, and it needs no
+	// extra Cognito configuration because it is still the authorization code
+	// grant with PKCE, only with the redirect carried by hand.
+	//
+	// Setting it implies NoBrowser: no browser is launched here. PromptURL is
+	// required alongside it; CallbackAddr is not, since nothing binds a port. The pasted URL carries a single-use authorization
+	// code, so it should not travel through a shared channel; state is still
+	// checked, so a code from a different attempt is rejected.
+	ReadRedirect func() (redirectedURL string, err error)
 
 	// HTTPClient calls the token endpoint. Nil uses a client with a timeout.
 	HTTPClient *http.Client
@@ -114,20 +137,7 @@ func Login(ctx context.Context, cfg Config) (*TokenSet, error) {
 		return nil, err
 	}
 
-	// Bind the callback port BEFORE sending the operator to Cognito. If the
-	// port is unavailable the redirect could never land, and there is no
-	// fallback port to try, so failing here saves a pointless round trip.
-	server, err := startCallbackServer(cfg.CallbackAddr, callbackPath(cfg.RedirectURI))
-	if err != nil {
-		return nil, err
-	}
-	defer server.shutdown()
-
-	if err := cfg.presentAuthorizeURL(cfg.buildAuthorizeURL(state, generateChallenge(verifier))); err != nil {
-		return nil, err
-	}
-
-	code, callbackState, err := server.wait(ctx, defaultCallbackTimeout)
+	code, callbackState, err := cfg.collectCode(ctx, state, generateChallenge(verifier))
 	if err != nil {
 		return nil, err
 	}
@@ -338,8 +348,12 @@ func (c Config) validateForLogin() error {
 	if wegostrings.IsBlank(c.RedirectURI) {
 		return errors.New("cognito redirect uri is not configured")
 	}
-	if wegostrings.IsBlank(c.CallbackAddr) {
+	// Only the listener path needs a port; paste-back binds nothing.
+	if c.ReadRedirect == nil && wegostrings.IsBlank(c.CallbackAddr) {
 		return errors.New("local callback address is not configured")
+	}
+	if c.ReadRedirect != nil && c.PromptURL == nil {
+		return errors.New("paste-back sign-in needs Config.PromptURL: the operator has to be shown the url they are meant to open")
 	}
 	if c.NoBrowser && c.PromptURL == nil {
 		return errors.New("no-browser sign-in needs Config.PromptURL: with no browser launched and no way to report the url, the operator has nothing to open")
@@ -395,7 +409,11 @@ func (c Config) now() time.Time {
 // presentAuthorizeURL gets the operator to the authorize URL, by launching a
 // browser or, under NoBrowser, by handing the URL to PromptURL.
 func (c Config) presentAuthorizeURL(rawURL string) error {
-	if c.NoBrowser {
+	// ReadRedirect implies the prompt. A machine that cannot receive the
+	// callback generally cannot open a browser either, and where it could, the
+	// listener path would have worked and been less work for the operator.
+	// Launching a browser and then also asking for a paste is a footgun.
+	if c.NoBrowser || c.ReadRedirect != nil {
 		if err := c.PromptURL(rawURL); err != nil {
 			return fmt.Errorf("present the sign-in url: %w", err)
 		}
@@ -408,6 +426,91 @@ func (c Config) presentAuthorizeURL(rawURL string) error {
 	}
 
 	return nil
+}
+
+// collectCode shows the operator the authorize URL and returns the code they
+// came back with, by whichever route this Config selected.
+//
+// The loopback listener is the default. ReadRedirect replaces it with a
+// paste-back exchange for a machine that can neither open a browser nor be
+// reached on its callback port.
+func (c Config) collectCode(ctx context.Context, state, challenge string) (code, gotState string, err error) {
+	if c.ReadRedirect != nil {
+		// No port is bound, so there is nothing to fail early on: show the URL,
+		// then wait on the operator rather than on the network.
+		if err := c.presentAuthorizeURL(c.buildAuthorizeURL(state, challenge)); err != nil {
+			return "", "", err
+		}
+
+		pasted, err := c.ReadRedirect()
+		if err != nil {
+			return "", "", fmt.Errorf("read the pasted redirect: %w", err)
+		}
+
+		return codeFromRedirect(pasted)
+	}
+
+	// Bind the callback port BEFORE sending the operator to Cognito. If the
+	// port is unavailable the redirect could never land, and there is no
+	// fallback port to try, so failing here saves a pointless round trip.
+	server, err := startCallbackServer(c.CallbackAddr, callbackPath(c.RedirectURI))
+	if err != nil {
+		return "", "", err
+	}
+	defer server.shutdown()
+
+	if err := c.presentAuthorizeURL(c.buildAuthorizeURL(state, challenge)); err != nil {
+		return "", "", err
+	}
+
+	return server.wait(ctx, defaultCallbackTimeout)
+}
+
+// codeFromRedirect reads the authorization code and state out of a redirect URL
+// an operator pasted back.
+//
+// The host and scheme are deliberately not checked. The operator is copying
+// from their own address bar, and what binds the code to this attempt is the
+// state check the caller performs, not the shape of the URL. A bare code is
+// refused for the same reason: with no state there is nothing to bind it to.
+func codeFromRedirect(pasted string) (code, state string, err error) {
+	trimmed := strings.TrimSpace(pasted)
+	if wegostrings.IsBlank(trimmed) {
+		return "", "", errors.New("nothing was pasted: copy the whole URL the browser was redirected to, including the ?code=... part")
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return "", "", fmt.Errorf("parse the pasted redirect: %w", err)
+	}
+
+	if wegostrings.IsBlank(parsed.RawQuery) {
+		return "", "", errors.New("the pasted value has no query string: copy the whole URL from the address bar, including the ?code=... part")
+	}
+
+	query := parsed.Query()
+
+	// Cognito reports a refusal in the redirect rather than as a failed
+	// request, so this is where a denied sign-in surfaces.
+	if reported := query.Get("error"); wegostrings.IsNotBlank(reported) {
+		if description := query.Get("error_description"); wegostrings.IsNotBlank(description) {
+			return "", "", fmt.Errorf("the sign-in was refused: %s (%s)", reported, description)
+		}
+
+		return "", "", fmt.Errorf("the sign-in was refused: %s", reported)
+	}
+
+	code = query.Get("code")
+	if wegostrings.IsBlank(code) {
+		return "", "", errors.New("the pasted redirect carries no authorization code")
+	}
+
+	state = query.Get("state")
+	if wegostrings.IsBlank(state) {
+		return "", "", errors.New("the pasted redirect carries no state, so it cannot be tied to this sign-in attempt")
+	}
+
+	return code, state, nil
 }
 
 func (c Config) openBrowserAt(rawURL string) error {

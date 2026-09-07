@@ -763,3 +763,95 @@ func TestLogin_RejectsAnUnusableExpiresIn(t *testing.T) {
 		})
 	}
 }
+
+// TestLogin_PasteBack drives a whole sign-in through the paste-back path: no
+// browser is launched, no callback port is bound, and the code arrives as the
+// redirect URL an operator copied out of their address bar.
+func TestLogin_PasteBack(t *testing.T) {
+	ts := newTokenServer(t, nil)
+
+	var shown string
+
+	cfg := cognito.Config{
+		AuthorizeURL:  "https://cognito.test/oauth2/authorize",
+		TokenURL:      ts.URL,
+		ClientID:      "test-client-id",
+		RedirectURI:   "http://localhost:8100/callback",
+		Scopes:        "openid email",
+		AllowedDomain: "@wego.com",
+		Now:           func() time.Time { return fixedNow },
+		PromptURL:     func(u string) error { shown = u; return nil },
+	}
+	// CallbackAddr is deliberately left empty: nothing binds a port here, and
+	// that is the whole reason this path exists.
+	cfg.ReadRedirect = func() (string, error) {
+		return "http://localhost:8100/callback?code=pasted-code&state=" + stateOf(t, shown), nil
+	}
+
+	tokens, err := cognito.Login(context.Background(), cfg)
+	require.NoError(t, err)
+	require.NotNil(t, tokens)
+
+	assert.Contains(t, shown, "code_challenge_method=S256", "the operator must be shown a PKCE authorize url")
+
+	form := ts.lastForm(t)
+	assert.Equal(t, "pasted-code", form.Get("code"), "the pasted code must be what is redeemed")
+	assert.NotEmpty(t, form.Get("code_verifier"), "PKCE must still bind the exchange to this process")
+	assert.Equal(t, "authorization_code", form.Get("grant_type"))
+}
+
+// TestLogin_PasteBackRejectsAForeignState covers the guard that replaces the
+// listener's origin check. Nothing about a pasted URL proves where it came
+// from except the state, so a code from another attempt must be refused.
+func TestLogin_PasteBackRejectsAForeignState(t *testing.T) {
+	ts := newTokenServer(t, nil)
+
+	cfg := cognito.Config{
+		AuthorizeURL:  "https://cognito.test/oauth2/authorize",
+		TokenURL:      ts.URL,
+		ClientID:      "test-client-id",
+		RedirectURI:   "http://localhost:8100/callback",
+		AllowedDomain: "@wego.com",
+		Now:           func() time.Time { return fixedNow },
+		PromptURL:     func(string) error { return nil },
+		ReadRedirect: func() (string, error) {
+			return "http://localhost:8100/callback?code=pasted-code&state=someone-elses-state", nil
+		},
+	}
+
+	_, err := cognito.Login(context.Background(), cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "state mismatch")
+	assert.Empty(t, ts.forms, "a code with a foreign state must never reach the token endpoint")
+}
+
+// TestLogin_PasteBackReportsAReadFailure covers the operator abandoning the
+// prompt, e.g. ctrl-D at the paste.
+func TestLogin_PasteBackReportsAReadFailure(t *testing.T) {
+	cfg := cognito.Config{
+		AuthorizeURL:  "https://cognito.test/oauth2/authorize",
+		TokenURL:      "https://unused.test/oauth2/token",
+		ClientID:      "test-client-id",
+		RedirectURI:   "http://localhost:8100/callback",
+		AllowedDomain: "@wego.com",
+		PromptURL:     func(string) error { return nil },
+		ReadRedirect:  func() (string, error) { return "", errors.New("stdin closed") },
+	}
+
+	_, err := cognito.Login(context.Background(), cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "stdin closed")
+}
+
+// stateOf pulls the state parameter out of an authorize URL.
+func stateOf(t *testing.T, authorizeURL string) string {
+	t.Helper()
+
+	parsed, err := url.Parse(authorizeURL)
+	require.NoError(t, err)
+
+	state := parsed.Query().Get("state")
+	require.NotEmpty(t, state, "the authorize url must carry a state")
+
+	return state
+}
