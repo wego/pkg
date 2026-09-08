@@ -66,7 +66,7 @@ func callbackPath(redirectURI string) string {
 // A bind failure is terminal on purpose: the Cognito app client registers
 // exactly one callback URL, so listening somewhere else would produce a
 // redirect the authorization server refuses. Fail loudly instead.
-func startCallbackServer(addr, path string) (*callbackServer, error) {
+func startCallbackServer(addr, path, expectedState string) (*callbackServer, error) {
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -76,7 +76,7 @@ func startCallbackServer(addr, path string) (*callbackServer, error) {
 
 	results := make(chan callbackResult, 1)
 	mux := http.NewServeMux()
-	mux.HandleFunc(path, callbackHandler(results))
+	mux.HandleFunc(path, callbackHandler(expectedState, results))
 
 	srv := &http.Server{
 		Handler:           mux,
@@ -91,10 +91,33 @@ func startCallbackServer(addr, path string) (*callbackServer, error) {
 
 // callbackHandler serves the redirect, renders a minimal page for the
 // operator, and reports the outcome exactly once.
-func callbackHandler(results chan<- callbackResult) http.HandlerFunc {
+//
+// expectedState is checked BEFORE anything is delivered, and that ordering is
+// the point. The callback port is predictable and the result channel is
+// single-use, so a handler that published first would let any local process —
+// or a page in the operator's own browser — hit http://127.0.0.1:<port>/?code=x
+// and consume the one delivery, aborting a real sign-in that had not landed
+// yet. Refusing to deliver an uncorrelated request means the flow survives it
+// and the genuine redirect is still accepted.
+//
+// This is a denial-of-sign-in guard, not the CSRF check: Login still compares
+// the state it generated against what came back, which is what stops a code
+// from a different attempt being exchanged. Both run, and the paste-back path
+// relies on the Login-side one alone.
+func callbackHandler(expectedState string, results chan<- callbackResult) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		// Drop anything that is not this attempt without touching the channel.
+		// Deliberately indistinguishable from any other failure to the caller:
+		// the page says nothing, and the terminal is never told, because a
+		// stray request is not the operator's problem to debug.
+		if !stateMatches(expectedState, query.Get("state")) {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = fmt.Fprint(w, failureHTML)
+			return
+		}
 
 		if authErr := query.Get("error"); wegostrings.IsNotBlank(authErr) {
 			message := authErr

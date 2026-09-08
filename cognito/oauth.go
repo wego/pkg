@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -37,6 +38,9 @@ const (
 
 	defaultHTTPTimeout    = 30 * time.Second
 	maxTokenResponseBytes = 1 << 20
+
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
 )
 
 // Config carries everything the login flow needs. Nothing is read from the
@@ -334,7 +338,7 @@ func (c Config) validateClient() error {
 	if wegostrings.IsBlank(c.TokenURL) {
 		return errors.New("cognito token url is not configured")
 	}
-	return nil
+	return requireHTTPS("cognito token url", c.TokenURL)
 }
 
 // validateForLogin checks everything the interactive flow additionally needs.
@@ -345,12 +349,23 @@ func (c Config) validateForLogin() error {
 	if wegostrings.IsBlank(c.AuthorizeURL) {
 		return errors.New("cognito authorize url is not configured")
 	}
+	if err := requireHTTPS("cognito authorize url", c.AuthorizeURL); err != nil {
+		return err
+	}
 	if wegostrings.IsBlank(c.RedirectURI) {
 		return errors.New("cognito redirect uri is not configured")
+	}
+	if err := requireLoopbackRedirect(c.RedirectURI); err != nil {
+		return err
 	}
 	// Only the listener path needs a port; paste-back binds nothing.
 	if c.ReadRedirect == nil && wegostrings.IsBlank(c.CallbackAddr) {
 		return errors.New("local callback address is not configured")
+	}
+	if c.ReadRedirect == nil {
+		if err := requireLoopbackAddr(c.CallbackAddr); err != nil {
+			return err
+		}
 	}
 	if c.ReadRedirect != nil && c.PromptURL == nil {
 		return errors.New("paste-back sign-in needs Config.PromptURL: the operator has to be shown the url they are meant to open")
@@ -442,9 +457,9 @@ func (c Config) collectCode(ctx context.Context, state, challenge string) (code,
 			return "", "", err
 		}
 
-		pasted, err := c.ReadRedirect()
+		pasted, err := c.readRedirect(ctx)
 		if err != nil {
-			return "", "", fmt.Errorf("read the pasted redirect: %w", err)
+			return "", "", err
 		}
 
 		return codeFromRedirect(pasted)
@@ -453,7 +468,7 @@ func (c Config) collectCode(ctx context.Context, state, challenge string) (code,
 	// Bind the callback port BEFORE sending the operator to Cognito. If the
 	// port is unavailable the redirect could never land, and there is no
 	// fallback port to try, so failing here saves a pointless round trip.
-	server, err := startCallbackServer(c.CallbackAddr, callbackPath(c.RedirectURI))
+	server, err := startCallbackServer(c.CallbackAddr, callbackPath(c.RedirectURI), state)
 	if err != nil {
 		return "", "", err
 	}
@@ -518,4 +533,150 @@ func (c Config) openBrowserAt(rawURL string) error {
 		return c.OpenBrowser(rawURL)
 	}
 	return openBrowser(rawURL)
+}
+
+// ErrInsecureEndpoint is returned for a configured URL or bind address that
+// must not carry OAuth credentials.
+var ErrInsecureEndpoint = errors.New("insecure cognito endpoint")
+
+// requireHTTPS rejects a Cognito endpoint that is not https.
+//
+// Both endpoints carry credentials in the clear if the transport does not
+// protect them: the authorize URL puts the PKCE challenge and state on the
+// wire, and the token endpoint receives the authorization code, the PKCE
+// verifier and the client id on sign-in and the refresh token on renewal. A
+// cleartext http:// value hands all of that to anyone on the path, so it is
+// refused rather than warned about.
+//
+// There is no loopback exemption here, unlike the redirect: these are Cognito's
+// own endpoints on a domain the operator configured, and Cognito serves them
+// over https only. An http:// value is a misconfiguration in every case.
+func requireHTTPS(name, raw string) error {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("%w: %s %q cannot be parsed: %w", ErrInsecureEndpoint, name, raw, err)
+	}
+	if parsed.Scheme != schemeHTTPS {
+		return fmt.Errorf(
+			"%w: %s must use https, got %q (the sign-in exchange carries the authorization code, the pkce verifier and the refresh token, so cleartext would expose the whole credential set)",
+			ErrInsecureEndpoint, name, raw)
+	}
+	if wegostrings.IsBlank(parsed.Host) {
+		return fmt.Errorf("%w: %s %q has no host", ErrInsecureEndpoint, name, raw)
+	}
+	if parsed.User != nil {
+		return fmt.Errorf(
+			"%w: %s %q embeds credentials in the url, which would be logged and sent on every request",
+			ErrInsecureEndpoint, name, raw)
+	}
+	return nil
+}
+
+// requireLoopbackRedirect rejects a redirect URI that is not a loopback
+// address.
+//
+// Cleartext http IS allowed here, and only here: RFC 8252 §7.3 has a native app
+// receive the redirect on a loopback interface, where the request never leaves
+// the machine and TLS would buy nothing but a certificate problem. What must
+// hold is that the host is loopback — a redirect to a routable host would send
+// the authorization code across the network to whoever answers it, which is the
+// exact exposure this package's loopback-only design exists to prevent.
+func requireLoopbackRedirect(raw string) error {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("%w: cognito redirect uri %q cannot be parsed: %w", ErrInsecureEndpoint, raw, err)
+	}
+	switch parsed.Scheme {
+	case schemeHTTP, schemeHTTPS:
+	default:
+		return fmt.Errorf(
+			"%w: cognito redirect uri %q must be http or https, got scheme %q",
+			ErrInsecureEndpoint, raw, parsed.Scheme)
+	}
+	if !isLoopbackHost(parsed.Hostname()) {
+		return fmt.Errorf(
+			"%w: cognito redirect uri %q must be a loopback address (127.0.0.1, [::1] or localhost) — a routable host would receive the authorization code over the network",
+			ErrInsecureEndpoint, raw)
+	}
+	return nil
+}
+
+// requireLoopbackAddr rejects a callback bind address that is not loopback.
+//
+// Binding 0.0.0.0 or a LAN interface would let anything that can reach the
+// machine deliver a redirect to the single-use callback, so the listener is
+// held to the same loopback rule as the redirect it serves.
+func requireLoopbackAddr(addr string) error {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return fmt.Errorf(
+			"%w: local callback address %q must be host:port, e.g. 127.0.0.1:8110: %w",
+			ErrInsecureEndpoint, addr, err)
+	}
+	if wegostrings.IsBlank(port) {
+		return fmt.Errorf("%w: local callback address %q has no port", ErrInsecureEndpoint, addr)
+	}
+	if !isLoopbackHost(host) {
+		return fmt.Errorf(
+			"%w: local callback address %q must bind a loopback interface (127.0.0.1 or [::1]) — binding 0.0.0.0 or a routable interface would let any host that can reach this machine deliver the sign-in callback",
+			ErrInsecureEndpoint, addr)
+	}
+	return nil
+}
+
+// isLoopbackHost reports whether host is LITERALLY loopback.
+//
+// Only a literal loopback IP counts, plus the name "localhost". A name that
+// merely resolves to 127.0.0.1 does not: resolution can change between this
+// check and the request, so trusting it would make the check decorative. Go
+// itself treats "localhost" as loopback (net/http.isLocalhost, and the URL
+// spec's special-casing), and a poisoned "localhost" costs the attacker nothing
+// they do not already have on a machine they can edit /etc/hosts on.
+func isLoopbackHost(host string) bool {
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(strings.Trim(host, "[]"))
+	return ip != nil && ip.IsLoopback()
+}
+
+// readRedirect runs ReadRedirect without letting it pin Login to a blocked
+// reader.
+//
+// ReadRedirect is synchronous and typically reads a line from stdin, which
+// ignores context: os.Stdin.Read stays blocked until the operator types
+// something or the descriptor closes. Called directly, that made a cancelled
+// or timed-out Login unable to return — the caller asked to stop and the
+// process sat there anyway, which is the whole defect.
+//
+// Running it on a goroutine and selecting on ctx.Done() means Login returns
+// when the caller says so. It does NOT unblock the read itself, and nothing
+// here can: the goroutine survives until the reader yields, then sends into a
+// buffered channel and exits, so it parks rather than leaks and never blocks on
+// a receiver that has gone. A caller that needs the read torn down too should
+// close its own reader on cancellation — the signature stays
+// func() (string, error) so existing callers keep working.
+func (c Config) readRedirect(ctx context.Context) (string, error) {
+	type pasteResult struct {
+		url string
+		err error
+	}
+	// Buffered: the goroutine must be able to finish and exit after Login has
+	// already returned on ctx.Done() and stopped receiving.
+	done := make(chan pasteResult, 1)
+
+	go func() {
+		url, err := c.ReadRedirect()
+		done <- pasteResult{url: url, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", fmt.Errorf("waiting for the pasted redirect: %w", ctx.Err())
+	case result := <-done:
+		if result.err != nil {
+			return "", fmt.Errorf("read the pasted redirect: %w", result.err)
+		}
+		return result.url, nil
+	}
 }

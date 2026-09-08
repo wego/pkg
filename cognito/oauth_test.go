@@ -31,6 +31,7 @@ const (
 func TestLogin(t *testing.T) {
 	tests := []struct {
 		name            string
+		givenTimeout    time.Duration
 		givenConfig     func(*cognito.Config)
 		givenBrowser    func(*fakeBrowser)
 		givenHandler    func(*testing.T) http.HandlerFunc
@@ -73,19 +74,31 @@ func TestLogin(t *testing.T) {
 			givenBrowser:    func(f *fakeBrowser) { f.openErr = errors.New("no browser here") },
 			wantErrContains: "open browser",
 		},
+		// On the listener path a callback whose state is not this attempt's is
+		// now DROPPED BY THE HANDLER rather than delivered and then rejected by
+		// Login, so the observable failure is the wait timing out instead of a
+		// "state mismatch". That is the point: delivering it would consume the
+		// single-use result and let a blind request to the predictable callback
+		// port abort a real sign-in. See
+		// TestCallbackHandler_BlindRequestDoesNotAbortTheRealSignIn for the
+		// invalid-then-valid proof, and TestLogin_PasteBackRejectsAForeignState
+		// for the paste-back path, where Login's own state check is still the
+		// only guard and still reports a mismatch.
 		{
-			name: "tampered state is rejected",
+			name:         "a tampered state never completes the sign-in",
+			givenTimeout: 500 * time.Millisecond,
 			givenBrowser: func(f *fakeBrowser) {
 				f.tamper = func(q url.Values) { q.Set("state", "tampered-state") }
 			},
-			wantErrContains: "state mismatch",
+			wantErrContains: "waiting for the sign-in callback",
 		},
 		{
-			name: "missing state is rejected",
+			name:         "a callback with no state never completes the sign-in",
+			givenTimeout: 500 * time.Millisecond,
 			givenBrowser: func(f *fakeBrowser) {
 				f.tamper = func(q url.Values) { q.Del("state") }
 			},
-			wantErrContains: "state mismatch",
+			wantErrContains: "waiting for the sign-in callback",
 		},
 		{
 			name: "authorize server error is surfaced",
@@ -197,13 +210,17 @@ func TestLogin(t *testing.T) {
 				tt.givenBrowser(browser)
 			}
 
-			cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+			cfg := tlsConfig(t, ts, mustFreeAddr(t))
 			cfg.OpenBrowser = browser.open
 			if tt.givenConfig != nil {
 				tt.givenConfig(&cfg)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			timeout := 10 * time.Second
+			if tt.givenTimeout > 0 {
+				timeout = tt.givenTimeout
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			if tt.givenCancel {
 				cancel()
@@ -235,7 +252,7 @@ func TestLogin_BindsTheCallbackPortBeforeOpeningTheBrowser(t *testing.T) {
 
 	ts := newTokenServer(t, nil)
 	browser := newFakeBrowser()
-	cfg := baseConfig(t, ts.URL, addr)
+	cfg := tlsConfig(t, ts, addr)
 	cfg.OpenBrowser = browser.open
 
 	got, err := cognito.Login(context.Background(), cfg)
@@ -249,7 +266,7 @@ func TestLogin_BindsTheCallbackPortBeforeOpeningTheBrowser(t *testing.T) {
 func TestLogin_SendsPKCEAndState(t *testing.T) {
 	ts := newTokenServer(t, nil)
 	browser := newFakeBrowser()
-	cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+	cfg := tlsConfig(t, ts, mustFreeAddr(t))
 	cfg.OpenBrowser = browser.open
 
 	got, err := cognito.Login(context.Background(), cfg)
@@ -290,7 +307,7 @@ func TestLogin_SendsPKCEAndState(t *testing.T) {
 func TestLogin_ErrorsDoNotLeakVerifierOrState(t *testing.T) {
 	ts := newTokenServer(t, jsonHandler(http.StatusBadRequest, map[string]any{"error": "invalid_grant"}))
 	browser := newFakeBrowser()
-	cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+	cfg := tlsConfig(t, ts, mustFreeAddr(t))
 	cfg.OpenBrowser = browser.open
 
 	_, err := cognito.Login(context.Background(), cfg)
@@ -310,7 +327,7 @@ func TestLogin_ErrorsDoNotLeakVerifierOrState(t *testing.T) {
 func TestLogin_FallsBackToTheSystemClockWhenNowIsNil(t *testing.T) {
 	ts := newTokenServer(t, nil)
 	browser := newFakeBrowser()
-	cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+	cfg := tlsConfig(t, ts, mustFreeAddr(t))
 	cfg.OpenBrowser = browser.open
 	cfg.Now = nil
 
@@ -324,7 +341,7 @@ func TestLogin_FallsBackToTheSystemClockWhenNowIsNil(t *testing.T) {
 func TestLogin_AllowsAnyEmailWhenNoDomainIsConfigured(t *testing.T) {
 	ts := newTokenServer(t, jsonHandler(http.StatusOK, goodTokenBody(t, "contractor@example.test")))
 	browser := newFakeBrowser()
-	cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+	cfg := tlsConfig(t, ts, mustFreeAddr(t))
 	cfg.OpenBrowser = browser.open
 	cfg.AllowedDomain = ""
 
@@ -426,7 +443,7 @@ func TestRefresh(t *testing.T) {
 			}
 			ts := newTokenServer(t, handler)
 
-			cfg := baseConfig(t, ts.URL, "127.0.0.1:0")
+			cfg := tlsConfig(t, ts, "127.0.0.1:0")
 			if tt.givenConfig != nil {
 				tt.givenConfig(&cfg)
 			}
@@ -455,7 +472,7 @@ func TestRefresh_PreservesTheOriginalRefreshToken(t *testing.T) {
 	delete(body, "refresh_token")
 	ts := newTokenServer(t, jsonHandler(http.StatusOK, body))
 
-	cfg := baseConfig(t, ts.URL, "127.0.0.1:0")
+	cfg := tlsConfig(t, ts, "127.0.0.1:0")
 
 	got, err := cognito.Refresh(context.Background(), cfg, "the-long-lived-refresh-token")
 	require.NoError(t, err)
@@ -469,7 +486,7 @@ func TestRefresh_PreservesTheOriginalRefreshToken(t *testing.T) {
 // is a login-time UX affordance, not something to re-run on every refresh.
 func TestRefresh_DoesNotApplyTheDomainGate(t *testing.T) {
 	ts := newTokenServer(t, jsonHandler(http.StatusOK, goodTokenBody(t, "someone@gmail.com")))
-	cfg := baseConfig(t, ts.URL, "127.0.0.1:0")
+	cfg := tlsConfig(t, ts, "127.0.0.1:0")
 
 	got, err := cognito.Refresh(context.Background(), cfg, testRefreshValue)
 	require.NoError(t, err)
@@ -478,7 +495,7 @@ func TestRefresh_DoesNotApplyTheDomainGate(t *testing.T) {
 
 func TestRefresh_HonoursContextCancellation(t *testing.T) {
 	ts := newTokenServer(t, nil)
-	cfg := baseConfig(t, ts.URL, "127.0.0.1:0")
+	cfg := tlsConfig(t, ts, "127.0.0.1:0")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -501,6 +518,16 @@ func baseConfig(t *testing.T, tokenURL, callbackAddr string) cognito.Config {
 		CallbackAddr:  callbackAddr,
 		Now:           func() time.Time { return fixedNow },
 	}
+}
+
+// tlsConfig is baseConfig wired to trust ts's self-signed certificate. Config
+// copies the client and forces CheckRedirect, but keeps the Transport, so the
+// test root travels with it.
+func tlsConfig(t *testing.T, ts *tokenServer, callbackAddr string) cognito.Config {
+	t.Helper()
+	cfg := baseConfig(t, ts.URL, callbackAddr)
+	cfg.HTTPClient = ts.Client()
+	return cfg
 }
 
 // goodTokenBody is a well-formed Cognito token response.
@@ -552,7 +579,10 @@ func newTokenServer(t *testing.T, handler http.HandlerFunc) *tokenServer {
 		handler = jsonHandler(http.StatusOK, goodTokenBody(t, testOperatorEmail))
 	}
 
-	ts.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// NewTLSServer, not NewServer: Config.validateClient requires https for the
+	// token endpoint, so a plaintext test server would exercise the rejection
+	// path instead of the flow. ts.Client() below trusts this server's cert.
+	ts.Server = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "bad form", http.StatusBadRequest)
 			return
@@ -663,7 +693,7 @@ func TestLogin_NoBrowser(t *testing.T) {
 	// callback, which is exactly what an operator pasting the URL would cause.
 	prompt := newFakeBrowser()
 
-	cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+	cfg := tlsConfig(t, ts, mustFreeAddr(t))
 	cfg.NoBrowser = true
 	cfg.PromptURL = prompt.open
 	cfg.OpenBrowser = func(string) error {
@@ -753,7 +783,7 @@ func TestLogin_RejectsAnUnusableExpiresIn(t *testing.T) {
 
 			ts := newTokenServer(t, jsonHandler(http.StatusOK, body))
 			browser := newFakeBrowser()
-			cfg := baseConfig(t, ts.URL, mustFreeAddr(t))
+			cfg := tlsConfig(t, ts, mustFreeAddr(t))
 			cfg.OpenBrowser = browser.open
 
 			_, err := cognito.Login(context.Background(), cfg)
@@ -775,6 +805,7 @@ func TestLogin_PasteBack(t *testing.T) {
 	cfg := cognito.Config{
 		AuthorizeURL:  "https://cognito.test/oauth2/authorize",
 		TokenURL:      ts.URL,
+		HTTPClient:    ts.Client(),
 		ClientID:      "test-client-id",
 		RedirectURI:   "http://localhost:8100/callback",
 		Scopes:        "openid email",
@@ -809,6 +840,7 @@ func TestLogin_PasteBackRejectsAForeignState(t *testing.T) {
 	cfg := cognito.Config{
 		AuthorizeURL:  "https://cognito.test/oauth2/authorize",
 		TokenURL:      ts.URL,
+		HTTPClient:    ts.Client(),
 		ClientID:      "test-client-id",
 		RedirectURI:   "http://localhost:8100/callback",
 		AllowedDomain: "@wego.com",
@@ -854,4 +886,161 @@ func stateOf(t *testing.T, authorizeURL string) string {
 	require.NotEmpty(t, state, "the authorize url must carry a state")
 
 	return state
+}
+
+// TestLogin_RejectsInsecureEndpoints covers the transport rules. The sign-in
+// exchange carries the authorization code, the PKCE verifier and the refresh
+// token, so the two Cognito endpoints must be https and the two local ones must
+// be loopback — a routable redirect or bind would put a single-use code on the
+// network for whoever answers.
+//
+// Every case must fail BEFORE any request is made, which is why none of these
+// configs point at a live server.
+func TestLogin_RejectsInsecureEndpoints(t *testing.T) {
+	tests := []struct {
+		name            string
+		givenConfig     func(*cognito.Config)
+		wantErrContains string
+	}{
+		{
+			name:            "cleartext token url",
+			givenConfig:     func(c *cognito.Config) { c.TokenURL = "http://cognito.test/oauth2/token" },
+			wantErrContains: "token url must use https",
+		},
+		{
+			name:            "cleartext token url on loopback is refused too",
+			givenConfig:     func(c *cognito.Config) { c.TokenURL = "http://127.0.0.1:9000/oauth2/token" },
+			wantErrContains: "token url must use https",
+		},
+		{
+			name:            "token url embedding credentials",
+			givenConfig:     func(c *cognito.Config) { c.TokenURL = "https://user:pw@cognito.test/oauth2/token" },
+			wantErrContains: "embeds credentials in the url",
+		},
+		{
+			name:            "cleartext authorize url",
+			givenConfig:     func(c *cognito.Config) { c.AuthorizeURL = "http://cognito.test/oauth2/authorize" },
+			wantErrContains: "authorize url must use https",
+		},
+		{
+			name:            "routable redirect uri",
+			givenConfig:     func(c *cognito.Config) { c.RedirectURI = "http://attacker.test/callback" },
+			wantErrContains: "redirect uri",
+		},
+		{
+			name:            "non-http redirect scheme",
+			givenConfig:     func(c *cognito.Config) { c.RedirectURI = "ftp://127.0.0.1/callback" },
+			wantErrContains: "must be http or https",
+		},
+		{
+			name:            "wildcard callback bind",
+			givenConfig:     func(c *cognito.Config) { c.CallbackAddr = "0.0.0.0:8110" },
+			wantErrContains: "must bind a loopback interface",
+		},
+		{
+			name:            "routable callback bind",
+			givenConfig:     func(c *cognito.Config) { c.CallbackAddr = "192.168.1.20:8110" },
+			wantErrContains: "must bind a loopback interface",
+		},
+		{
+			name:            "callback bind without a port",
+			givenConfig:     func(c *cognito.Config) { c.CallbackAddr = "127.0.0.1" },
+			wantErrContains: "must be host:port",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := baseConfig(t, "https://cognito.test/oauth2/token", "127.0.0.1:8110")
+			cfg.OpenBrowser = func(string) error {
+				t.Fatal("an insecure endpoint must be rejected before a browser is opened")
+				return nil
+			}
+			tt.givenConfig(&cfg)
+
+			got, err := cognito.Login(context.Background(), cfg)
+
+			require.Error(t, err)
+			assert.ErrorIs(t, err, cognito.ErrInsecureEndpoint,
+				"callers need to distinguish a refused endpoint from a failed sign-in")
+			assert.Contains(t, err.Error(), tt.wantErrContains)
+			assert.Nil(t, got)
+		})
+	}
+}
+
+// TestLogin_AcceptsLoopbackHTTPRedirect pins the one cleartext exemption:
+// RFC 8252 has a native app receive the redirect on loopback, where the request
+// never leaves the machine, so requiring TLS there would buy nothing but a
+// certificate problem.
+func TestLogin_AcceptsLoopbackHTTPRedirect(t *testing.T) {
+	for _, host := range []string{"127.0.0.1", "localhost", "[::1]"} {
+		t.Run(host, func(t *testing.T) {
+			cfg := baseConfig(t, "https://cognito.test/oauth2/token", "127.0.0.1:8110")
+			cfg.RedirectURI = "http://" + host + ":8110/callback"
+			cfg.OpenBrowser = func(string) error { return errors.New("stop here") }
+
+			_, err := cognito.Login(context.Background(), cfg)
+
+			require.Error(t, err, "the fake browser stops the flow")
+			assert.NotErrorIs(t, err, cognito.ErrInsecureEndpoint,
+				"a loopback http redirect is the documented native-app callback and must be accepted")
+		})
+	}
+}
+
+// TestRefresh_RejectsInsecureTokenURL covers the renewal path, which sends the
+// refresh token rather than the code and so needs the same transport rule.
+func TestRefresh_RejectsInsecureTokenURL(t *testing.T) {
+	cfg := baseConfig(t, "http://cognito.test/oauth2/token", "127.0.0.1:8110")
+
+	got, err := cognito.Refresh(context.Background(), cfg, testRefreshValue)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, cognito.ErrInsecureEndpoint)
+	assert.Nil(t, got)
+}
+
+// TestLogin_PasteBackIsCancellable pins that cancelling Login returns even
+// though the paste-back reader is still blocked.
+//
+// ReadRedirect is synchronous and normally reads stdin, which ignores context:
+// called directly, a cancelled Login could not return until the operator typed
+// something, so the caller asked to stop and the process sat there. Login now
+// waits on ctx alongside the read.
+func TestLogin_PasteBackIsCancellable(t *testing.T) {
+	reading := make(chan struct{})
+	release := make(chan struct{})
+	t.Cleanup(func() { close(release) })
+
+	// Paste-back binds no port, but RedirectURI still has to be a valid loopback
+	// URL — it is what Cognito redirects the operator's browser to.
+	cfg := baseConfig(t, "https://cognito.test/oauth2/token", "127.0.0.1:8110")
+	cfg.CallbackAddr = ""
+	cfg.PromptURL = func(string) error { return nil }
+	cfg.ReadRedirect = func() (string, error) {
+		close(reading)
+		<-release // a reader that cannot be interrupted, like os.Stdin.Read
+		return "", errors.New("never reached in this test")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := cognito.Login(ctx, cfg)
+		done <- err
+	}()
+
+	<-reading // the read is now blocked
+	cancel()
+
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.ErrorIs(t, err, context.Canceled)
+		assert.Contains(t, err.Error(), "waiting for the pasted redirect")
+	case <-time.After(5 * time.Second):
+		t.Fatal("Login did not return after cancellation while the paste-back reader was blocked")
+	}
 }

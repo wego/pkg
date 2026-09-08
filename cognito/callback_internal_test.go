@@ -34,6 +34,8 @@ func TestCallbackPath(t *testing.T) {
 }
 
 func TestCallbackHandler(t *testing.T) {
+	const wantedState = "the-state"
+
 	tests := []struct {
 		name            string
 		givenQuery      string
@@ -41,31 +43,55 @@ func TestCallbackHandler(t *testing.T) {
 		wantCode        string
 		wantState       string
 		wantErrContains string
+		wantNoDelivery  bool
 	}{
 		{
 			name:            "authorize error is surfaced with its description",
-			givenQuery:      "error=access_denied&error_description=user+said+no",
+			givenQuery:      "error=access_denied&error_description=user+said+no&state=" + wantedState,
 			wantStatus:      http.StatusBadRequest,
 			wantErrContains: "user said no",
 		},
 		{
 			name:            "authorize error without a description still reports",
-			givenQuery:      "error=server_error",
+			givenQuery:      "error=server_error&state=" + wantedState,
 			wantStatus:      http.StatusBadRequest,
 			wantErrContains: "server_error",
 		},
 		{
 			name:            "missing code is rejected",
-			givenQuery:      "state=abc",
+			givenQuery:      "state=" + wantedState,
 			wantStatus:      http.StatusBadRequest,
 			wantErrContains: "no authorization code",
 		},
 		{
 			name:       "code and state are captured",
-			givenQuery: "code=the-code&state=the-state",
+			givenQuery: "code=the-code&state=" + wantedState,
 			wantStatus: http.StatusOK,
 			wantCode:   "the-code",
-			wantState:  "the-state",
+			wantState:  wantedState,
+		},
+		// The next three are the denial-of-sign-in guard. Each is a request
+		// that reaches the predictable callback port without belonging to this
+		// attempt, and the assertion that matters is wantNoDelivery: the
+		// single-use channel must still be empty afterwards, so the genuine
+		// redirect can still be accepted.
+		{
+			name:           "a code carrying someone else's state is not delivered",
+			givenQuery:     "code=blind-code&state=not-this-attempt",
+			wantStatus:     http.StatusBadRequest,
+			wantNoDelivery: true,
+		},
+		{
+			name:           "a code with no state at all is not delivered",
+			givenQuery:     "code=blind-code",
+			wantStatus:     http.StatusBadRequest,
+			wantNoDelivery: true,
+		},
+		{
+			name:           "an authorize error from another attempt is not delivered",
+			givenQuery:     "error=access_denied&state=not-this-attempt",
+			wantStatus:     http.StatusBadRequest,
+			wantNoDelivery: true,
 		},
 	}
 
@@ -75,10 +101,17 @@ func TestCallbackHandler(t *testing.T) {
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/callback?"+tt.givenQuery, nil)
 
-			callbackHandler(ch)(rec, req)
+			callbackHandler(wantedState, ch)(rec, req)
 
 			assert.Equal(t, tt.wantStatus, rec.Code)
 			assert.Contains(t, rec.Header().Get("Content-Type"), "text/html")
+
+			if tt.wantNoDelivery {
+				assert.Empty(t, ch, "an uncorrelated request must not consume the single-use delivery")
+				assert.NotContains(t, rec.Body.String(), "blind-code",
+					"the page must not reflect anything from the request")
+				return
+			}
 
 			select {
 			case got := <-ch:
@@ -97,9 +130,40 @@ func TestCallbackHandler(t *testing.T) {
 	}
 }
 
+// TestCallbackHandler_BlindRequestDoesNotAbortTheRealSignIn is the
+// invalid-then-valid case. Before the state check moved ahead of delivery, the
+// first request here consumed the one delivery the flow gets and the operator's
+// actual redirect arrived to a channel that was already full, so a sign-in
+// could be aborted by anything able to guess the callback port.
+func TestCallbackHandler_BlindRequestDoesNotAbortTheRealSignIn(t *testing.T) {
+	const wantedState = "real-attempt"
+
+	ch := make(chan callbackResult, 1)
+	handler := callbackHandler(wantedState, ch)
+
+	blind := httptest.NewRecorder()
+	handler(blind, httptest.NewRequest(http.MethodGet, "/callback?code=blind&state=guessed", nil))
+
+	assert.Equal(t, http.StatusBadRequest, blind.Code)
+	require.Empty(t, ch, "the blind request must leave the delivery unused")
+
+	real := httptest.NewRecorder()
+	handler(real, httptest.NewRequest(http.MethodGet, "/callback?code=genuine&state="+wantedState, nil))
+
+	assert.Equal(t, http.StatusOK, real.Code)
+	select {
+	case got := <-ch:
+		require.NoError(t, got.err)
+		assert.Equal(t, "genuine", got.code, "the real callback must still be the one delivered")
+		assert.Equal(t, wantedState, got.state)
+	default:
+		t.Fatal("the genuine callback was not delivered after a blind request")
+	}
+}
+
 func TestCallbackHandler_IsSingleUse(t *testing.T) {
 	ch := make(chan callbackResult, 1)
-	handler := callbackHandler(ch)
+	handler := callbackHandler("s", ch)
 
 	for range 3 {
 		rec := httptest.NewRecorder()
@@ -115,7 +179,7 @@ func TestStartCallbackServer_PortAlreadyBoundFailsFast(t *testing.T) {
 	t.Cleanup(func() { _ = ln.Close() })
 
 	addr := ln.Addr().String()
-	cs, err := startCallbackServer(addr, "/callback")
+	cs, err := startCallbackServer(addr, "/callback", "s")
 
 	require.Error(t, err, "binding an occupied port must fail rather than silently pick another")
 	assert.Nil(t, cs)
@@ -124,7 +188,7 @@ func TestStartCallbackServer_PortAlreadyBoundFailsFast(t *testing.T) {
 
 func TestStartCallbackServer_ServesTheCallback(t *testing.T) {
 	addr := mustFreeAddr(t)
-	cs, err := startCallbackServer(addr, "/callback")
+	cs, err := startCallbackServer(addr, "/callback", "xyz")
 	require.NoError(t, err)
 	t.Cleanup(cs.shutdown)
 
