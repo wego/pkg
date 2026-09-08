@@ -182,12 +182,23 @@ func (k *keyringStore) readPointer(namespace string) (keyringPointer, error) {
 	var pointer keyringPointer
 	if err := json.Unmarshal([]byte(raw), &pointer); err != nil {
 		// Nothing here writes anything but this record, so the entry was
-		// tampered with or written by a version that stored something else.
-		return keyringPointer{}, fmt.Errorf("parse the token pointer for %q: %w", namespace, err)
+		// tampered with, truncated, restored from a backup taken mid-write, or
+		// written by a build that stored a different shape.
+		//
+		// The recovery is always the same and the operator cannot guess it from
+		// a json error, so name it: Delete rewrites the whole namespace, so
+		// signing out and back in fixes any unreadable pointer. Reported rather
+		// than done here, because silently discarding a session store is not
+		// this function's call to make.
+		return keyringPointer{}, fmt.Errorf(
+			"parse the token pointer for %q: %w (the stored session is unreadable - sign out of this environment and sign in again to rewrite it)",
+			namespace, err)
 	}
 
 	if wegostrings.IsBlank(pointer.Current) {
-		return keyringPointer{}, fmt.Errorf("the token pointer for %q names no generation", namespace)
+		return keyringPointer{}, fmt.Errorf(
+			"the token pointer for %q names no generation (the stored session is unreadable - sign out of this environment and sign in again to rewrite it)",
+			namespace)
 	}
 
 	return pointer, nil

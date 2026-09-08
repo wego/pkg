@@ -387,6 +387,12 @@ func TestKeyringStore_LoadRejectsAnUnreadablePointer(t *testing.T) {
 	}{
 		{name: "not json", givenValue: "somewhere-else", wantErr: "parse the token pointer"},
 		{name: "json naming no generation", givenValue: `{"current":""}`, wantErr: "names no generation"},
+		// A bare slot name is what a pre-release build of this package wrote,
+		// before generations replaced two reusable slots. That shape never
+		// shipped, so no released version can produce it and there is nothing
+		// to migrate — but a keychain carrying one still has to fail readably
+		// rather than with a raw json error.
+		{name: "a bare slot name from a pre-release layout", givenValue: "a", wantErr: "parse the token pointer"},
 	}
 
 	for _, tt := range tests {
@@ -398,6 +404,8 @@ func TestKeyringStore_LoadRejectsAnUnreadablePointer(t *testing.T) {
 			_, err := store.Load(testNamespace)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.wantErr)
+			assert.Contains(t, err.Error(), "sign out of this environment and sign in again",
+				"an unreadable pointer must name the recovery, which is not guessable from a json error")
 		})
 	}
 }
