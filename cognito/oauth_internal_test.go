@@ -331,14 +331,14 @@ func TestValidateForLogin_PasteBack(t *testing.T) {
 
 	t.Run("paste-back without PromptURL is refused", func(t *testing.T) {
 		cfg := base()
-		cfg.ReadRedirect = func() (string, error) { return "", nil }
+		cfg.ReadRedirect = func(context.Context) (string, error) { return "", nil }
 
 		require.ErrorContains(t, cfg.validateForLogin(), "PromptURL")
 	})
 
 	t.Run("paste-back needs no callback address", func(t *testing.T) {
 		cfg := base()
-		cfg.ReadRedirect = func() (string, error) { return "", nil }
+		cfg.ReadRedirect = func(context.Context) (string, error) { return "", nil }
 		cfg.PromptURL = func(string) error { return nil }
 
 		require.NoError(t, cfg.validateForLogin(), "nothing binds a port on this path")
@@ -358,7 +358,7 @@ func TestPresentAuthorizeURL_PasteBackImpliesThePrompt(t *testing.T) {
 	cfg := Config{
 		PromptURL:    func(u string) error { prompted = u; return nil },
 		OpenBrowser:  func(u string) error { opened = u; return nil },
-		ReadRedirect: func() (string, error) { return "", nil },
+		ReadRedirect: func(context.Context) (string, error) { return "", nil },
 	}
 
 	require.NoError(t, cfg.presentAuthorizeURL("https://cognito.test/authorize?state=s"))

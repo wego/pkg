@@ -112,10 +112,36 @@ type Config struct {
 	// grant with PKCE, only with the redirect carried by hand.
 	//
 	// Setting it implies NoBrowser: no browser is launched here. PromptURL is
-	// required alongside it; CallbackAddr is not, since nothing binds a port. The pasted URL carries a single-use authorization
-	// code, so it should not travel through a shared channel; state is still
-	// checked, so a code from a different attempt is rejected.
-	ReadRedirect func() (redirectedURL string, err error)
+	// required alongside it; CallbackAddr is not, since nothing binds a port.
+	// The pasted URL carries a single-use authorization code, so it should not
+	// travel through a shared channel; state is still checked, so a code from a
+	// different attempt is rejected.
+	//
+	// LIFETIME CONTRACT. Read this before wiring a reader to it.
+	//
+	// The ctx is the one passed to Login, and honouring it is the caller's
+	// responsibility. Login itself stops waiting when ctx is done, so a
+	// cancelled or timed-out Login always returns — but it CANNOT interrupt a
+	// read already blocked in this function. A reader that ignores ctx (a bare
+	// os.Stdin.Read, or bufio.Reader over it) therefore stays blocked after
+	// Login has returned, holding whatever it reads from.
+	//
+	// Two obligations follow:
+	//
+	//   - On cancellation, tear the reader down yourself if you need the read to
+	//     stop — close the file or pipe, or use a reader that selects on ctx.
+	//     Nothing in this package can do it for you.
+	//   - Do NOT start another Login while a previous invocation may still be
+	//     blocked in here. Two live invocations reading the same stdin race for
+	//     the operator's next line: either may win, so a retry can consume the
+	//     paste meant for the other and the losing attempt sees a truncated or
+	//     empty read. Wait for the previous reader to yield, or give the retry
+	//     its own reader.
+	//
+	// The abandoned invocation is otherwise harmless: Login sends its result
+	// into a buffered channel and exits, so it parks rather than leaks and never
+	// blocks on a receiver that has gone.
+	ReadRedirect func(ctx context.Context) (redirectedURL string, err error)
 
 	// HTTPClient calls the token endpoint. Nil uses a client with a timeout.
 	HTTPClient *http.Client
@@ -649,13 +675,15 @@ func isLoopbackHost(host string) bool {
 // or timed-out Login unable to return — the caller asked to stop and the
 // process sat there anyway, which is the whole defect.
 //
-// Running it on a goroutine and selecting on ctx.Done() means Login returns
-// when the caller says so. It does NOT unblock the read itself, and nothing
-// here can: the goroutine survives until the reader yields, then sends into a
-// buffered channel and exits, so it parks rather than leaks and never blocks on
-// a receiver that has gone. A caller that needs the read torn down too should
-// close its own reader on cancellation — the signature stays
-// func() (string, error) so existing callers keep working.
+// ctx is handed to the callback so a reader that can honour it will, and Login
+// additionally selects on ctx.Done() so it returns even when the reader cannot.
+// Those are different guarantees and both are needed: the select bounds Login,
+// the ctx argument is what lets the read itself be abandoned. Neither can
+// interrupt a read already blocked inside an uncooperative reader — the
+// goroutine survives until it yields, then sends into a buffered channel and
+// exits, so it parks rather than leaks and never blocks on a receiver that has
+// gone. Config.ReadRedirect documents the teardown and no-concurrent-retry
+// obligations that fall to the caller as a result.
 func (c Config) readRedirect(ctx context.Context) (string, error) {
 	type pasteResult struct {
 		url string
@@ -666,7 +694,7 @@ func (c Config) readRedirect(ctx context.Context) (string, error) {
 	done := make(chan pasteResult, 1)
 
 	go func() {
-		url, err := c.ReadRedirect()
+		url, err := c.ReadRedirect(ctx)
 		done <- pasteResult{url: url, err: err}
 	}()
 

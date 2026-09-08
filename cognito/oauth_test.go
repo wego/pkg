@@ -815,7 +815,7 @@ func TestLogin_PasteBack(t *testing.T) {
 	}
 	// CallbackAddr is deliberately left empty: nothing binds a port here, and
 	// that is the whole reason this path exists.
-	cfg.ReadRedirect = func() (string, error) {
+	cfg.ReadRedirect = func(context.Context) (string, error) {
 		return "http://localhost:8100/callback?code=pasted-code&state=" + stateOf(t, shown), nil
 	}
 
@@ -846,7 +846,7 @@ func TestLogin_PasteBackRejectsAForeignState(t *testing.T) {
 		AllowedDomain: "@wego.com",
 		Now:           func() time.Time { return fixedNow },
 		PromptURL:     func(string) error { return nil },
-		ReadRedirect: func() (string, error) {
+		ReadRedirect: func(context.Context) (string, error) {
 			return "http://localhost:8100/callback?code=pasted-code&state=someone-elses-state", nil
 		},
 	}
@@ -867,7 +867,7 @@ func TestLogin_PasteBackReportsAReadFailure(t *testing.T) {
 		RedirectURI:   "http://localhost:8100/callback",
 		AllowedDomain: "@wego.com",
 		PromptURL:     func(string) error { return nil },
-		ReadRedirect:  func() (string, error) { return "", errors.New("stdin closed") },
+		ReadRedirect:  func(context.Context) (string, error) { return "", errors.New("stdin closed") },
 	}
 
 	_, err := cognito.Login(context.Background(), cfg)
@@ -1018,7 +1018,7 @@ func TestLogin_PasteBackIsCancellable(t *testing.T) {
 	cfg := baseConfig(t, "https://cognito.test/oauth2/token", "127.0.0.1:8110")
 	cfg.CallbackAddr = ""
 	cfg.PromptURL = func(string) error { return nil }
-	cfg.ReadRedirect = func() (string, error) {
+	cfg.ReadRedirect = func(context.Context) (string, error) {
 		close(reading)
 		<-release // a reader that cannot be interrupted, like os.Stdin.Read
 		return "", errors.New("never reached in this test")
@@ -1042,5 +1042,44 @@ func TestLogin_PasteBackIsCancellable(t *testing.T) {
 		assert.Contains(t, err.Error(), "waiting for the pasted redirect")
 	case <-time.After(5 * time.Second):
 		t.Fatal("Login did not return after cancellation while the paste-back reader was blocked")
+	}
+}
+
+// TestLogin_PasteBackReaderSeesCancellation pins the other half of the
+// cancellation contract. TestLogin_PasteBackIsCancellable proves Login returns
+// when the reader CANNOT honour ctx; this proves a reader that CAN honour it is
+// given what it needs to — the ctx reaching the callback is the only way a
+// caller can abandon the read itself rather than leaving it parked on stdin.
+func TestLogin_PasteBackReaderSeesCancellation(t *testing.T) {
+	cfg := baseConfig(t, "https://cognito.test/oauth2/token", "127.0.0.1:8110")
+	cfg.CallbackAddr = ""
+	cfg.PromptURL = func(string) error { return nil }
+
+	readerReturned := make(chan error, 1)
+	cfg.ReadRedirect = func(ctx context.Context) (string, error) {
+		// A cooperative reader: selects rather than blocking on the fd.
+		<-ctx.Done()
+		err := ctx.Err()
+		readerReturned <- err
+		return "", err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+
+	_, err := cognito.Login(ctx, cfg)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.Canceled)
+
+	select {
+	case readerErr := <-readerReturned:
+		assert.ErrorIs(t, readerErr, context.Canceled,
+			"the callback must receive Login's ctx, not a detached one")
+	case <-time.After(2 * time.Second):
+		t.Fatal("the reader never observed cancellation, so ctx did not reach the callback")
 	}
 }
