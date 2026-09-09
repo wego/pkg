@@ -2,9 +2,10 @@ package postgres_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/wego/pkg/database/postgres"
 )
@@ -21,6 +22,10 @@ func TestIsLockError(t *testing.T) {
 	// Test case: Error is a *pgconn.PgError with the lock error code
 	pgErr = &pgconn.PgError{Code: "55P03"}
 	assert.True(t, postgres.IsLockError(pgErr))
+
+	// Test case: a wrapped lock error is still detected via errors.As
+	wrapped := fmt.Errorf("acquiring lock: %w", &pgconn.PgError{Code: "55P03"})
+	assert.True(t, postgres.IsLockError(wrapped))
 }
 
 func TestIsUniqueConstraintError(t *testing.T) {
@@ -35,4 +40,8 @@ func TestIsUniqueConstraintError(t *testing.T) {
 	// Test case: Error is a *pgconn.PgError with the unique constraint error code
 	pgErr = &pgconn.PgError{Code: "23505"}
 	assert.True(t, postgres.IsUniqueConstraintError(pgErr))
+
+	// Test case: a wrapped unique constraint error is still detected via errors.As
+	wrapped := fmt.Errorf("saving record: %w", &pgconn.PgError{Code: "23505"})
+	assert.True(t, postgres.IsUniqueConstraintError(wrapped))
 }
