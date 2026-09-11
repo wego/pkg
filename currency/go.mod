@@ -1,9 +1,9 @@
 module github.com/wego/pkg/currency
 
-go 1.19
+go 1.24
 
 require (
-	github.com/bojanz/currency v1.3.0
+	github.com/bojanz/currency v1.5.0
 	github.com/stretchr/testify v1.11.1
 )
 
