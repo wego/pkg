@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -321,4 +322,50 @@ func TestFirstLoadFailureIsReturnedToTheCaller(t *testing.T) {
 	data, err := cache.Get(context.Background())
 	assert.Error(t, err, "with nothing cached there is nothing to fall back to")
 	assert.Empty(t, data)
+}
+
+func TestConcurrentGetsCauseOneDataRead(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+
+	var loads int64
+	refresherIsBlocked := make(chan struct{})
+	releaseRefresher := make(chan struct{})
+	loadData := func(context.Context) (string, error) {
+		if atomic.AddInt64(&loads, 1) == 2 {
+			// Hold the second load open so the other callers arrive mid-refresh.
+			close(refresherIsBlocked)
+			<-releaseRefresher
+		}
+		return "data", nil
+	}
+
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{Now: clock.Now})
+
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.2"))
+	clock.Advance(2 * time.Minute)
+
+	var refresher sync.WaitGroup
+	refresher.Add(1)
+	go func() {
+		defer refresher.Done()
+		_, getErr := cache.Get(context.Background())
+		assert.NoError(t, getErr)
+	}()
+	<-refresherIsBlocked
+
+	for i := 0; i < 4; i++ {
+		data, getErr := cache.Get(context.Background())
+		require.NoError(t, getErr)
+		assert.Equal(t, "data", data, "callers arriving mid-refresh are served the cached value")
+	}
+
+	close(releaseRefresher)
+	refresher.Wait()
+
+	assert.Equal(t, int64(2), atomic.LoadInt64(&loads), "one warm-up load plus one refresh, not six")
 }
