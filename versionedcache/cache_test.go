@@ -114,3 +114,134 @@ func TestRefreshWithoutAVersionKeyIsReported(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []versionedcache.RefreshOutcome{versionedcache.ReloadedWithoutVersion}, outcomes)
 }
+
+const exampleVersionKey = "flight:example:version"
+
+func TestUnchangedVersionDoesNotReadTheData(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	answer := "first"
+	loadData, loads := countingLoader(&answer)
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{Now: clock.Now})
+
+	data, err := cache.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "first", data)
+	assert.Equal(t, 1, *loads)
+
+	// The data behind the version changed but the version did not: the cache must not see it.
+	answer = "second"
+	clock.Advance(2 * time.Minute)
+
+	data, err = cache.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "first", data)
+	assert.Equal(t, 1, *loads, "an unchanged version must not read the data")
+}
+
+func TestChangedVersionReloadsTheData(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	answer := "first"
+	loadData, loads := countingLoader(&answer)
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{Now: clock.Now})
+
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	answer = "second"
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.2"))
+	clock.Advance(2 * time.Minute)
+
+	data, err := cache.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "second", data)
+	assert.Equal(t, 2, *loads)
+}
+
+// A version that moves backwards, or to a different shape, still counts as changed:
+// the comparison is exact text, never an ordering.
+func TestAnyDifferentVersionReloadsTheData(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	answer := "first"
+	loadData, loads := countingLoader(&answer)
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.9"))
+
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{Now: clock.Now})
+
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	answer = "restored from a backup"
+	require.NoError(t, server.Set(exampleVersionKey, "20260101.1"))
+	clock.Advance(2 * time.Minute)
+
+	data, err := cache.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "restored from a backup", data)
+	assert.Equal(t, 2, *loads)
+}
+
+func TestMissingVersionKeyReloadsRatherThanFailing(t *testing.T) {
+	_, client := newTestClient(t)
+	clock := newFakeClock()
+	answer := "first"
+	loadData, loads := countingLoader(&answer)
+
+	// The key is configured but nobody has published it yet: the writer has not shipped.
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{Now: clock.Now})
+
+	data, err := cache.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "first", data)
+
+	answer = "second"
+	clock.Advance(2 * time.Minute)
+
+	data, err = cache.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "second", data, "with no version published the cache reloads every interval")
+	assert.Equal(t, 2, *loads)
+}
+
+func TestOutcomesTellTheThreeCasesApart(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	answer := "first"
+	loadData, _ := countingLoader(&answer)
+
+	var outcomes []versionedcache.RefreshOutcome
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{
+		Now: clock.Now,
+		WhenRefreshed: func(outcome versionedcache.RefreshOutcome, err error) {
+			require.NoError(t, err)
+			outcomes = append(outcomes, outcome)
+		},
+	})
+
+	// No version published yet.
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	// A version appears.
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+	clock.Advance(2 * time.Minute)
+	_, err = cache.Get(context.Background())
+	require.NoError(t, err)
+
+	// The same version again.
+	clock.Advance(2 * time.Minute)
+	_, err = cache.Get(context.Background())
+	require.NoError(t, err)
+
+	assert.Equal(t, []versionedcache.RefreshOutcome{
+		versionedcache.ReloadedWithoutVersion,
+		versionedcache.ReloadedAfterChange,
+		versionedcache.KeptCachedData,
+	}, outcomes)
+}
