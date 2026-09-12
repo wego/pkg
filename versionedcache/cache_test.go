@@ -2,6 +2,7 @@ package versionedcache_test
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -244,4 +245,80 @@ func TestOutcomesTellTheThreeCasesApart(t *testing.T) {
 		versionedcache.ReloadedAfterChange,
 		versionedcache.KeptCachedData,
 	}, outcomes)
+}
+
+func TestFailedVersionReadKeepsTheCachedData(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	answer := "first"
+	loadData, loads := countingLoader(&answer)
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+
+	var reported error
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{
+		Now:           clock.Now,
+		WhenRefreshed: func(_ versionedcache.RefreshOutcome, err error) { reported = err },
+	})
+
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	// Redis goes away.
+	server.Close()
+	clock.Advance(2 * time.Minute)
+
+	data, err := cache.Get(context.Background())
+	require.NoError(t, err, "a warm cache keeps serving through a Redis outage")
+	assert.Equal(t, "first", data)
+	assert.Equal(t, 1, *loads, "the data must not be read when the version could not be")
+	assert.Error(t, reported, "the failure is reported even though Get succeeded")
+}
+
+func TestFailedDataReadKeepsTheCachedData(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+
+	failNextLoad := false
+	loadData := func(context.Context) (string, error) {
+		if failNextLoad {
+			return "", errors.New("the hash could not be read")
+		}
+		return "first", nil
+	}
+
+	var reportedOutcome versionedcache.RefreshOutcome
+	var reportedError error
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{
+		Now: clock.Now,
+		WhenRefreshed: func(outcome versionedcache.RefreshOutcome, err error) {
+			reportedOutcome, reportedError = outcome, err
+		},
+	})
+
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	failNextLoad = true
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.2"))
+	clock.Advance(2 * time.Minute)
+
+	data, err := cache.Get(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "first", data)
+	assert.Equal(t, versionedcache.KeptCachedData, reportedOutcome)
+	assert.Error(t, reportedError)
+}
+
+func TestFirstLoadFailureIsReturnedToTheCaller(t *testing.T) {
+	_, client := newTestClient(t)
+	loadData := func(context.Context) (string, error) {
+		return "", errors.New("the hash could not be read")
+	}
+
+	cache := versionedcache.New(client, exampleVersionKey, loadData, time.Minute, versionedcache.Options{})
+
+	data, err := cache.Get(context.Background())
+	assert.Error(t, err, "with nothing cached there is nothing to fall back to")
+	assert.Empty(t, data)
 }
