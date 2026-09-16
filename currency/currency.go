@@ -265,6 +265,20 @@ var currencyFactors = map[string]float64{
 	TND: 1000, // Tunisian Dinar
 }
 
+// ANG, BGN and CUC were removed in CLDR 48, which github.com/bojanz/currency
+// adopted in v1.5.0. All three stay in iso4217Currencies, so without these
+// registrations IsISO4217 accepts codes that Format rejects as
+// "invalid currency code".
+//
+// The definitions are the library's own pre-v1.5.0 values, so Format output
+// does not change. DefaultSymbol stays empty: these codes have no
+// locale-specific symbol, so the formatter falls back to the code itself.
+func init() {
+	currency.Register(ANG, currency.Definition{NumericCode: "532", Digits: 2})
+	currency.Register(BGN, currency.Definition{NumericCode: "975", Digits: 2})
+	currency.Register(CUC, currency.Definition{NumericCode: "931", Digits: 2})
+}
+
 // ToMinorUnit converts amount in a currency to amount in smallest unit (minor unit)
 // https://en.wikipedia.org/wiki/ISO_4217#Minor_units_of_currency
 func ToMinorUnit(currencyCode string, amount float64) (minorUnitAmount uint64, err error) {

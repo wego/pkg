@@ -228,6 +228,27 @@ func Test_Format(t *testing.T) {
 			locale:       "en",
 			want:         "BHD\u00a02,048.456",
 		},
+		// ANG, BGN and CUC were removed in CLDR 48 but stay in
+		// iso4217Currencies, so they must still format. Expected values are
+		// currency v0.4.4 output.
+		"ANG en": {
+			amount:       1234.5,
+			currencyCode: "ANG",
+			locale:       "en",
+			want:         "ANG\u00a01,234.50",
+		},
+		"BGN en": {
+			amount:       1234.5,
+			currencyCode: "BGN",
+			locale:       "en",
+			want:         "BGN\u00a01,234.50",
+		},
+		"CUC en": {
+			amount:       1234.5,
+			currencyCode: "CUC",
+			locale:       "en",
+			want:         "CUC\u00a01,234.50",
+		},
 	} {
 		t.Run(n, func(tt *testing.T) {
 			got, err := currency.Format(tc.amount, tc.currencyCode, tc.locale)
