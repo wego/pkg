@@ -58,7 +58,11 @@ func NewFile(dir string) Store {
 // the XDG state convention, which is the right home for data that persists
 // between runs but is not configuration the operator edits.
 func DefaultFileDir(service string) (string, error) {
-	if state := os.Getenv("XDG_STATE_HOME"); wegostrings.IsNotBlank(state) {
+	// Absolute only. The XDG base-directory spec says a relative value must be
+	// ignored, and for this store that rule has teeth: a relative path resolves
+	// against the working directory, so `login` from one directory would write
+	// a session that every later command run from elsewhere fails to find.
+	if state := os.Getenv("XDG_STATE_HOME"); filepath.IsAbs(state) {
 		return filepath.Join(state, service), nil
 	}
 

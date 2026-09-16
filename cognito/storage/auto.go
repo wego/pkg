@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"runtime"
 
 	"github.com/wego/pkg/cognito"
 
@@ -47,6 +48,18 @@ func NewAuto(service, dir string) (Store, *Downgrade) {
 	file := NewFile(dir)
 
 	if err := probeKeyring(service); err != nil {
+		// Only downgrade where the file store's protection actually holds. Its
+		// guarantee is 0600/0700, which is a Unix guarantee; Go maps those bits
+		// onto Windows ACLs only approximately, so falling back there would
+		// write a long-lived refresh token to a file whose protection we have
+		// not verified and have documented as Unix-only. Windows has a working
+		// credential manager for go-keyring, so a probe failure there is a real
+		// problem to surface rather than to route around: return the keychain
+		// store and let its own error speak.
+		if !fileStoreProtects() {
+			return NewKeyring(service), nil
+		}
+
 		// Keychain unusable: read and write the file, but still try to clear
 		// the keychain on Delete for the mirror-image case - a session written
 		// on a host that had a keychain, being signed out from one that does
@@ -122,5 +135,19 @@ func probeKeyring(service string) error {
 		return nil
 	default:
 		return err
+	}
+}
+
+// fileStoreProtects reports whether this platform enforces the file store's
+// documented owner-only guarantee.
+//
+// An allow-list rather than a deny-list: a platform nobody has checked should
+// not silently inherit permission to hold a long-lived credential in a file.
+func fileStoreProtects() bool {
+	switch runtime.GOOS {
+	case "linux", "darwin", "freebsd", "openbsd", "netbsd", "dragonfly":
+		return true
+	default:
+		return false
 	}
 }

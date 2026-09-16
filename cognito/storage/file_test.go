@@ -200,6 +200,29 @@ func TestDefaultFileDir_FollowsXDG(t *testing.T) {
 	assert.Equal(t, filepath.Join("/tmp/xdg-state", "pay-admin"), dir)
 }
 
+// TestDefaultFileDir_IgnoresARelativeXDGStateHome covers the XDG rule that a
+// relative value must be ignored. It matters here beyond spec compliance: a
+// relative path resolves against the working directory, so a sign-in from one
+// directory would write a session that every later command run from elsewhere
+// fails to find - presenting as a mysteriously signed-out CLI.
+func TestDefaultFileDir_IgnoresARelativeXDGStateHome(t *testing.T) {
+	home, err := os.UserHomeDir()
+	require.NoError(t, err)
+
+	for _, relative := range []string{"relative/state", "./state", "../state", "state"} {
+		t.Run(relative, func(t *testing.T) {
+			t.Setenv("XDG_STATE_HOME", relative)
+
+			dir, err := storage.DefaultFileDir("pay-admin")
+
+			require.NoError(t, err)
+			assert.Equal(t, filepath.Join(home, ".local", "state", "pay-admin"), dir,
+				"a relative XDG_STATE_HOME must be ignored in favour of the home fallback")
+			assert.True(t, filepath.IsAbs(dir), "the session directory must never depend on the working directory")
+		})
+	}
+}
+
 func TestDefaultFileDir_FallsBackToHome(t *testing.T) {
 	t.Setenv("XDG_STATE_HOME", "")
 
