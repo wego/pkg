@@ -270,9 +270,12 @@ var currencyFactors = map[string]float64{
 // registrations IsISO4217 accepts codes that Format rejects as
 // "invalid currency code".
 //
-// The definitions are the library's own pre-v1.5.0 values, so Format output
-// does not change. DefaultSymbol stays empty: these codes have no
-// locale-specific symbol, so the formatter falls back to the code itself.
+// The definitions are the library's own pre-v1.5.0 numeric codes and minor
+// units. They do not restore the per-locale symbols CLDR held, because Register
+// takes a single DefaultSymbol applied to every locale. Format output is
+// therefore unchanged wherever the formatter already fell back to the code, and
+// drops the symbol in the locales that had one: ANG in my ("NAf"), en-SX, nl-CW
+// and nl-SX ("NAf."), and BGN in bg ("лв."). CUC never had a symbol.
 func init() {
 	currency.Register(ANG, currency.Definition{NumericCode: "532", Digits: 2})
 	currency.Register(BGN, currency.Definition{NumericCode: "975", Digits: 2})
