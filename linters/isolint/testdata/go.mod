@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/bojanz/currency v1.3.0 // indirect
+	github.com/bojanz/currency v1.5.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 )
 
