@@ -43,6 +43,13 @@ type fileStore struct {
 // NewFile returns a Store writing one owner-only JSON file per namespace under
 // dir. The directory is created on first write, not here, so constructing a
 // store this process never writes to touches no disk.
+//
+// The owner-only guarantee is a Unix one. Wego runs this on macOS workstations
+// and Linux hosts, where 0600 and 0700 mean what they say. Go maps those bits
+// onto Windows ACLs only approximately, so on Windows the file would be created
+// but its protection would not be the one documented here - and NewAuto would
+// not choose this store there anyway, since Windows has a working credential
+// manager for go-keyring to use.
 func NewFile(dir string) Store {
 	return &fileStore{dir: dir}
 }

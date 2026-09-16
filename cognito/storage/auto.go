@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/wego/pkg/cognito"
+
 	"github.com/zalando/go-keyring"
 )
 
@@ -42,10 +44,64 @@ func (d *Downgrade) Unwrap() error { return d.Cause }
 // fileStore's doc comment. A caller that would rather fail than write a
 // long-lived refresh token to disk should use NewKeyring directly.
 func NewAuto(service, dir string) (Store, *Downgrade) {
+	file := NewFile(dir)
+
 	if err := probeKeyring(service); err != nil {
-		return NewFile(dir), &Downgrade{Dir: dir, Cause: err}
+		// Keychain unusable: read and write the file, but still try to clear
+		// the keychain on Delete for the mirror-image case - a session written
+		// on a host that had a keychain, being signed out from one that does
+		// not.
+		return &autoStore{primary: file, secondary: NewKeyring(service)}, &Downgrade{Dir: dir, Cause: err}
 	}
-	return NewKeyring(service), nil
+
+	return &autoStore{primary: NewKeyring(service), secondary: file}, nil
+}
+
+// autoStore reads and writes one backend but deletes from both.
+//
+// Backend selection is per process and depends on whether the keychain happens
+// to be reachable right now, so a session can outlive the condition that chose
+// where it went. Without this, signing out was only as durable as the current
+// selection: save while the keychain is down, sign out after it returns, lose
+// the keychain again, and Load hands back the session the operator believed
+// they had deleted - with a live refresh token in it. Deleting from both makes
+// sign-out mean signed out, whichever backend is selected at the time.
+//
+// Only Delete fans out. Load and Save deliberately stay on the selected
+// backend: reading both would make precedence ambiguous when the two disagree,
+// and writing both would put the credential in the weaker store even on hosts
+// that have a keychain.
+type autoStore struct {
+	primary   Store
+	secondary Store
+}
+
+func (a *autoStore) Load(namespace string) (*cognito.TokenSet, error) {
+	return a.primary.Load(namespace)
+}
+
+func (a *autoStore) Save(namespace string, tokens *cognito.TokenSet) error {
+	return a.primary.Save(namespace, tokens)
+}
+
+// Delete clears the session from both backends.
+//
+// The primary's error is what the caller hears, since that is the backend they
+// are working with. A secondary failure is reported only when the primary
+// succeeded, because otherwise the primary error is the more useful one and
+// the caller is going to retry anyway. Either way both are attempted: a
+// half-done sign-out is the failure this method exists to prevent.
+func (a *autoStore) Delete(namespace string) error {
+	primaryErr := a.primary.Delete(namespace)
+	secondaryErr := a.secondary.Delete(namespace)
+
+	if primaryErr != nil {
+		return primaryErr
+	}
+	if secondaryErr != nil {
+		return fmt.Errorf("the session was cleared, but the inactive store could not be cleared too: %w", secondaryErr)
+	}
+	return nil
 }
 
 // probeKeyring reports whether the OS keychain can be reached.
