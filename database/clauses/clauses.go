@@ -4,12 +4,13 @@ import (
 	"github.com/wego/pkg/strings"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 )
 
 // OnConflict adds an ON CONFLICT clause to the query
 func OnConflict(tx *gorm.DB, idx string) {
-	index, ok := tx.Statement.Schema.ParseIndexes()[idx]
-	if !ok || index.Class != "UNIQUE" {
+	index := uniqueIndex(tx.Statement.Schema, idx)
+	if index == nil {
 		return
 	}
 
@@ -30,4 +31,20 @@ func OnConflict(tx *gorm.DB, idx string) {
 	}
 
 	tx.Statement.AddClause(onConflictClause)
+}
+
+// uniqueIndex returns the unique index named idx, or nil when the schema declares no such index.
+// idx matches an index name only, never a field name.
+func uniqueIndex(s *schema.Schema, idx string) *schema.Index {
+	if s == nil {
+		return nil
+	}
+
+	for _, index := range s.ParseIndexes() {
+		if index.Name == idx && index.Class == "UNIQUE" {
+			return index
+		}
+	}
+
+	return nil
 }
