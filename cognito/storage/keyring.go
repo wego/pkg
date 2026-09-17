@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"time"
 
+	"strings"
+
 	wegostrings "github.com/wego/pkg/strings"
+
 	"github.com/zalando/go-keyring"
 
 	"github.com/wego/pkg/cognito"
@@ -176,7 +179,7 @@ func (k *keyringStore) readPointer(namespace string) (keyringPointer, error) {
 		return keyringPointer{}, nil
 	}
 	if err != nil {
-		return keyringPointer{}, fmt.Errorf("read the keychain: %w (is the system keychain unlocked?)", err)
+		return keyringPointer{}, fmt.Errorf("read the keychain: %w%s", err, keychainHint(err))
 	}
 
 	var pointer keyringPointer
@@ -306,7 +309,7 @@ func (k *keyringStore) Save(namespace string, tokens *cognito.TokenSet) error {
 	// keeps failures reproducible.
 	for _, field := range tokenFields {
 		if err := k.backend.Set(k.service, fieldAccount(namespace, generation, field), values[field]); err != nil {
-			return fmt.Errorf("write %s to the keychain: %w (is the system keychain unlocked?)", field, err)
+			return fmt.Errorf("write the %s token to the keychain: %w%s", field, err, keychainHint(err))
 		}
 	}
 
@@ -317,7 +320,7 @@ func (k *keyringStore) Save(namespace string, tokens *cognito.TokenSet) error {
 
 	// The commit.
 	if err := k.backend.Set(k.service, pointerAccount(namespace), string(committed)); err != nil {
-		return fmt.Errorf("commit the session to the keychain: %w (is the system keychain unlocked?)", err)
+		return fmt.Errorf("commit the session to the keychain: %w%s", err, keychainHint(err))
 	}
 
 	// The generation before the one just replaced is now unreachable by any
@@ -367,7 +370,7 @@ func (k *keyringStore) Delete(namespace string) error {
 
 	err := k.backend.Delete(k.service, pointerAccount(namespace))
 	if err != nil && !errors.Is(err, keyring.ErrNotFound) {
-		return fmt.Errorf("delete the token pointer from the keychain: %w (is the system keychain unlocked?)", err)
+		return fmt.Errorf("delete the token pointer from the keychain: %w%s", err, keychainHint(err))
 	}
 
 	for _, generation := range []string{pointer.Current, pointer.Previous} {
@@ -407,4 +410,46 @@ func pointerAccount(namespace string) string {
 // fieldAccount is the keychain account name for one field of one generation.
 func fieldAccount(namespace, generation, field string) string {
 	return namespace + "/" + generation + "/" + field
+}
+
+// keychainHint appends advice that matches the actual failure.
+//
+// The previous unconditional "(is the system keychain unlocked?)" was wrong in
+// the most common failure: on a headless Linux host there is no keychain to
+// unlock, the D-Bus secrets service simply is not running, and the hint sent
+// readers looking for a lock that does not exist. A locked keychain and an
+// absent one need opposite responses, so the message has to tell them apart.
+func keychainHint(err error) string {
+	if err == nil {
+		return ""
+	}
+	if isKeychainUnavailable(err) {
+		return " (this host has no OS keychain - see NewAuto for the file-backed fallback)"
+	}
+	return " (is the system keychain unlocked?)"
+}
+
+// isKeychainUnavailable reports whether the backend is absent rather than
+// merely refusing.
+//
+// String matching, because go-keyring surfaces a missing D-Bus secrets service
+// as an opaque error with no sentinel to compare against. Matching is
+// deliberately narrow: a false negative only costs a less precise hint, while a
+// false positive would tell someone with a genuinely locked keychain that they
+// do not have one.
+func isKeychainUnavailable(err error) bool {
+	if errors.Is(err, keyring.ErrUnsupportedPlatform) {
+		return true
+	}
+	text := strings.ToLower(err.Error())
+	for _, marker := range []string{
+		"org.freedesktop.secrets",          // no secrets service registered on the bus
+		"was not provided by any .service", // the same, as dbus words it
+		"dbus",                             // no session bus at all, the SSH case
+	} {
+		if strings.Contains(text, marker) {
+			return true
+		}
+	}
+	return false
 }
