@@ -6,7 +6,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.12.1
-	github.com/wego/pkg/common v0.1.18
+	github.com/wego/pkg/common v0.1.19
 	gopkg.in/DataDog/dd-trace-go.v1 v1.72.1
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.31.2

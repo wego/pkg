@@ -89,7 +89,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/wego/pkg/collection v0.1.11 // indirect
-	github.com/wego/pkg/common v0.1.18 // indirect
+	github.com/wego/pkg/common v0.1.19 // indirect
 	github.com/wego/pkg/env v0.1.1 // indirect
 	github.com/wego/pkg/pointer v0.1.3 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
