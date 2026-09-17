@@ -2,10 +2,12 @@ package storage
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zalando/go-keyring"
 
 	"github.com/wego/pkg/cognito"
 )
@@ -111,5 +113,35 @@ func TestAutoStore_LoadAndSaveStayOnThePrimary(t *testing.T) {
 func TestFileStoreProtects(t *testing.T) {
 	// Whatever this suite runs on is a platform we support, so the live answer
 	// must be true - if it is not, the fallback is silently disabled here.
-	assert.True(t, fileStoreProtects(), "the development platforms must support the file store")
+	assert.True(t, defaultFileStoreProtects(), "the development platforms must support the file store")
+}
+
+// TestNewAuto_LeavesTheFileStoreAloneWhereItsGuaranteesDoNotHold covers the
+// platform gate for the store Delete also clears, not just the selected one.
+//
+// The allow-list already kept the file store from being chosen on such a
+// platform, but it was still wired in as the secondary, so signing out reached
+// into a store whose owner-only mode and whose flock serialisation are both
+// unverified there. The exposure is the same resurrection this package fixes
+// on Unix: a store that cannot serialise Save against Delete.
+func TestNewAuto_LeavesTheFileStoreAloneWhereItsGuaranteesDoNotHold(t *testing.T) {
+	keyring.MockInit()
+
+	original := fileStoreProtects
+	t.Cleanup(func() { fileStoreProtects = original })
+	fileStoreProtects = func() bool { return false }
+
+	dir := t.TempDir()
+
+	store, downgrade := NewAuto(testService, dir)
+	require.Nil(t, downgrade, "the keychain is usable, so there is nothing to downgrade to")
+
+	require.NoError(t, store.Save(testNamespace, sampleTokens()))
+	require.NoError(t, store.Delete(testNamespace),
+		"sign-out must still succeed without reaching into the unsupported store")
+
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	assert.Empty(t, entries,
+		"nothing may be created in the file store's directory on a platform where its guarantees do not hold, not even the lock file")
 }

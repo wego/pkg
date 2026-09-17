@@ -45,21 +45,24 @@ func (d *Downgrade) Unwrap() error { return d.Cause }
 // fileStore's doc comment. A caller that would rather fail than write a
 // long-lived refresh token to disk should use NewKeyring directly.
 func NewAuto(service, dir string) (Store, *Downgrade) {
+	// Where the file store's guarantees do not hold, it is not an option at
+	// all - not as the selected backend, and not as the one Delete also clears.
+	//
+	// Its protection is 0600/0700, which is a Unix guarantee; Go maps those
+	// bits onto Windows ACLs only approximately. Its serialisation is flock,
+	// which is also Unix. Wiring it in as the secondary anyway would mean
+	// logout reaching into an unserialised store on exactly the platform where
+	// neither guarantee has been verified, so the keychain is the whole answer
+	// there. Windows has a working credential manager for go-keyring, so a
+	// probe failure is a real problem to surface rather than route around:
+	// return the keychain store and let its own error speak.
+	if !fileStoreProtects() {
+		return NewKeyring(service), nil
+	}
+
 	file := NewFile(dir)
 
 	if err := probeKeyring(service); err != nil {
-		// Only downgrade where the file store's protection actually holds. Its
-		// guarantee is 0600/0700, which is a Unix guarantee; Go maps those bits
-		// onto Windows ACLs only approximately, so falling back there would
-		// write a long-lived refresh token to a file whose protection we have
-		// not verified and have documented as Unix-only. Windows has a working
-		// credential manager for go-keyring, so a probe failure there is a real
-		// problem to surface rather than to route around: return the keychain
-		// store and let its own error speak.
-		if !fileStoreProtects() {
-			return NewKeyring(service), nil
-		}
-
 		// Keychain unusable: read and write the file, but still try to clear
 		// the keychain on Delete for the mirror-image case - a session written
 		// on a host that had a keychain, being signed out from one that does
@@ -139,11 +142,16 @@ func probeKeyring(service string) error {
 }
 
 // fileStoreProtects reports whether this platform enforces the file store's
-// documented owner-only guarantee.
+// documented guarantees. It is a variable so a test can exercise the
+// unsupported-platform path on a machine that does support it.
+var fileStoreProtects = defaultFileStoreProtects
+
+// defaultFileStoreProtects reports whether this platform enforces the file
+// store's documented owner-only guarantee, and can serialise access to it.
 //
 // An allow-list rather than a deny-list: a platform nobody has checked should
 // not silently inherit permission to hold a long-lived credential in a file.
-func fileStoreProtects() bool {
+func defaultFileStoreProtects() bool {
 	switch runtime.GOOS {
 	case "linux", "darwin", "freebsd", "openbsd", "netbsd", "dragonfly":
 		return true

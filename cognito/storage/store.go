@@ -34,6 +34,9 @@ type Store interface {
 var (
 	errBlankNamespace = errors.New("storage namespace must not be blank")
 	errNoTokens       = errors.New("no tokens to save")
+	// errFileStoreUnsupported is returned by the file store's writes on a
+	// platform that cannot enforce its guarantees. See lock_other.go.
+	errFileStoreUnsupported = errors.New("the file-backed session store is not supported on this platform: its owner-only file mode and its locking are both Unix guarantees, so use NewKeyring here")
 )
 
 // memoryStore keeps tokens in process memory only.
