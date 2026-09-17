@@ -451,8 +451,8 @@ github.com/vmihailenco/tagparser v0.1.2 h1:gnjoVuB/kljJ5wICEEOpx98oXMWPLj22G67Vb
 github.com/vmihailenco/tagparser v0.1.2/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/wego/pkg/collection v0.1.11 h1:WjNHO3Ieyx+aKFWrE9taRsGHHy/G88zGMLx6i7uaMnk=
 github.com/wego/pkg/collection v0.1.11/go.mod h1:Te8vYGlj+7/a/4NbO8FsCoj0ehugw12/IX+XEQXi0A4=
-github.com/wego/pkg/common v0.1.18 h1:SrJyqJZ8Q9I+TpJrNQA2PseIESXMYwZ8Am1TboFIMSU=
-github.com/wego/pkg/common v0.1.18/go.mod h1:hdKYQNsAoM4zpMrvnY0FeXUSUqgWd1J4EmG1gYIVBfA=
+github.com/wego/pkg/common v0.1.19 h1:Dz+F1XoPV9PfQJ07Vn7qmAu2VQWppt+NySHcIr5UN64=
+github.com/wego/pkg/common v0.1.19/go.mod h1:EE2h+yQ7G15zIvZGgTObNJDzuJ6s2xLa6va3Cl29MYw=
 github.com/wego/pkg/database/postgres v0.1.14 h1:j07/iJnPWi4DH6xOOwblaPDyPyaW98qN6m4WPu/ZMA4=
 github.com/wego/pkg/database/postgres v0.1.14/go.mod h1:Ytzk5bkqjILtsG058gl96WdCxNODh7anPRv/4aguzIM=
 github.com/wego/pkg/env v0.1.1 h1:fim9aezYjQFPQUN8L11HfBg6OgMLq1w40Ok/kBtpIL4=

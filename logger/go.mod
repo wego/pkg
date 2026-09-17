@@ -8,7 +8,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/valyala/fastjson v1.6.4
 	github.com/wego/pkg/collection v0.1.11
-	github.com/wego/pkg/common v0.1.18
+	github.com/wego/pkg/common v0.1.19
 	github.com/wego/pkg/errors v0.2.3
 	go.uber.org/zap v1.27.0
 )
