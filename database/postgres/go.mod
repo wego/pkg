@@ -3,7 +3,7 @@ module github.com/wego/pkg/database/postgres
 go 1.25.0
 
 require (
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.12.1
 	github.com/wego/pkg/common v0.1.18
