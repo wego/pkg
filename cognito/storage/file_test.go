@@ -3,6 +3,7 @@ package storage_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -53,8 +54,7 @@ func TestFileStore_IsOwnerOnly(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, storage.NewFile(dir).Save("pay-admin/production", fileTokens()))
 
-	entries, err := os.ReadDir(dir)
-	require.NoError(t, err)
+	entries := sessionFiles(t, dir)
 	require.Len(t, entries, 1, "exactly one session file, and no temp file left behind")
 
 	info, err := entries[0].Info()
@@ -101,8 +101,7 @@ func TestFileStore_NamespaceCannotEscapeTheDirectory(t *testing.T) {
 	_, err := os.Stat(outside)
 	assert.True(t, os.IsNotExist(err), "a traversing namespace must not write outside the store directory")
 
-	entries, err := os.ReadDir(dir)
-	require.NoError(t, err)
+	entries := sessionFiles(t, dir)
 	assert.Len(t, entries, 1, "it must land inside the store directory instead")
 }
 
@@ -128,12 +127,11 @@ func TestFileStore_RejectsAnIncompleteSession(t *testing.T) {
 	store := storage.NewFile(dir)
 	require.NoError(t, store.Save("pay-admin/staging", fileTokens()))
 
-	entries, err := os.ReadDir(dir)
-	require.NoError(t, err)
+	entries := sessionFiles(t, dir)
 	path := filepath.Join(dir, entries[0].Name())
 	require.NoError(t, os.WriteFile(path, []byte(`{"access_token":"a","id_token":"b"}`), 0o600))
 
-	_, err = store.Load("pay-admin/staging")
+	_, err := store.Load("pay-admin/staging")
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "incomplete")
@@ -145,11 +143,10 @@ func TestFileStore_RejectsUnreadableContent(t *testing.T) {
 	store := storage.NewFile(dir)
 	require.NoError(t, store.Save("pay-admin/staging", fileTokens()))
 
-	entries, err := os.ReadDir(dir)
-	require.NoError(t, err)
+	entries := sessionFiles(t, dir)
 	require.NoError(t, os.WriteFile(filepath.Join(dir, entries[0].Name()), []byte("not json"), 0o600))
 
-	_, err = store.Load("pay-admin/staging")
+	_, err := store.Load("pay-admin/staging")
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "sign in again", "the error must name the recovery")
@@ -169,8 +166,7 @@ func TestFileStore_SaveReplacesAtomically(t *testing.T) {
 	second.AccessToken = "second"
 	require.NoError(t, store.Save("pay-admin/staging", second))
 
-	entries, err := os.ReadDir(dir)
-	require.NoError(t, err)
+	entries := sessionFiles(t, dir)
 	assert.Len(t, entries, 1, "replacing a session must not leave the old file or a temp file behind")
 
 	got, err := store.Load("pay-admin/staging")
@@ -232,4 +228,24 @@ func TestDefaultFileDir_FallsBackToHome(t *testing.T) {
 	home, err := os.UserHomeDir()
 	require.NoError(t, err)
 	assert.Equal(t, filepath.Join(home, ".local", "state", "pay-admin"), dir)
+}
+
+// sessionFiles lists the store's session files, excluding the per-namespace
+// .lock files Save and Delete serialise on. Those are created on purpose and
+// never removed, so counting them would say nothing; a leftover .session-* temp
+// file, which these assertions exist to catch, still shows up here.
+func sessionFiles(t *testing.T, dir string) []os.DirEntry {
+	t.Helper()
+
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+
+	kept := make([]os.DirEntry, 0, len(entries))
+	for _, entry := range entries {
+		if !strings.HasSuffix(entry.Name(), ".lock") {
+			kept = append(kept, entry)
+		}
+	}
+
+	return kept
 }

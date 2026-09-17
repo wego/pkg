@@ -1007,3 +1007,96 @@ func TestKeyringStore_SaveReportsAFieldWriteFailure(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, session("live"), got, "a failed write must not disturb the live session")
 }
+
+// TestKeychainHint covers the absent-versus-locked classifier.
+//
+// The two cases need opposite responses from the operator - install or accept
+// the file fallback, versus unlock the keychain they already have - and the
+// only thing separating them is substring matching against error text
+// go-keyring passes through from D-Bus. Nothing else pins those markers, so an
+// edit to one could silently start sending people down the wrong path; this
+// table is what makes such an edit fail.
+func TestKeychainHint(t *testing.T) {
+	tests := []struct {
+		name          string
+		given         error
+		wantAvailable bool
+	}{
+		{
+			name:          "no error adds nothing",
+			given:         nil,
+			wantAvailable: true,
+		},
+		{
+			name:          "no secrets service registered on the bus",
+			given:         errors.New("The name org.freedesktop.secrets was not provided by any .service files"),
+			wantAvailable: false,
+		},
+		// The case above carries every marker at once, so on its own it keeps
+		// passing when any single one is deleted. These two isolate a marker
+		// each, which is the point of covering this at all: the risk is an edit
+		// to one marker going unnoticed.
+		{
+			name:          "only the secrets bus name, no .service wording",
+			given:         errors.New("The name org.freedesktop.secrets was not activatable"),
+			wantAvailable: false,
+		},
+		{
+			name:          "only the .service wording, under another bus name",
+			given:         errors.New("The name org.wego.Keyring was not provided by any .service files"),
+			wantAvailable: false,
+		},
+		{
+			name:          "no session bus at all, the SSH case",
+			given:         errors.New("dbus: couldn't determine address of session bus"),
+			wantAvailable: false,
+		},
+		{
+			name:          "go-keyring says the platform has no backend",
+			given:         keyring.ErrUnsupportedPlatform,
+			wantAvailable: false,
+		},
+		{
+			name:          "wrapped unsupported platform is still unsupported",
+			given:         fmt.Errorf("save the refresh token: %w", keyring.ErrUnsupportedPlatform),
+			wantAvailable: false,
+		},
+		{
+			name:          "a locked keychain is present, not absent",
+			given:         errors.New("User interaction is not allowed"),
+			wantAvailable: true,
+		},
+		{
+			name:          "an unrelated failure must not be read as an absent keychain",
+			given:         errors.New("the specified item could not be found in the keyring"),
+			wantAvailable: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := keychainHint(tt.given)
+
+			if tt.given == nil {
+				assert.Empty(t, got, "a successful call must not be decorated")
+
+				return
+			}
+
+			// Assert on which branch was taken, not on a fragment that both
+			// strings happen to share.
+			if tt.wantAvailable {
+				assert.Contains(t, got, "is the system keychain unlocked?",
+					"a keychain that exists but refused must point at unlocking it")
+				assert.NotContains(t, got, "no OS keychain",
+					"telling someone with a locked keychain they have none sends them to the wrong fix")
+
+				return
+			}
+
+			assert.Contains(t, got, "no OS keychain")
+			assert.Contains(t, got, "NewAuto", "the hint must name where the fallback lives")
+			assert.NotContains(t, got, "unlocked?")
+		})
+	}
+}

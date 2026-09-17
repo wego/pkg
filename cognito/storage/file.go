@@ -171,6 +171,16 @@ func (f *fileStore) Save(namespace string, tokens *cognito.TokenSet) error {
 		return fmt.Errorf("encode the session: %w", err)
 	}
 
+	// Held across the whole write-and-commit. rename(2) below is atomic on its
+	// own, but atomic is not ordered: without this a logout in another terminal
+	// can remove the session and report success in the gap between the temp
+	// file and the rename, and the rename then puts a live refresh token back.
+	unlock, err := f.lockNamespace(namespace)
+	if err != nil {
+		return fmt.Errorf("lock the session directory %s: %w", f.dir, err)
+	}
+	defer unlock()
+
 	final := f.path(namespace)
 
 	// Created in the destination directory so the rename cannot cross a
@@ -217,8 +227,25 @@ func (f *fileStore) Delete(namespace string) error {
 		return errBlankNamespace
 	}
 
+	// The same lock Save takes, so a writer already past its temp file cannot
+	// rename a session back into place after this reports success.
+	//
+	// The directory is deliberately not created here. A missing one means
+	// nothing was ever stored, which is the "not signed in" case Delete already
+	// treats as success - and creating it would leave a trace of an environment
+	// the operator never signed in to.
+	unlock, err := f.lockNamespace(namespace)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("lock the session directory %s: %w", f.dir, err)
+	}
+	defer unlock()
+
 	if err := os.Remove(f.path(namespace)); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("delete the stored session: %w", err)
 	}
+
 	return nil
 }
