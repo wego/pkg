@@ -251,11 +251,13 @@ func (c *refreshCycle[T]) Reload(ctx context.Context, _ string, cached cacheEntr
 //
 // A cycle that loses the claim reports nothing, because none ran.
 func (c *refreshCycle[T]) startCycle() bool {
-	now := c.now()
 	for {
 		started := c.startedAt.Load()
-		// A negative gap means the clock was set backwards. Run the cycle rather than wait for
-		// the clock to reach a time it has already been.
+		now := c.now()
+		// A negative gap means the clock was set backwards. Run the cycle rather than wait for the
+		// clock to reach a time it has already been. Reading the clock inside the loop is what
+		// makes that safe: a caller that loses the swap reads it again, so a negative gap is only
+		// ever a clock that really moved, not a caller that sampled early and lost.
 		if started != nil {
 			if since := now.Sub(*started); since >= 0 && since < c.interval {
 				return false

@@ -41,11 +41,13 @@ func TestAReloadHandedAnOutOfDateEntryComparesAgainstTheLastCycleInstead(t *test
 	assert.Equal(t, "data for v2", kept.data)
 }
 
-// The store's clock never goes backwards, so it keeps asking for cycles however the wall clock
-// moves. Counting the interval on wall time would stall them for the whole of a clock correction.
-// Driven directly because Options.Now is the store's clock too, so a test cannot move just one.
-func TestCyclesAreNotHeldBackByAClockThatMovesBackwards(t *testing.T) {
-	now := time.Now()
+// A caller's clock with no monotonic reading, which is the case the guard exists for: time.Now
+// carries one and Sub counts on it whatever the wall clock does, so only a clock without one can
+// report time going backwards. Driven directly because Options.Now is the store's clock too, so a
+// test cannot move just one of them.
+func TestCyclesAreNotHeldBackByAClockWithNoMonotonicReading(t *testing.T) {
+	// Off the real clock, as every fixture here is, with Round(0) dropping the monotonic reading.
+	now := time.Now().Round(0)
 	cycle := &refreshCycle[string]{interval: time.Minute, now: func() time.Time { return now }}
 
 	require.True(t, cycle.startCycle(), "the first cycle has nothing to wait behind")
