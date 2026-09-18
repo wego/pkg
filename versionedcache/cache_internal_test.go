@@ -40,3 +40,17 @@ func TestAReloadHandedAnOutOfDateEntryComparesAgainstTheLastCycleInstead(t *test
 	assert.Equal(t, 1, reads, "a cycle must compare against what the last finished cycle loaded")
 	assert.Equal(t, "data for v2", kept.data)
 }
+
+// The store's clock never goes backwards, so it keeps asking for cycles however the wall clock
+// moves. Counting the interval on wall time would stall them for the whole of a clock correction.
+// Driven directly because Options.Now is the store's clock too, so a test cannot move just one.
+func TestCyclesAreNotHeldBackByAClockThatMovesBackwards(t *testing.T) {
+	now := time.Now()
+	cycle := &refreshCycle[string]{interval: time.Minute, now: func() time.Time { return now }}
+
+	require.True(t, cycle.startCycle(), "the first cycle has nothing to wait behind")
+	require.False(t, cycle.startCycle(), "a second inside the interval waits for it")
+
+	now = now.Add(-time.Hour)
+	assert.True(t, cycle.startCycle(), "a clock that moved back must not hold the cycle back with it")
+}

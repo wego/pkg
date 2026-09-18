@@ -58,6 +58,9 @@ func publishedVersion(version string, err error, location string) (string, bool,
 type Options struct {
 	// WhenRefreshed is called once per refresh cycle with what the cycle did and any error
 	// that stopped it. This is where a caller emits its own metric and log line.
+	//
+	// It runs inside the cycle, so calling Get on this cache from here waits on the cycle it is
+	// itself part of and never returns. A panic here is caught and the report dropped.
 	WhenRefreshed func(RefreshOutcome, error)
 
 	// MaxStaleness is how long the data may be kept on an unchanged version before it is read
@@ -106,8 +109,8 @@ type Cache[T any] struct {
 // which is what every caller did before this package existed.
 //
 // New panics on a nil loadData, a checkEvery that is not positive, or a negative
-// Options.MaxStaleness. Each of those builds a cache that compiles and is then quietly wrong for
-// the life of the process, so it is refused here rather than at the first cycle.
+// Options.MaxStaleness. Each of those builds a cache that compiles and then never refreshes
+// properly, so it is refused here rather than at the first cycle.
 func New[T any](
 	readVersion ReadVersion,
 	loadData func(context.Context) (T, error),
@@ -117,9 +120,8 @@ func New[T any](
 	if loadData == nil {
 		panic("versionedcache: loadData must not be nil")
 	}
-	// Both of these otherwise produce a cache that compiles, loads once and is quietly wrong:
-	// otter arms no refresh for an interval that is not positive, and a negative staleness limit
-	// makes every cycle read the whole dataset.
+	// Without these: an interval that is not positive never refreshes at all, and a negative
+	// staleness limit reads the whole dataset every cycle.
 	if checkEvery <= 0 {
 		panic("versionedcache: checkEvery must be greater than zero")
 	}
@@ -178,9 +180,10 @@ type refreshCycle[T any] struct {
 	whenRefreshed func(RefreshOutcome, error)
 	now           func() time.Time
 
-	// startedAt is when the last cycle began, as Unix nanoseconds, and zero before the first one.
-	// startCycle below is the only writer.
-	startedAt atomic.Int64
+	// startedAt is when the last cycle began, nil before the first one. Kept as a time.Time so the
+	// comparison below counts elapsed time the way the store's own clock does, and a clock set
+	// backwards does not stall every cycle after it.
+	startedAt atomic.Pointer[time.Time]
 
 	// newest is what the last finished cycle produced. The store hands Reload the value the
 	// cache held when that call's Get ran, which is out of date for a cycle that was queued
@@ -241,22 +244,24 @@ func (c *refreshCycle[T]) Reload(ctx context.Context, _ string, cached cacheEntr
 	return c.loadedNow(data, version, published), nil
 }
 
-// startCycle claims the current interval, so that of the callers who find the data due only the
-// first goes on to read. The store puts the data back on the clock when a cycle finishes, not when
-// it starts, so while a read is failing the data stays due for as long as that read takes and every
-// call arriving meanwhile starts a cycle of its own — a source already known to be down is then
-// read continuously rather than once an interval.
+// startCycle claims the interval, so only the first caller that finds the data due goes on to read
+// it. The store puts the data back on the clock when a cycle finishes, not when it starts, so a
+// slow failing read leaves it due meanwhile and every call arriving starts its own cycle — reading
+// a source already known to be down over and over.
 //
-// A cycle that loses this claim reports nothing, because none ran: the caller is counting cycles,
-// and a call that did no work is not one.
+// A cycle that loses the claim reports nothing, because none ran.
 func (c *refreshCycle[T]) startCycle() bool {
-	now := c.now().UnixNano()
+	now := c.now()
 	for {
 		started := c.startedAt.Load()
-		if started != 0 && now-started < int64(c.interval) {
-			return false
+		// A negative gap means the clock was set backwards. Run the cycle rather than wait for
+		// the clock to reach a time it has already been.
+		if started != nil {
+			if since := now.Sub(*started); since >= 0 && since < c.interval {
+				return false
+			}
 		}
-		if c.startedAt.CompareAndSwap(started, now) {
+		if c.startedAt.CompareAndSwap(started, &now) {
 			return true
 		}
 	}
@@ -268,9 +273,8 @@ func (c *refreshCycle[T]) failed(outcome RefreshOutcome, err error) (cacheEntry[
 	c.report(outcome, err)
 	var nothing cacheEntry[T]
 	if errors.Is(err, otter.ErrNotFound) {
-		// The store reads that sentinel as the dataset being gone and drops what it holds, which
-		// would empty a warm cache after one failed read. Flatten the chain rather than pass it on:
-		// a loader reporting it means the read failed, not that the data no longer exists.
+		// The store reads that error as the dataset being gone and throws away what it holds. A
+		// loader reporting it means the read failed, so flatten it rather than pass it on.
 		return nothing, fmt.Errorf("versionedcache: %s", err)
 	}
 	return nothing, err
@@ -290,9 +294,9 @@ func (c *refreshCycle[T]) currentVersion(ctx context.Context) (version string, p
 	return c.readVersion(ctx)
 }
 
-// loadDataNow reads the dataset, turning a panic into an error. otter starts a background reload
-// on a goroutine of its own and re-panics whatever the loader panicked with, so an unrecovered
-// panic there ends the process instead of reporting one failed cycle.
+// loadDataNow reads the dataset, turning a panic into an error. The store runs a background reload
+// on a goroutine of its own and re-raises whatever the loader panicked with, so a panic left alone
+// there ends the process instead of failing one cycle.
 func (c *refreshCycle[T]) loadDataNow(ctx context.Context) (data T, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -336,8 +340,8 @@ func reloadReason(published, versionUnchanged bool) RefreshOutcome {
 }
 
 // report hands the cycle's outcome to the caller. It runs on the store's refresh goroutine, like
-// the two reads above it, so a panic here would end the process. There is nowhere to report a
-// reporter that failed, so the report is dropped and the next cycle still runs.
+// the two reads above, so a panic here would end the process. Nothing can report a broken
+// reporter, so the report is dropped and the next cycle still runs.
 func (c *refreshCycle[T]) report(outcome RefreshOutcome, err error) {
 	if c.whenRefreshed == nil {
 		return

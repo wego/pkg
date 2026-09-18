@@ -91,6 +91,8 @@ the data the cache already holds, and starts the refresh; a dataset that changed
 call. Nothing waits on Redis once the cache is warm, and the worst-case staleness is the interval
 plus one refresh. The refresh also runs with the caller's cancellation stripped, so a deadline on the
 `Get` that started it does not cut it short; the Redis client's own timeouts bound it instead.
+Each call arriving while a refresh is still running starts a goroutine that waits for it, so a slow
+Redis is a short-lived spike in goroutines bounded by that client's timeouts.
 
 **Get returns an error only when it has never loaded.** Once a load has succeeded, a failure
 to read either the version or the data keeps the previous value and `Get` returns it with a
