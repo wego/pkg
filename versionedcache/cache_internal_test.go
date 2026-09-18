@@ -56,3 +56,26 @@ func TestCyclesAreNotHeldBackByAClockWithNoMonotonicReading(t *testing.T) {
 	now = now.Add(-time.Hour)
 	assert.True(t, cycle.startCycle(), "a clock that moved back must not hold the cycle back with it")
 }
+
+// startCycle's contract is that only one cycle holds the interval. A caller that loses the swap
+// re-reads the clock, so the gap it compares is against a start that really is in the past.
+func TestOnlyOneCycleHoldsTheIntervalWhenAnotherClaimsItMidSwap(t *testing.T) {
+	base := time.Now().Round(0)
+	cycle := &refreshCycle[string]{interval: time.Minute}
+
+	reads := 0
+	cycle.now = func() time.Time {
+		reads++
+		if reads == 1 {
+			// Another cycle reads the clock a second later and wins the claim, which is the
+			// window this caller's swap has to survive.
+			won := base.Add(2 * time.Second)
+			cycle.startedAt.Store(&won)
+			return base.Add(1 * time.Second)
+		}
+		return base.Add(3 * time.Second)
+	}
+
+	assert.False(t, cycle.startCycle(),
+		"a cycle that lost the swap must re-read the clock, not read its own stale sample as a clock that moved backwards")
+}
