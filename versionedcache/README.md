@@ -76,7 +76,7 @@ metric tag is `string(outcome)` with nothing to branch on.
 | Outcome | Meaning |
 | --- | --- |
 | `version_unchanged` | the version matched, so nothing was read |
-| `reloaded_after_change` | the version moved, so the data was read again |
+| `reloaded_after_change` | the version moved, so the data was read again, and a first load with a version published reports this too |
 | `reloaded_without_version` | there was no version to compare, so the data was read again |
 | `reloaded_at_max_staleness` | the version had not moved but the data had been kept for `MaxStaleness`, so it was read again |
 | `refresh_failed` | the read failed and the previous value is still being served |
