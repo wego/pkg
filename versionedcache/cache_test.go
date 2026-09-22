@@ -909,6 +909,30 @@ func TestNewRejectsSettingsThatWouldNeverRefresh(t *testing.T) {
 	}
 }
 
+// New's godoc promises the two loads differ: this one runs on the calling goroutine, so it
+// carries that caller's deadline. The background half is the test below.
+func TestTheFirstLoadRunsUnderTheCallersDeadline(t *testing.T) {
+	server, client := newTestClient(t)
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+
+	hasDeadline := make(chan bool, 4)
+	loadData := func(ctx context.Context) (string, error) {
+		_, has := ctx.Deadline()
+		hasDeadline <- has
+		return "data", nil
+	}
+
+	cache := versionedcache.New(versionedcache.VersionInKey(client, exampleVersionKey), loadData,
+		time.Minute, versionedcache.Options{})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := cache.Get(ctx)
+	require.NoError(t, err)
+
+	assert.True(t, <-hasDeadline, "a first Get needs a budget its load can finish within")
+}
+
 // A background reload must not inherit the cancellation of the Get that started it, or a caller
 // whose request ends would cut the refresh short for everyone. otter strips it today, and nothing
 // in the suite held that down, so a store swap that stopped stripping would ship green.

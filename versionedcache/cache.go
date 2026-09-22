@@ -65,7 +65,8 @@ type Options struct {
 	WhenRefreshed func(RefreshOutcome, error)
 
 	// MaxStaleness is how long the data may be kept on an unchanged version before it is read
-	// again anyway, at the next cycle. Zero means DefaultMaxStaleness. It is the way out when a
+	// again anyway, at the next cycle. Zero means DefaultMaxStaleness, and New panics when the
+	// value in force is shorter than checkEvery, that default included. It is the way out when a
 	// version stops moving for some reason other than the data being unchanged, such as a
 	// writer that changed rows and died before publishing.
 	MaxStaleness time.Duration
@@ -109,8 +110,10 @@ type Cache[T any] struct {
 // A nil readVersion means the dataset carries no version, so the data reloads every checkEvery,
 // which is what every caller did before this package existed.
 //
-// loadData is handed a context with no deadline and no cancellation, because a refresh must
-// outlive the Get that started it. Put any timeout it needs inside it.
+// A background refresh hands loadData a context with no deadline and no cancellation, because
+// it must outlive the Get that started it. The first load is the exception: it runs on the
+// calling goroutine under that caller's context, deadline and all. Put any timeout loadData
+// needs inside it, and give the first Get a budget the load can finish within.
 //
 // New panics on a nil loadData, a checkEvery that is not positive, or an Options.MaxStaleness
 // shorter than checkEvery — including a negative one, and including the DefaultMaxStaleness a
@@ -254,9 +257,10 @@ func (c *refreshCycle[T]) Reload(ctx context.Context, _ string, cached cacheEntr
 }
 
 // startCycle claims the interval, so only the first caller that finds the data due goes on to read
-// it. A slow read is already deduplicated by the store, so what this bounds is a quick one: the
-// store does not re-check freshness when a cycle ends, so the next call arriving finds the data
-// still due and starts another, over and over — reading a source that may already be down.
+// it. A read still in flight is already deduplicated by the store; what this bounds is the window
+// after one ends. The store re-arms the entry when a cycle finishes, failed ones included, but
+// calls arriving before that lands still find the data due and each start a cycle of their own,
+// hammering a source that may already be down.
 //
 // A cycle that loses the claim reports nothing, because none ran.
 func (c *refreshCycle[T]) startCycle() bool {
