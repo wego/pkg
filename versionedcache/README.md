@@ -38,8 +38,10 @@ configs, err := settings.Get(ctx)
 ```
 
 `New` refuses a cache that would be quietly wrong for the life of the process, and panics on a
-nil loader, a `checkEvery` that is not positive, or a negative `Options.MaxStaleness`. There is no
-error to return, and each of those builds a cache that compiles and then never refreshes properly.
+nil loader, a `checkEvery` that is not positive, or an `Options.MaxStaleness` shorter than
+`checkEvery`, including a negative one and including the six-hour default a zero takes. There is
+no error to return, and each of those builds a cache that compiles and then never refreshes
+properly.
 
 **A string key of its own**, read with `GET`. Use this when the version has no hash to sit in.
 
@@ -92,10 +94,10 @@ The `error` argument carries detail for the log line, never the classification.
 **A refresh runs in the background.** The call that finds the interval elapsed is answered with
 the data the cache already holds, and starts the refresh; a dataset that changed reaches a later
 call. Nothing waits on Redis once the cache is warm, and the worst-case staleness is the interval
-plus one refresh. The refresh also runs with the caller's cancellation stripped, so a deadline on the
-`Get` that started it does not cut it short; the Redis client's own timeouts bound it instead.
-Each call arriving while a refresh is still running starts a goroutine that waits for it, so a slow
-Redis is a short-lived spike in goroutines bounded by that client's timeouts.
+plus one refresh. The refresh runs with the caller's cancellation and deadline stripped, so a
+deadline on the `Get` that started it does not cut it short. The Redis client bounds its own
+reads, but nothing bounds `loadData`: put any timeout it needs inside it, or a load that hangs
+parks every arriving `Get` on a goroutine and reports no outcome at all.
 
 **Get returns an error only when it has never loaded.** Once a load has succeeded, a failure
 to read either the version or the data keeps the previous value and `Get` returns it with a

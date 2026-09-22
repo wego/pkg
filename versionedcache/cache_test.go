@@ -158,7 +158,13 @@ func assertServes(t *testing.T, cache *versionedcache.Cache[string], want string
 func newTestClient(t *testing.T) (*miniredis.Miniredis, *redis.Client) {
 	t.Helper()
 	server := miniredis.RunT(t)
-	client := redis.NewClient(&redis.Options{Addr: server.Addr()})
+	// Stock options retry three times and wait five seconds to dial, so every test that closes
+	// the server pays 1.7s of backoff, against a 5s budget in waitUntil. Fail fast instead.
+	client := redis.NewClient(&redis.Options{
+		Addr:        server.Addr(),
+		MaxRetries:  -1,
+		DialTimeout: 100 * time.Millisecond,
+	})
 	t.Cleanup(func() { _ = client.Close() })
 	return server, client
 }
@@ -173,7 +179,9 @@ const (
 // versionPlace is one of the two places a version can live. A behaviour that has to hold
 // wherever it lives is written once here and run for each place, so the two cannot drift apart.
 type versionPlace struct {
-	name    string
+	name string
+	// named is how an error from this place says where it was reading.
+	named   string
 	publish func(*testing.T, *miniredis.Miniredis, string)
 	build   func(*redis.Client, func(context.Context) (string, error), versionedcache.Options) *versionedcache.Cache[string]
 }
@@ -181,7 +189,8 @@ type versionPlace struct {
 func versionPlaces() []versionPlace {
 	return []versionPlace{
 		{
-			name: "a string key of its own",
+			name:  "a string key of its own",
+			named: exampleVersionKey,
 			publish: func(t *testing.T, server *miniredis.Miniredis, version string) {
 				require.NoError(t, server.Set(exampleVersionKey, version))
 			},
@@ -191,7 +200,8 @@ func versionPlaces() []versionPlace {
 			},
 		},
 		{
-			name: "one field of a shared hash",
+			name:  "one field of a shared hash",
+			named: exampleVersionHashKey + " field " + exampleVersionField,
 			publish: func(_ *testing.T, server *miniredis.Miniredis, version string) {
 				server.HSet(exampleVersionHashKey, exampleVersionField, version)
 			},
@@ -478,15 +488,20 @@ func TestAFirstLoadThatCannotReadTheVersionReturnsTheError(t *testing.T) {
 
 func TestFirstLoadFailureIsReturnedToTheCaller(t *testing.T) {
 	_, client := newTestClient(t)
+	reported := newCycles(t)
 	loadData := func(context.Context) (string, error) {
 		return "", errors.New("the hash could not be read")
 	}
 
-	cache := versionedcache.New(versionedcache.VersionInKey(client, exampleVersionKey), loadData, time.Minute, versionedcache.Options{})
+	cache := versionedcache.New(versionedcache.VersionInKey(client, exampleVersionKey), loadData, time.Minute,
+		versionedcache.Options{WhenRefreshed: reported.record})
 
 	data, err := cache.Get(context.Background())
 	assert.Error(t, err, "with nothing cached there is nothing to fall back to")
 	assert.Empty(t, data)
+	// The first load runs on this goroutine, so the report is already in by now.
+	assert.Equal(t, []versionedcache.RefreshOutcome{versionedcache.FirstLoadFailed}, reported.seen(),
+		"nothing is cached, so this is not a warm cache serving slightly old data")
 }
 
 // Nothing has ever loaded, so a caller arriving while the first load is running has no previous
@@ -892,6 +907,109 @@ func TestNewRejectsSettingsThatWouldNeverRefresh(t *testing.T) {
 			assert.Panics(t, c.build)
 		})
 	}
+}
+
+// A background reload must not inherit the cancellation of the Get that started it, or a caller
+// whose request ends would cut the refresh short for everyone. otter strips it today, and nothing
+// in the suite held that down, so a store swap that stopped stripping would ship green.
+func TestABackgroundReloadDoesNotInheritTheCallersCancellation(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	reported := newCycles(t)
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.1"))
+
+	var loads atomic.Int64
+	cancelled := make(chan struct{})
+	reloadSaw := make(chan context.Context, 4)
+	loadData := func(ctx context.Context) (string, error) {
+		if loads.Add(1) > 1 {
+			// Read the context only once the Get that started this cycle is cancelled.
+			<-cancelled
+			reloadSaw <- ctx
+		}
+		return "data", nil
+	}
+
+	cache := versionedcache.New(versionedcache.VersionInKey(client, exampleVersionKey), loadData, time.Minute,
+		versionedcache.Options{Now: clock.Now, WhenRefreshed: reported.record})
+
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	// A version that moved, so the next cycle reaches the loader at all.
+	require.NoError(t, server.Set(exampleVersionKey, "20260912.2"))
+	clock.Advance(2 * time.Minute)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	_, err = cache.Get(ctx) // answered from memory; the reload runs behind it
+	require.NoError(t, err)
+	cancel()
+	close(cancelled)
+
+	select {
+	case reloadCtx := <-reloadSaw:
+		assert.NoError(t, reloadCtx.Err(), "the reload must outlive the Get that started it")
+		_, hasDeadline := reloadCtx.Deadline()
+		assert.False(t, hasDeadline, "and it carries no deadline, so loadData has to bound itself")
+	case <-time.After(5 * time.Second):
+		t.Fatal("the reload never reached the loader")
+	}
+}
+
+// Every failure test hardcoded the string-key shape, so a hash read that swallowed its errors
+// stayed green and a Redis outage on a hash-shaped cache looked like "no version published".
+func TestAFailedVersionReadIsReportedWhereverTheVersionLives(t *testing.T) {
+	for _, place := range versionPlaces() {
+		t.Run(place.name, func(t *testing.T) {
+			server, client := newTestClient(t)
+			clock := newFakeClock()
+			data := newAnswers("first")
+			reported := newCycles(t)
+			place.publish(t, server, "20260912.1")
+
+			cache := place.build(client, data.load,
+				versionedcache.Options{Now: clock.Now, WhenRefreshed: reported.record})
+
+			_, err := cache.Get(context.Background())
+			require.NoError(t, err)
+
+			// Redis goes away.
+			server.Close()
+			clock.Advance(2 * time.Minute)
+			refreshCycle(t, cache, reported)
+
+			assert.Equal(t, versionedcache.RefreshFailed, reported.seen()[1],
+				"an outage is a failed cycle, not a dataset with no version")
+			assert.ErrorContains(t, reported.lastError(), place.named,
+				"the error names where it was reading")
+			assert.Equal(t, 1, data.timesRead(), "the data must not be read when the version could not be")
+		})
+	}
+}
+
+// Deleting the version is the off switch the README advertises. Data loaded on a published empty
+// version must not compare equal to nothing published, or the switch is ignored for a full cycle.
+func TestDeletingAPublishedEmptyVersionReadsTheDataAgain(t *testing.T) {
+	server, client := newTestClient(t)
+	clock := newFakeClock()
+	data := newAnswers("first")
+	reported := newCycles(t)
+	require.NoError(t, server.Set(exampleVersionKey, ""))
+
+	cache := versionedcache.New(versionedcache.VersionInKey(client, exampleVersionKey), data.load, time.Minute,
+		versionedcache.Options{Now: clock.Now, WhenRefreshed: reported.record})
+
+	_, err := cache.Get(context.Background())
+	require.NoError(t, err)
+
+	server.Del(exampleVersionKey)
+	data.set("second")
+	clock.Advance(2 * time.Minute)
+	refreshCycle(t, cache, reported)
+
+	assert.Equal(t, 2, data.timesRead(), "nothing published cannot match a published empty version")
+	assert.Equal(t, versionedcache.ReloadedWithoutVersion, reported.seen()[1])
+	assertServes(t, cache, "second")
 }
 
 // A consumer tags its metric with string(outcome), so these six literals are the contract and

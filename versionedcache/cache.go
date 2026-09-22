@@ -53,8 +53,8 @@ func publishedVersion(version string, err error, location string) (string, bool,
 	return version, true, nil
 }
 
-// Options are the parts of a cache a caller may leave out. The zero value is fine: nothing
-// is reported and the real clock is used.
+// Options are the parts of a cache a caller may leave out: nothing is reported, the real clock
+// is used, and MaxStaleness takes DefaultMaxStaleness.
 type Options struct {
 	// WhenRefreshed is called once per refresh cycle with what the cycle did and any error
 	// that stopped it. This is where a caller emits its own metric and log line.
@@ -108,6 +108,9 @@ type Cache[T any] struct {
 //
 // A nil readVersion means the dataset carries no version, so the data reloads every checkEvery,
 // which is what every caller did before this package existed.
+//
+// loadData is handed a context with no deadline and no cancellation, because a refresh must
+// outlive the Get that started it. Put any timeout it needs inside it.
 //
 // New panics on a nil loadData, a checkEvery that is not positive, or an Options.MaxStaleness
 // shorter than checkEvery — including a negative one, and including the DefaultMaxStaleness a
@@ -251,9 +254,9 @@ func (c *refreshCycle[T]) Reload(ctx context.Context, _ string, cached cacheEntr
 }
 
 // startCycle claims the interval, so only the first caller that finds the data due goes on to read
-// it. The store puts the data back on the clock when a cycle finishes, not when it starts, so a
-// slow failing read leaves it due meanwhile and every call arriving starts its own cycle — reading
-// a source already known to be down over and over.
+// it. A slow read is already deduplicated by the store, so what this bounds is a quick one: the
+// store does not re-check freshness when a cycle ends, so the next call arriving finds the data
+// still due and starts another, over and over — reading a source that may already be down.
 //
 // A cycle that loses the claim reports nothing, because none ran.
 func (c *refreshCycle[T]) startCycle() bool {
