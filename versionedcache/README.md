@@ -61,11 +61,14 @@ there means nobody publishes one, so deleting it is an off switch that needs no 
 rows and die before it publishes, or a bulk import can publish once at the very end. So data
 kept on an unchanged version for `Options.MaxStaleness` is read again at the next cycle anyway,
 and that read restarts the clock; a cycle that skipped does not. Zero means
-`DefaultMaxStaleness`, six hours. Set it against how often the writer runs, and keep it longer
-than the check interval, or every cycle reloads.
+`DefaultMaxStaleness`, six hours. Set it against how often the writer runs. It has to be at
+least the check interval — a shorter one puts every cycle past the limit, so the whole dataset
+is read every time and the version decides nothing, and `New` refuses it.
 
 `Get` returns `T` by value, so it copies whatever you store on every call. Hold a map, a slice
-or a pointer when the dataset is large.
+or a pointer when the dataset is large. For those shapes the copy is the header alone, so every
+caller shares the backing store the cache holds: treat what `Get` returns as read-only, and copy
+it before mutating.
 
 ## What each cycle reports
 

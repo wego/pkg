@@ -59,8 +59,9 @@ type Options struct {
 	// WhenRefreshed is called once per refresh cycle with what the cycle did and any error
 	// that stopped it. This is where a caller emits its own metric and log line.
 	//
-	// It runs inside the cycle, so calling Get on this cache from here waits on the cycle it is
-	// itself part of and never returns. A panic here is caught and the report dropped.
+	// It runs inside the cycle, so calling Get on this cache from here during the first load
+	// waits on the load it is itself part of and never returns. On a later cycle that Get is
+	// answered from memory instead. A panic here is caught and the report dropped.
 	WhenRefreshed func(RefreshOutcome, error)
 
 	// MaxStaleness is how long the data may be kept on an unchanged version before it is read
@@ -108,9 +109,10 @@ type Cache[T any] struct {
 // A nil readVersion means the dataset carries no version, so the data reloads every checkEvery,
 // which is what every caller did before this package existed.
 //
-// New panics on a nil loadData, a checkEvery that is not positive, or a negative
-// Options.MaxStaleness. Each of those builds a cache that compiles and then never refreshes
-// properly, so it is refused here rather than at the first cycle.
+// New panics on a nil loadData, a checkEvery that is not positive, or an Options.MaxStaleness
+// shorter than checkEvery — including a negative one, and including the DefaultMaxStaleness a
+// zero takes. Each of those builds a cache that compiles and then never refreshes properly, so
+// it is refused here rather than at the first cycle.
 func New[T any](
 	readVersion ReadVersion,
 	loadData func(context.Context) (T, error),
@@ -120,13 +122,9 @@ func New[T any](
 	if loadData == nil {
 		panic("versionedcache: loadData must not be nil")
 	}
-	// Without these: an interval that is not positive never refreshes at all, and a negative
-	// staleness limit reads the whole dataset every cycle.
+	// An interval that is not positive never refreshes at all.
 	if checkEvery <= 0 {
 		panic("versionedcache: checkEvery must be greater than zero")
-	}
-	if options.MaxStaleness < 0 {
-		panic("versionedcache: Options.MaxStaleness must not be negative")
 	}
 	now := options.Now
 	if now == nil {
@@ -135,6 +133,14 @@ func New[T any](
 	maxStaleness := options.MaxStaleness
 	if maxStaleness == 0 {
 		maxStaleness = DefaultMaxStaleness
+	}
+	// A limit the interval always clears puts every cycle past it, so the whole dataset is read
+	// every time and the version decides nothing. Checked after the default is filled in, because
+	// a zero left with a check interval longer than six hours lands in the same place.
+	if maxStaleness < checkEvery {
+		panic(fmt.Sprintf(
+			"versionedcache: Options.MaxStaleness (%s) must not be shorter than checkEvery (%s)",
+			maxStaleness, checkEvery))
 	}
 	store := &otter.Options[string, cacheEntry[T]]{
 		RefreshCalculator: refreshEvery[T]{interval: checkEvery},

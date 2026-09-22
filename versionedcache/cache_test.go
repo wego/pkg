@@ -414,7 +414,8 @@ func TestFailedVersionReadKeepsTheCachedData(t *testing.T) {
 	require.NoError(t, err, "a warm cache keeps serving through a Redis outage")
 	assert.Equal(t, "first", served)
 	assert.Equal(t, 1, data.timesRead(), "the data must not be read when the version could not be")
-	assert.Error(t, reported.lastError(), "the failure is reported even though Get succeeded")
+	assert.ErrorContains(t, reported.lastError(), exampleVersionKey,
+		"the failure is reported even though Get succeeded, and names the key it could not read")
 }
 
 func TestFailedDataReadKeepsTheCachedData(t *testing.T) {
@@ -876,6 +877,12 @@ func TestNewRejectsSettingsThatWouldNeverRefresh(t *testing.T) {
 		{"a negative staleness limit", func() {
 			versionedcache.New(readVersion, loadData, time.Minute, versionedcache.Options{MaxStaleness: -time.Second})
 		}},
+		{"a staleness limit shorter than the interval", func() {
+			versionedcache.New(readVersion, loadData, time.Minute, versionedcache.Options{MaxStaleness: 30 * time.Second})
+		}},
+		{"an interval longer than the staleness limit a zero takes", func() {
+			versionedcache.New(readVersion, loadData, versionedcache.DefaultMaxStaleness+time.Minute, versionedcache.Options{})
+		}},
 		{"no loader", func() {
 			versionedcache.New[string](readVersion, nil, time.Minute, versionedcache.Options{})
 		}},
@@ -885,6 +892,18 @@ func TestNewRejectsSettingsThatWouldNeverRefresh(t *testing.T) {
 			assert.Panics(t, c.build)
 		})
 	}
+}
+
+// A consumer tags its metric with string(outcome), so these six literals are the contract and
+// renaming one silently renames someone's dashboard series. Nothing else in the suite asserts a
+// literal value, so they are pinned here.
+func TestTheOutcomeStringsAreTheMetricContract(t *testing.T) {
+	assert.Equal(t, "version_unchanged", string(versionedcache.VersionUnchanged))
+	assert.Equal(t, "reloaded_after_change", string(versionedcache.ReloadedAfterChange))
+	assert.Equal(t, "reloaded_without_version", string(versionedcache.ReloadedWithoutVersion))
+	assert.Equal(t, "reloaded_at_max_staleness", string(versionedcache.ReloadedAtMaxStaleness))
+	assert.Equal(t, "refresh_failed", string(versionedcache.RefreshFailed))
+	assert.Equal(t, "first_load_failed", string(versionedcache.FirstLoadFailed))
 }
 
 // The empty string is what a missing key reads as, and it is also a value a publisher can write.
