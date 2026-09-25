@@ -9,7 +9,7 @@ require (
 	github.com/valyala/fastjson v1.6.4
 	github.com/wego/pkg/collection v0.1.11
 	github.com/wego/pkg/common v0.1.20
-	github.com/wego/pkg/errors v0.2.3
+	github.com/wego/pkg/errors v0.2.10
 	go.uber.org/zap v1.27.0
 )
 

@@ -6,7 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/stretchr/testify v1.12.1
 	github.com/wego/pkg/audit v0.1.4
-	github.com/wego/pkg/errors v0.2.3
+	github.com/wego/pkg/errors v0.2.10
 )
 
 require (

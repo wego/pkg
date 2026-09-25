@@ -7,7 +7,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.21.0
 	github.com/wego/pkg/database/postgres v0.1.14
-	github.com/wego/pkg/errors v0.2.3
+	github.com/wego/pkg/errors v0.2.10
 	gorm.io/gorm v1.31.2
 )
 

@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/eapache/go-resiliency v1.7.0
-	github.com/wego/pkg/errors v0.2.3
+	github.com/wego/pkg/errors v0.2.10
 )
 
 require (

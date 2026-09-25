@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/stretchr/testify v1.12.1
 	github.com/wego/pkg/common v0.1.20
-	github.com/wego/pkg/errors v0.2.3
+	github.com/wego/pkg/errors v0.2.10
 	github.com/wego/pkg/host v0.1.11
 )
 

@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/lestrrat-go/jwx/v2 v2.1.4
-	github.com/wego/pkg/errors v0.2.3
+	github.com/wego/pkg/errors v0.2.10
 	github.com/wego/pkg/http/header v0.1.6
 )
 
