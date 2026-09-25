@@ -8,7 +8,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/wego/pkg/common v0.1.20
 	gopkg.in/DataDog/dd-trace-go.v1 v1.74.8
-	gorm.io/driver/postgres v1.5.11
+	gorm.io/driver/postgres v1.6.3
 	gorm.io/gorm v1.31.2
 )
 
