@@ -49,9 +49,10 @@ const (
 
 // sentry keys
 const (
-	SentryErrorCode  = "error_code"
-	SentryOperations = "operations"
-	SentryRequestID  = "request_id"
+	SentryErrorCode    = "error_code"
+	SentryOperations   = "operations"
+	SentryRequestID    = "request_id"
+	SentryErrorContext = "wego_error"
 )
 
 var (
