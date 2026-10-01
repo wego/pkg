@@ -72,9 +72,11 @@ func enrichScope(ctx context.Context, scope *sentry.Scope, err error) {
 		tagsToSet[SentryRequestID] = reqID
 	}
 
-	// Finally, update the scope with the tags, extras and fingerprint
+	// Preserve structured values in a named context for error events.
 	scope.SetTags(tagsToSet)
-	scope.SetExtras(extrasToSet)
+	if len(extrasToSet) > 0 {
+		scope.SetContext(SentryErrorContext, extrasToSet)
+	}
 	scope.SetFingerprint(fingerprint)
 }
 
