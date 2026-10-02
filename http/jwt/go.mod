@@ -38,7 +38,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.21.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/wego/pkg/collection v0.1.11 // indirect
+	github.com/wego/pkg/collection v0.1.15 // indirect
 	github.com/wego/pkg/common v0.1.20 // indirect
 	github.com/wego/pkg/env v0.1.2 // indirect
 	github.com/wego/pkg/pointer v0.1.3 // indirect
