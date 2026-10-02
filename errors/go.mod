@@ -1,6 +1,6 @@
 module github.com/wego/pkg/errors
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/getsentry/sentry-go v0.49.0

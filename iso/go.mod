@@ -1,3 +1,3 @@
 module github.com/wego/pkg/iso
 
-go 1.22
+go 1.26.0

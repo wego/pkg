@@ -1,6 +1,6 @@
 module github.com/wego/pkg/common
 
-go 1.23.0
+go 1.26.0
 
 require (
 	github.com/Ardesco/credit-card-generator v0.0.0-20201208233833-a7202c328b75

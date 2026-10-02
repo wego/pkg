@@ -1,6 +1,6 @@
 module github.com/wego/pkg/env
 
-go 1.23.0
+go 1.26.0
 
 require github.com/spf13/viper v1.21.0
 
