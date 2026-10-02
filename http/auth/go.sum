@@ -229,8 +229,8 @@ github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65E
 github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
 github.com/unrolled/secure v1.0.1/go.mod h1:R6rugAuzh4TQpbFAq69oqZggyBQxFRFQIewtz5z7Jsc=
 github.com/urfave/cli v1.21.0/go.mod h1:lxDj6qX9Q6lWQxIrbrT0nwecwUtRnhVZAJjJZrVUZZQ=
-github.com/wego/pkg/collection v0.1.11 h1:WjNHO3Ieyx+aKFWrE9taRsGHHy/G88zGMLx6i7uaMnk=
-github.com/wego/pkg/collection v0.1.11/go.mod h1:Te8vYGlj+7/a/4NbO8FsCoj0ehugw12/IX+XEQXi0A4=
+github.com/wego/pkg/collection v0.1.15 h1:HC1HeOr6Ah8RWGj2Pq/TRHhwVYiNMCptqAL9wqU2C/Y=
+github.com/wego/pkg/collection v0.1.15/go.mod h1:dossV0Cbl8IQpwAanoZwpcxO/DDdg1mnV8z3EIoG0rk=
 github.com/wego/pkg/common v0.1.20 h1:cmC7pUsP2kP4byDee5YKN236A2vA9tKIItDJk3GR6Os=
 github.com/wego/pkg/common v0.1.20/go.mod h1:QdF0ldUdrgGophJFpSvSaZ3pAg4uN7D2eONpe+zoxQE=
 github.com/wego/pkg/env v0.1.2 h1:loNSsHycbvAhwLW+fyhORfq9CPfuBmOWgjjdBlZ4YxU=
