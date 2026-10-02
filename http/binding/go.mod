@@ -45,7 +45,7 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/wego/pkg/collection v0.1.11 // indirect
 	github.com/wego/pkg/common v0.1.20 // indirect
-	github.com/wego/pkg/env v0.1.1 // indirect
+	github.com/wego/pkg/env v0.1.2 // indirect
 	github.com/wego/pkg/pointer v0.1.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.15.0 // indirect
