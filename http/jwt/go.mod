@@ -1,6 +1,6 @@
 module github.com/wego/pkg/http/jwt
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/lestrrat-go/jwx/v2 v2.1.4

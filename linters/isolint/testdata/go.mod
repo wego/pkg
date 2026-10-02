@@ -1,6 +1,6 @@
 module example
 
-go 1.24
+go 1.26.0
 
 require (
 	github.com/wego/pkg/currency v0.1.0

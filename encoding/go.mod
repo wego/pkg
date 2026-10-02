@@ -1,6 +1,6 @@
 module github.com/wego/pkg/encoding
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/stretchr/testify v1.12.1

@@ -1,6 +1,6 @@
 module github.com/wego/pkg/strings
 
-go 1.21
+go 1.26.0
 
 require github.com/stretchr/testify v1.12.1
 

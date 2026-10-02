@@ -1,6 +1,6 @@
 module github.com/wego/pkg/database/clauses
 
-go 1.23.0
+go 1.26.0
 
 require (
 	github.com/wego/pkg/strings v0.1.4
