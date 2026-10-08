@@ -1,6 +1,6 @@
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
-github.com/wego/pkg/pointer v0.1.3 h1:Yq52W2rd6HJLU2JTfwbPc3lC42kdosZHXBck28AgGKQ=
-github.com/wego/pkg/pointer v0.1.3/go.mod h1:TincAjFVHSyuZ05qnSP4APqs+eg+adjOfZV6VH0+CUA=
+github.com/wego/pkg/pointer v0.2.0 h1:I2UVIJlEaL+eZgrQTLgXCQ1GKakmaKlqD4kdPrQYavY=
+github.com/wego/pkg/pointer v0.2.0/go.mod h1:3Xj9cetN0r6FEqFd+ix6OS6EL0a5hrENligZjIwePmA=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
 go.yaml.in/yaml/v3 v3.0.5/go.mod h1:HVTZu1O7/Vkt2N+BFy8Zza+lnLsABggaTM2ZpNIGuKg=

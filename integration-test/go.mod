@@ -100,7 +100,7 @@ require (
 	github.com/wego/pkg/collection v0.1.15 // indirect
 	github.com/wego/pkg/common v0.1.20 // indirect
 	github.com/wego/pkg/env v0.1.2 // indirect
-	github.com/wego/pkg/pointer v0.1.3 // indirect
+	github.com/wego/pkg/pointer v0.2.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/collector/component v1.51.1-0.20260205185216-81bc641f26c0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.51.1-0.20260205185216-81bc641f26c0 // indirect
