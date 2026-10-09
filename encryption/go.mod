@@ -32,7 +32,7 @@ require (
 	github.com/spf13/viper v1.21.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/wego/pkg/collection v0.1.15 // indirect
-	github.com/wego/pkg/common v0.1.20 // indirect
+	github.com/wego/pkg/common v0.2.0 // indirect
 	github.com/wego/pkg/env v0.1.2 // indirect
 	github.com/wego/pkg/errors v0.2.10
 	github.com/wego/pkg/pointer v0.2.0 // indirect
