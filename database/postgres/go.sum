@@ -337,8 +337,8 @@ github.com/vmihailenco/msgpack/v4 v4.3.13 h1:A2wsiTbvp63ilDaWmsk2wjx6xZdxQOvpiNl
 github.com/vmihailenco/msgpack/v4 v4.3.13/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+NXzzngzBKDPIqw4=
 github.com/vmihailenco/tagparser v0.1.2 h1:gnjoVuB/kljJ5wICEEOpx98oXMWPLj22G67Vbd1qPqc=
 github.com/vmihailenco/tagparser v0.1.2/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
-github.com/wego/pkg/common v0.1.20 h1:cmC7pUsP2kP4byDee5YKN236A2vA9tKIItDJk3GR6Os=
-github.com/wego/pkg/common v0.1.20/go.mod h1:QdF0ldUdrgGophJFpSvSaZ3pAg4uN7D2eONpe+zoxQE=
+github.com/wego/pkg/common v0.2.0 h1:KtMmXccWyp+AIlDapQ+EIG9bAkATh3RAPDtslZEvzDA=
+github.com/wego/pkg/common v0.2.0/go.mod h1:DhZx45fw3T63qokaTOBGTZqUEw5dgCnIv1X3/RVwY6M=
 github.com/wego/pkg/pointer v0.2.0 h1:I2UVIJlEaL+eZgrQTLgXCQ1GKakmaKlqD4kdPrQYavY=
 github.com/wego/pkg/pointer v0.2.0/go.mod h1:3Xj9cetN0r6FEqFd+ix6OS6EL0a5hrENligZjIwePmA=
 github.com/xlab/treeprint v0.0.0-20180616005107-d6fb6747feb6/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=
