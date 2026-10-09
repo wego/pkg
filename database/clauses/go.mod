@@ -3,7 +3,7 @@ module github.com/wego/pkg/database/clauses
 go 1.26.0
 
 require (
-	github.com/wego/pkg/strings v0.1.4
+	github.com/wego/pkg/strings v0.2.0
 	gorm.io/gorm v1.31.2
 )
 
