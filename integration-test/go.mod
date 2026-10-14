@@ -7,7 +7,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.21.0
 	github.com/wego/pkg/database/postgres v0.1.14
-	github.com/wego/pkg/errors v0.2.10
+	github.com/wego/pkg/errors v0.4.1
 	gorm.io/gorm v1.31.2
 )
 
@@ -45,7 +45,7 @@ require (
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
-	github.com/getsentry/sentry-go v0.31.1 // indirect
+	github.com/getsentry/sentry-go v0.49.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect

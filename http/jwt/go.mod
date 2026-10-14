@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/lestrrat-go/jwx/v2 v2.1.4
-	github.com/wego/pkg/errors v0.2.10
+	github.com/wego/pkg/errors v0.4.1
 	github.com/wego/pkg/http/header v0.1.6
 )
 
@@ -15,7 +15,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
-	github.com/getsentry/sentry-go v0.31.1 // indirect
+	github.com/getsentry/sentry-go v0.49.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.25.0 // indirect
