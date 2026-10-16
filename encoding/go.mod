@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/stretchr/testify v1.12.1
-	github.com/wego/pkg/errors v0.4.1
+	github.com/wego/pkg/errors v0.4.3
 )
 
 require (
