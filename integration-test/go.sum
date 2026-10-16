@@ -476,8 +476,8 @@ github.com/wego/pkg/database/postgres v0.1.14 h1:j07/iJnPWi4DH6xOOwblaPDyPyaW98q
 github.com/wego/pkg/database/postgres v0.1.14/go.mod h1:Ytzk5bkqjILtsG058gl96WdCxNODh7anPRv/4aguzIM=
 github.com/wego/pkg/env v0.1.2 h1:loNSsHycbvAhwLW+fyhORfq9CPfuBmOWgjjdBlZ4YxU=
 github.com/wego/pkg/env v0.1.2/go.mod h1:psaNueSVLwgZC5Vm+sPn+6UiNCSvV4An0Wop0JfSl+E=
-github.com/wego/pkg/errors v0.4.1 h1:Hb9H14Wh740M7nfeNxiphzBzBSapTD0lFPJ0WL5MCgc=
-github.com/wego/pkg/errors v0.4.1/go.mod h1:f//zHN0+Upzjb6CyM70OrYwA8bZOXE4Kzejh9+8lmAQ=
+github.com/wego/pkg/errors v0.4.3 h1:UXY0I4cLDkLFvrrWTCRD0oMtQB8WjhmtVO/kIL11il4=
+github.com/wego/pkg/errors v0.4.3/go.mod h1:yDqtqaM07ywjV1CGj6s6hmtb5ZYbFYhoQI7jC/y3hg8=
 github.com/wego/pkg/pointer v0.2.0 h1:I2UVIJlEaL+eZgrQTLgXCQ1GKakmaKlqD4kdPrQYavY=
 github.com/wego/pkg/pointer v0.2.0/go.mod h1:3Xj9cetN0r6FEqFd+ix6OS6EL0a5hrENligZjIwePmA=
 github.com/xlab/treeprint v0.0.0-20180616005107-d6fb6747feb6/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=

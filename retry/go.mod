@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/eapache/go-resiliency v1.7.0
-	github.com/wego/pkg/errors v0.4.1
+	github.com/wego/pkg/errors v0.4.3
 )
 
 require (
