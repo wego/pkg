@@ -2,6 +2,8 @@ module github.com/wego/pkg/http/auth
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/casbin/casbin/v2 v2.135.0
 	github.com/gin-gonic/gin v1.10.0

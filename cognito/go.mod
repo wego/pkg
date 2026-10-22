@@ -2,6 +2,8 @@ module github.com/wego/pkg/cognito
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/stretchr/testify v1.11.1
 	github.com/wego/pkg/strings v0.1.2

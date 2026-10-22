@@ -2,6 +2,8 @@ module github.com/wego/pkg/errors
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/getsentry/sentry-go v0.49.0
 	github.com/go-playground/validator/v10 v10.25.0

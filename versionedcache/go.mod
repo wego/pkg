@@ -2,6 +2,8 @@ module github.com/wego/pkg/versionedcache
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/maypok86/otter/v2 v2.3.0

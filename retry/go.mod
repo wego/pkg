@@ -2,6 +2,8 @@ module github.com/wego/pkg/retry
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/eapache/go-resiliency v1.7.0
 	github.com/wego/pkg/errors v0.4.3

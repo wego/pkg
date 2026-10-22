@@ -2,6 +2,8 @@ module github.com/wego/pkg/database/postgres
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/spf13/viper v1.21.0

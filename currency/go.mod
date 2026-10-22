@@ -2,6 +2,8 @@ module github.com/wego/pkg/currency
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/bojanz/currency v1.5.0
 	github.com/stretchr/testify v1.12.1

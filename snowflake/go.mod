@@ -2,6 +2,8 @@ module github.com/wego/pkg/snowflake
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/stretchr/testify v1.12.1
 	github.com/wego/pkg/common v0.2.1
