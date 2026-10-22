@@ -2,6 +2,8 @@ module github.com/wego/pkg/http/jwt
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/lestrrat-go/jwx/v2 v2.1.4
 	github.com/wego/pkg/errors v0.4.3

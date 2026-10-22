@@ -2,6 +2,8 @@ module github.com/wego/pkg/linters/stringlint
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/golangci/plugin-module-register v0.1.2
 	golang.org/x/tools v0.32.0

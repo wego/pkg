@@ -2,6 +2,8 @@ module github.com/wego/pkg/secretsmanager
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/sergi/go-diff v1.3.1

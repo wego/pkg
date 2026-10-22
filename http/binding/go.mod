@@ -2,6 +2,8 @@ module github.com/wego/pkg/http/binding
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/stretchr/testify v1.12.1

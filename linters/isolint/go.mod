@@ -2,6 +2,8 @@ module github.com/wego/pkg/linters/isolint
 
 go 1.26.0
 
+toolchain go1.26.10
+
 require (
 	github.com/golangci/plugin-module-register v0.1.2
 	github.com/wego/pkg/currency v0.4.4
