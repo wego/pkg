@@ -188,8 +188,8 @@ github.com/wego/pkg/common v0.2.1 h1:qsTPlONG5+mD21fYZ8pWoe/QFv+Z5tySEjd1609ui18
 github.com/wego/pkg/common v0.2.1/go.mod h1:6D33EdzyQufK6XU6J1atofCtNvQHu8SQo+WTfx1H68s=
 github.com/wego/pkg/env v0.1.2 h1:loNSsHycbvAhwLW+fyhORfq9CPfuBmOWgjjdBlZ4YxU=
 github.com/wego/pkg/env v0.1.2/go.mod h1:psaNueSVLwgZC5Vm+sPn+6UiNCSvV4An0Wop0JfSl+E=
-github.com/wego/pkg/errors v0.4.3 h1:UXY0I4cLDkLFvrrWTCRD0oMtQB8WjhmtVO/kIL11il4=
-github.com/wego/pkg/errors v0.4.3/go.mod h1:yDqtqaM07ywjV1CGj6s6hmtb5ZYbFYhoQI7jC/y3hg8=
+github.com/wego/pkg/errors v0.4.5 h1:5OVjPx839TVTos5aX4zGmxj/H8FhE+9zRX3yLiSwPgA=
+github.com/wego/pkg/errors v0.4.5/go.mod h1:HvlagWfMaAsQr+9h1cAbK6oSothKOUNIH6zuXBcA1cM=
 github.com/wego/pkg/pointer v0.2.0 h1:I2UVIJlEaL+eZgrQTLgXCQ1GKakmaKlqD4kdPrQYavY=
 github.com/wego/pkg/pointer v0.2.0/go.mod h1:3Xj9cetN0r6FEqFd+ix6OS6EL0a5hrENligZjIwePmA=
 github.com/xlab/treeprint v0.0.0-20180616005107-d6fb6747feb6/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=

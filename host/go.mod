@@ -6,7 +6,7 @@ toolchain go1.26.10
 
 require (
 	github.com/stretchr/testify v1.12.1
-	github.com/wego/pkg/errors v0.4.3
+	github.com/wego/pkg/errors v0.4.5
 )
 
 require (
