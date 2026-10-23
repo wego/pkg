@@ -99,7 +99,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/trailofbits/go-mutexasserts v0.0.0-20250514102930-c1f3d2e37561 // indirect
-	github.com/wego/pkg/collection v0.1.15 // indirect
+	github.com/wego/pkg/collection v0.2.0 // indirect
 	github.com/wego/pkg/common v0.2.1 // indirect
 	github.com/wego/pkg/env v0.2.0 // indirect
 	github.com/wego/pkg/pointer v0.2.0 // indirect
