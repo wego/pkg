@@ -5,7 +5,7 @@ go 1.26.0
 toolchain go1.26.10
 
 require (
-	github.com/wego/pkg/strings v0.2.1
+	github.com/wego/pkg/strings v0.2.2
 	gorm.io/gorm v1.31.2
 )
 

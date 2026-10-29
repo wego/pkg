@@ -8,8 +8,8 @@ github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWD
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 github.com/wego/pkg/pointer v0.2.0 h1:I2UVIJlEaL+eZgrQTLgXCQ1GKakmaKlqD4kdPrQYavY=
 github.com/wego/pkg/pointer v0.2.0/go.mod h1:3Xj9cetN0r6FEqFd+ix6OS6EL0a5hrENligZjIwePmA=
-github.com/wego/pkg/strings v0.2.1 h1:CgvnA4DacVGeQr5f52m1IAY2Wa/0wRaIAjHrrDQFOZw=
-github.com/wego/pkg/strings v0.2.1/go.mod h1:X5IAo5sx4iI25wLsiGxnQmBV/OUjcnC9KFGIM/XJB8s=
+github.com/wego/pkg/strings v0.2.2 h1:8nUMpcD7tPB+xGSa73f7BdpelpYMWhzBcdxT/IAnxGU=
+github.com/wego/pkg/strings v0.2.2/go.mod h1:amd71SJ1DRQJ8PD2BZv+Q9tf1+bv12kLVgs6MySb1yE=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
 go.yaml.in/yaml/v3 v3.0.5/go.mod h1:HVTZu1O7/Vkt2N+BFy8Zza+lnLsABggaTM2ZpNIGuKg=
 golang.org/x/text v0.23.0 h1:D71I7dUrlY+VX0gQShAThNGHFxZ13dGLBHQLVl1mJlY=
