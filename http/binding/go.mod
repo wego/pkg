@@ -8,7 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/stretchr/testify v1.12.1
 	github.com/wego/pkg/audit v0.1.4
-	github.com/wego/pkg/errors v0.4.5
+	github.com/wego/pkg/errors v0.4.6
 )
 
 require (

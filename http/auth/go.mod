@@ -7,7 +7,7 @@ toolchain go1.26.10
 require (
 	github.com/casbin/casbin/v2 v2.135.0
 	github.com/gin-gonic/gin v1.10.0
-	github.com/wego/pkg/errors v0.4.5
+	github.com/wego/pkg/errors v0.4.6
 	gorm.io/gorm v1.31.2
 )
 

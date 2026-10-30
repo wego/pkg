@@ -6,7 +6,7 @@ toolchain go1.26.10
 
 require (
 	github.com/lestrrat-go/jwx/v2 v2.1.4
-	github.com/wego/pkg/errors v0.4.5
+	github.com/wego/pkg/errors v0.4.6
 	github.com/wego/pkg/http/header v0.1.6
 )
 
