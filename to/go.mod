@@ -4,4 +4,4 @@ go 1.26.0
 
 toolchain go1.26.10
 
-require github.com/wego/pkg/pointer v0.2.0
+require github.com/wego/pkg/pointer v0.2.1

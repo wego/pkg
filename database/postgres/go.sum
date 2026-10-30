@@ -339,8 +339,8 @@ github.com/vmihailenco/tagparser v0.1.2 h1:gnjoVuB/kljJ5wICEEOpx98oXMWPLj22G67Vb
 github.com/vmihailenco/tagparser v0.1.2/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/wego/pkg/common v0.2.2 h1:xSEEtvIIpD3N5T9HwUfEh5vSpMGakVe3ZFyPmOizQro=
 github.com/wego/pkg/common v0.2.2/go.mod h1:hZmw8QMTeBvBJHh+gwioeHLt6Nxp1HX06dABnxPHzeQ=
-github.com/wego/pkg/pointer v0.2.0 h1:I2UVIJlEaL+eZgrQTLgXCQ1GKakmaKlqD4kdPrQYavY=
-github.com/wego/pkg/pointer v0.2.0/go.mod h1:3Xj9cetN0r6FEqFd+ix6OS6EL0a5hrENligZjIwePmA=
+github.com/wego/pkg/pointer v0.2.1 h1:1NJVmyOdB1QFMBdpFl4GrUGTs4Qw7EXFAHaFNGqMcsI=
+github.com/wego/pkg/pointer v0.2.1/go.mod h1:1eW7ZkCxUNrZBEU8t5o2cvpVgqf1MTv04Q3BDjG4OWw=
 github.com/xlab/treeprint v0.0.0-20180616005107-d6fb6747feb6/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=

@@ -48,7 +48,7 @@ require (
 	github.com/wego/pkg/collection v0.2.0 // indirect
 	github.com/wego/pkg/common v0.2.2 // indirect
 	github.com/wego/pkg/env v0.2.0 // indirect
-	github.com/wego/pkg/pointer v0.2.0 // indirect
+	github.com/wego/pkg/pointer v0.2.1 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.15.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect

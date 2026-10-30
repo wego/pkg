@@ -37,7 +37,7 @@ require (
 	github.com/wego/pkg/common v0.2.2 // indirect
 	github.com/wego/pkg/env v0.2.0 // indirect
 	github.com/wego/pkg/errors v0.4.5
-	github.com/wego/pkg/pointer v0.2.0 // indirect
+	github.com/wego/pkg/pointer v0.2.1 // indirect
 	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
