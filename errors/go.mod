@@ -8,7 +8,7 @@ require (
 	github.com/getsentry/sentry-go v0.50.0
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/stretchr/testify v1.12.1
-	github.com/wego/pkg/common v0.2.1
+	github.com/wego/pkg/common v0.2.2
 	github.com/wego/pkg/env v0.2.0
 	gorm.io/gorm v1.31.2
 )
