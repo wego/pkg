@@ -848,6 +848,9 @@ func Test_RedactURLQueryParams(t *testing.T) {
 		{name: "empty segments", input: "https://example.com/p?&name=Jane&&", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?&name=~&&"},
 		{name: "keeps fragment", input: "https://example.com/p?name=Jane#top", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#top"},
 		{name: "query inside fragment", input: "https://example.com/#/route?name=Jane&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/#/route?name=~&a=1"},
+		{name: "fragment holding params", input: "https://example.com/cb#token=abc&name=Jane&type=x", replacement: "~", params: []string{"token", "name"}, expected: "https://example.com/cb#token=~&name=~&type=x"},
+		{name: "fragment without params is kept", input: "https://example.com/p?name=Jane#top-of-page", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#top-of-page"},
+		{name: "malformed escape in fragment params", input: "https://example.com/cb#name=Jane%zz&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/cb#~"},
 		{name: "query and fragment query", input: "https://example.com/p?name=A#/route?name=B", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#/route?name=~"},
 		{name: "relative url", input: "/p?name=Jane", replacement: "~", params: []string{"name"}, expected: "/p?name=~"},
 		{name: "malformed escape redacts whole query", input: "https://example.com/p?a=%zz&name=Jane#top", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?~#top"},
@@ -880,6 +883,7 @@ func Test_RedactURLQueryParams_NoAllocWithoutMatch(t *testing.T) {
 		{name: "plain keys", input: "https://example.com/p?a=1&b=%20x#/route?c=3", replacement: "~", params: []string{"name"}},
 		{name: "default replacement", input: "https://example.com/p?a=1&b=2", params: []string{"name"}},
 		{name: "replacement needing escapes", input: "https://example.com/p?a=1", replacement: "[x y]", params: []string{"name"}},
+		{name: "fragment holding other params", input: "https://example.com/cb#a=1&b=2", replacement: "~", params: []string{"name"}},
 		{name: "escaped keys", input: "https://example.com/p?na%6De2=1&first+nam=2&n%61=3", replacement: "~", params: []string{"name", "first name"}},
 	}
 	for _, tt := range tests {

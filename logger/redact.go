@@ -144,8 +144,9 @@ func RedactQueryParams(rawQueryParams, replacement string, sensitiveParams []str
 
 /*
 RedactURLQueryParams replaces the values of sensitiveParams in the query of rawURL, and in a query
-inside its fragment (e.g. "#/route?key=value"), with replacement or defaultReplacement when
-replacement is empty. The replacement is query-escaped.
+inside its fragment (e.g. "#/route?key=value", or "#key=value" when the fragment has no "?"
+but holds a "="), with replacement or defaultReplacement when replacement is empty. The
+replacement is query-escaped.
 
 Unlike RedactQueryParams, it takes a whole URL and keeps every other byte as is, including the
 order and encoding of the other params. Both "&" and ";" separate params, and keys are compared
@@ -164,9 +165,12 @@ func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) 
 	base, fragment, hasFragment := strings.Cut(rawURL, "#")
 	path, query, hasQuery := strings.Cut(base, "?")
 	var fragmentPath, fragmentQuery string
-	var hasFragmentQuery bool
+	var hasFragmentQuery, fragmentIsQuery bool
 	if hasFragment {
 		fragmentPath, fragmentQuery, hasFragmentQuery = strings.Cut(fragment, "?")
+		if !hasFragmentQuery && strings.Contains(fragment, "=") {
+			fragmentQuery, hasFragmentQuery, fragmentIsQuery = fragment, true, true
+		}
 	}
 	if !hasQuery && !hasFragmentQuery {
 		return rawURL
@@ -196,11 +200,14 @@ func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) 
 	}
 	if hasFragment {
 		_ = sb.WriteByte('#')
-		if hasFragmentQuery {
+		switch {
+		case fragmentIsQuery:
+			_, _ = sb.WriteString(fragmentQuery)
+		case hasFragmentQuery:
 			_, _ = sb.WriteString(fragmentPath)
 			_ = sb.WriteByte('?')
 			_, _ = sb.WriteString(fragmentQuery)
-		} else {
+		default:
 			_, _ = sb.WriteString(fragment)
 		}
 	}
