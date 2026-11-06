@@ -8,6 +8,9 @@ import (
 	"github.com/valyala/fastjson"
 )
 
+// invalidJSONText replaces fastjson's parse error, which quotes the unparsed input.
+const invalidJSONText = "cannot parse JSON"
+
 // Option configures how RedactJSON and MaskJSON resolve JSON key paths.
 type Option func(*jsonOptions)
 

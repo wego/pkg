@@ -93,7 +93,7 @@ func MaskJSON(json, maskChar string, toMasks []MaskData, opts ...Option) string 
 	var p fastjson.Parser
 	root, err := p.Parse(json)
 	if err != nil {
-		return err.Error()
+		return invalidJSONText
 	}
 
 	for _, toMask := range toMasks {
