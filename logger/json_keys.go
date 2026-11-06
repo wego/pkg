@@ -155,7 +155,12 @@ func replaceDuplicatedLeaves(obj *fastjson.Object, keys []string, o jsonOptions,
 		// last of them, so that is the copy whose value decides the replacement.
 		newValue := replace(matched[len(matched)-1])
 		if newValue == nil {
-			continue
+			if len(matched) == 1 {
+				continue
+			}
+			// The last copy needs no change, but the earlier ones still have
+			// to go: they may hold a value replace would have changed.
+			newValue = matched[len(matched)-1]
 		}
 		if len(matched) > 1 {
 			// Set replaces only the first member carrying the key, so every copy

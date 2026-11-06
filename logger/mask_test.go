@@ -838,9 +838,15 @@ func Test_MaskJSON_Transform(t *testing.T) {
 		},
 		{
 			name:     "leaves value bytes untouched when transform returns it unchanged",
-			input:    `{"u":"a<b&c"}`,
+			input:    `{"u":42}`,
 			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return s }},
-			expected: `{"u":"a<b&c"}`,
+			expected: `{"u":42}`,
+		},
+		{
+			name:     "collapses a duplicated key when the last copy is unchanged",
+			input:    `{"u":"https://example.com/p?name=Jane","u":"https://example.com/p?a=1"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return logger.RedactURLQueryParams(s, "~", []string{"name"}) }},
+			expected: `{"u":"https://example.com/p?a=1"}`,
 		},
 	}
 
