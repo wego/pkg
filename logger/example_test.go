@@ -152,7 +152,8 @@ func ExampleRedactFormURLEncoded() {
 
 func ExampleRedactURLQueryParams() {
 	rawURL := "https://example.com/done?id=42&name=Jane%20Doe&lang=en#/step?name=Jane"
-	fmt.Println(RedactURLQueryParams(rawURL, "~", []string{"name"}))
+	output := RedactURLQueryParams(rawURL, "~", []string{"name"})
+	_, _ = fmt.Println(output)
 
 	// Output:
 	// https://example.com/done?id=42&name=~&lang=en#/step?name=~
@@ -169,7 +170,8 @@ func ExampleMaskData_transform() {
 		},
 	}
 	input := `{"id":"42","returnUrl":"https://example.com/done?id=42&name=Jane"}`
-	fmt.Println(MaskJSON(input, "", maskData))
+	output := MaskJSON(input, "", maskData)
+	_, _ = fmt.Println(output)
 
 	// Output:
 	// {"id":"42","returnUrl":"https://example.com/done?id=42&name=~"}
