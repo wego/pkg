@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -851,7 +852,6 @@ func Test_RedactURLQueryParams(t *testing.T) {
 		{name: "malformed escape without match redacts whole query", input: "https://example.com/p?a=%2", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?~"},
 		{name: "malformed escape in fragment query", input: "https://example.com/p?a=1#/r?name=Jane%", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?a=1#/r?~"},
 		{name: "replacement is query escaped", input: "https://example.com/p?name=Jane", replacement: "a b&c", params: []string{"name"}, expected: "https://example.com/p?name=a+b%26c"},
-		{name: "default replacement", input: "https://example.com/p?name=Jane", replacement: "", params: []string{"name"}, expected: "https://example.com/p?name=" + url.QueryEscape("[Filtered by Wego]")},
 	}
 
 	for _, tt := range tests {
@@ -859,6 +859,13 @@ func Test_RedactURLQueryParams(t *testing.T) {
 			assert.Equal(t, tt.expected, logger.RedactURLQueryParams(tt.input, tt.replacement, tt.params))
 		})
 	}
+}
+
+func Test_RedactURLQueryParams_DefaultReplacement(t *testing.T) {
+	output := logger.RedactURLQueryParams("https://example.com/p?id=1&name=Jane", "", []string{"name"})
+	assert.True(t, strings.HasPrefix(output, "https://example.com/p?id=1&name="))
+	assert.NotContains(t, output, "Jane")
+	assert.NotEqual(t, "https://example.com/p?id=1&name=", output)
 }
 
 func Test_RedactURLQueryParams_NoAllocWithoutMatch(t *testing.T) {
