@@ -843,6 +843,24 @@ func Test_MaskJSON_Transform(t *testing.T) {
 			expected: `{"u":42}`,
 		},
 		{
+			name:     "keeps an unchanged string holding a control character valid JSON",
+			input:    `{"u":"a\u0001b"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return s }},
+			expected: `{"u":"a\u0001b"}`,
+		},
+		{
+			name:     "keeps an unchanged string holding a quote and a backslash valid JSON",
+			input:    `{"u":"a\"b\\c"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return s }},
+			expected: `{"u":"a\"b\\c"}`,
+		},
+		{
+			name:     "keeps an unchanged duplicated key holding a control character valid JSON",
+			input:    `{"u":"x","u":"https://example.com/p?a=\u0001"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return logger.RedactURLQueryParams(s, "~", []string{"name"}) }},
+			expected: `{"u":"https://example.com/p?a=\u0001"}`,
+		},
+		{
 			name:     "collapses a duplicated key when the last copy is unchanged",
 			input:    `{"u":"https://example.com/p?name=Jane","u":"https://example.com/p?a=1"}`,
 			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return logger.RedactURLQueryParams(s, "~", []string{"name"}) }},
@@ -854,6 +872,7 @@ func Test_MaskJSON_Transform(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			output := logger.MaskJSON(tt.input, "", []logger.MaskData{tt.toMask}, tt.opts...)
 			assert.Equal(t, tt.expected, output)
+			assert.True(t, json.Valid([]byte(output)))
 		})
 	}
 }

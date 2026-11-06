@@ -106,7 +106,10 @@ func MaskJSON(json, maskChar string, toMasks []MaskData, opts ...Option) string 
 			if toMask.Transform == nil {
 				return jsonString(masked)
 			}
-			if masked == value {
+			// The leaf can be kept only when fastjson writes it back as is: reading it
+			// unescaped it in place, and fastjson re-quotes a string holding a quote,
+			// a backslash or a control character with Go escapes that are not JSON.
+			if masked == value && !hasJSONSpecialChars(value) {
 				return nil
 			}
 			return jsonStringRaw(masked)
@@ -241,4 +244,14 @@ func MaskQueryParams(rawQueryParams, maskChar string, toMasks []MaskData) string
 	}
 
 	return rawQueryParams
+}
+
+// hasJSONSpecialChars reports whether s holds a byte JSON requires escaped in a string.
+func hasJSONSpecialChars(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if c := s[i]; c < 0x20 || c == '"' || c == '\\' {
+			return true
+		}
+	}
+	return false
 }
