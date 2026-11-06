@@ -871,11 +871,45 @@ func Test_RedactURLQueryParams_DefaultReplacement(t *testing.T) {
 }
 
 func Test_RedactURLQueryParams_NoAllocWithoutMatch(t *testing.T) {
-	input := "https://example.com/p?a=1&b=%20x#/route?c=3"
-	allocs := testing.AllocsPerRun(100, func() {
-		_ = logger.RedactURLQueryParams(input, "~", []string{"name"})
-	})
-	assert.Zero(t, allocs)
+	tests := []struct {
+		name        string
+		input       string
+		replacement string
+		params      []string
+	}{
+		{name: "plain keys", input: "https://example.com/p?a=1&b=%20x#/route?c=3", replacement: "~", params: []string{"name"}},
+		{name: "default replacement", input: "https://example.com/p?a=1&b=2", params: []string{"name"}},
+		{name: "replacement needing escapes", input: "https://example.com/p?a=1", replacement: "[x y]", params: []string{"name"}},
+		{name: "escaped keys", input: "https://example.com/p?na%6De2=1&first+nam=2&n%61=3", replacement: "~", params: []string{"name", "first name"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			allocs := testing.AllocsPerRun(100, func() {
+				_ = logger.RedactURLQueryParams(tt.input, tt.replacement, tt.params)
+			})
+			assert.Zero(t, allocs)
+		})
+	}
+}
+
+func Test_RedactURLQueryParams_EscapedKeys(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "plus in key", input: "https://example.com/p?first+name=Jane&a=1", expected: "https://example.com/p?first+name=~&a=1"},
+		{name: "escaped space in key", input: "https://example.com/p?first%20name=Jane", expected: "https://example.com/p?first%20name=~"},
+		{name: "upper case hex", input: "https://example.com/p?first%20N%41ME=Jane&na%4De=x", expected: "https://example.com/p?first%20N%41ME=Jane&na%4De=x"},
+		{name: "lower and upper case hex", input: "https://example.com/p?n%61%6De=Jane&%6E%41me=x", expected: "https://example.com/p?n%61%6De=~&%6E%41me=x"},
+		{name: "escaped key longer than param", input: "https://example.com/p?name%20=Jane", expected: "https://example.com/p?name%20=Jane"},
+		{name: "escaped key shorter than param", input: "https://example.com/p?n%61m=Jane", expected: "https://example.com/p?n%61m=Jane"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, logger.RedactURLQueryParams(tt.input, "~", []string{"name", "first name"}))
+		})
+	}
 }
 
 func Benchmark_RedactURLQueryParams(b *testing.B) {

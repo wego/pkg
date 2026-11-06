@@ -153,7 +153,8 @@ after URL-decoding, so "na%6De" matches "name". Keys are case-sensitive. A match
 the next "&", since a ";" may belong to it; any ";"-separated params after it are redacted too.
 
 A query holding a malformed percent-encoding is replaced whole, so a value that cannot be parsed
-is never returned as is. rawURL is returned unchanged, without allocating, when nothing matches.
+is never returned as is. rawURL is returned unchanged, without allocating, when nothing matches;
+the replacement is only escaped once a param matches.
 */
 func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) string {
 	if len(sensitiveParams) == 0 {
@@ -171,7 +172,7 @@ func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) 
 		return rawURL
 	}
 
-	replacement = url.QueryEscape(replacementCharOrDefault(replacement))
+	replacement = replacementCharOrDefault(replacement)
 
 	var queryChanged, fragmentChanged bool
 	if hasQuery {
@@ -206,11 +207,12 @@ func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) 
 	return sb.String()
 }
 
-// redactQuery replaces the values of params in a raw query, or the whole query when it holds a
-// malformed percent-encoding. It reports whether the query changed.
+// redactQuery replaces the values of params in a raw query with the query-escaped replacement,
+// or the whole query when it holds a malformed percent-encoding. It reports whether the query
+// changed.
 func redactQuery(query, replacement string, params []string) (string, bool) {
 	if !validQueryEscapes(query) {
-		return replacement, true
+		return url.QueryEscape(replacement), true
 	}
 
 	var sb strings.Builder
@@ -233,6 +235,7 @@ func redactQuery(query, replacement string, params []string) (string, bool) {
 				end += amp
 			}
 			if copied == 0 {
+				replacement = url.QueryEscape(replacement)
 				sb.Grow(len(query))
 			}
 			valueStart := start + len(key) + 1
@@ -250,15 +253,50 @@ func redactQuery(query, replacement string, params []string) (string, bool) {
 	return sb.String(), true
 }
 
+// isSensitiveQueryKey reports whether key, once query-unescaped, is one of params. key must hold
+// only valid percent-encodings.
 func isSensitiveQueryKey(key string, params []string) bool {
-	if strings.ContainsAny(key, "%+") {
-		decoded, err := url.QueryUnescape(key)
-		if err != nil {
+	if !strings.ContainsAny(key, "%+") {
+		return slices.Contains(params, key)
+	}
+	for _, param := range params {
+		if unescapedQueryKeyEquals(key, param) {
 			return true
 		}
-		key = decoded
 	}
-	return slices.Contains(params, key)
+	return false
+}
+
+// unescapedQueryKeyEquals compares a query-escaped key with want without allocating the
+// unescaped key.
+func unescapedQueryKeyEquals(key, want string) bool {
+	n := 0
+	for i := 0; i < len(key); i++ {
+		c := key[i]
+		switch c {
+		case '+':
+			c = ' '
+		case '%':
+			c = unhex(key[i+1])<<4 | unhex(key[i+2])
+			i += 2
+		}
+		if n >= len(want) || want[n] != c {
+			return false
+		}
+		n++
+	}
+	return n == len(want)
+}
+
+func unhex(c byte) byte {
+	switch {
+	case c >= 'a':
+		return c - 'a' + 10
+	case c >= 'A':
+		return c - 'A' + 10
+	default:
+		return c - '0'
+	}
 }
 
 // validQueryEscapes reports whether every "%" in s starts a valid percent-encoding, the only
