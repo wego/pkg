@@ -149,7 +149,8 @@ replacement is empty. The replacement is query-escaped.
 
 Unlike RedactQueryParams, it takes a whole URL and keeps every other byte as is, including the
 order and encoding of the other params. Both "&" and ";" separate params, and keys are compared
-after URL-decoding, so "na%6De" matches "name". Keys are case-sensitive.
+after URL-decoding, so "na%6De" matches "name". Keys are case-sensitive. A matched value runs to
+the next "&", since a ";" may belong to it; any ";"-separated params after it are redacted too.
 
 A query holding a malformed percent-encoding is replaced whole, so a value that cannot be parsed
 is never returned as is. rawURL is returned unchanged, without allocating, when nothing matches.
@@ -224,6 +225,13 @@ func redactQuery(query, replacement string, params []string) (string, bool) {
 
 		key, _, hasValue := strings.Cut(query[start:end], "=")
 		if hasValue && isSensitiveQueryKey(key, params) {
+			// A ";" may also be part of the value, so a matched value runs to the
+			// next "&": over-redacting a ";"-separated param beats logging a tail.
+			if amp := strings.IndexByte(query[end:], '&'); amp < 0 {
+				end = len(query)
+			} else {
+				end += amp
+			}
 			if copied == 0 {
 				sb.Grow(len(query))
 			}
