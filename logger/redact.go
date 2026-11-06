@@ -2,6 +2,7 @@ package logger
 
 import (
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
@@ -139,4 +140,134 @@ func RedactQueryParams(rawQueryParams, replacement string, sensitiveParams []str
 	}
 
 	return rawQueryParams
+}
+
+/*
+RedactURLQueryParams replaces the values of sensitiveParams in the query of rawURL, and in a query
+inside its fragment (e.g. "#/route?key=value"), with replacement or defaultReplacement when
+replacement is empty. The replacement is query-escaped.
+
+Unlike RedactQueryParams, it takes a whole URL and keeps every other byte as is, including the
+order and encoding of the other params. Both "&" and ";" separate params, and keys are compared
+after URL-decoding, so "na%6De" matches "name". Keys are case-sensitive.
+
+A query holding a malformed percent-encoding is replaced whole, so a value that cannot be parsed
+is never returned as is. rawURL is returned unchanged, without allocating, when nothing matches.
+*/
+func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) string {
+	if len(sensitiveParams) == 0 {
+		return rawURL
+	}
+
+	base, fragment, hasFragment := strings.Cut(rawURL, "#")
+	path, query, hasQuery := strings.Cut(base, "?")
+	var fragmentPath, fragmentQuery string
+	var hasFragmentQuery bool
+	if hasFragment {
+		fragmentPath, fragmentQuery, hasFragmentQuery = strings.Cut(fragment, "?")
+	}
+	if !hasQuery && !hasFragmentQuery {
+		return rawURL
+	}
+
+	replacement = url.QueryEscape(replacementCharOrDefault(replacement))
+
+	var queryChanged, fragmentChanged bool
+	if hasQuery {
+		query, queryChanged = redactQuery(query, replacement, sensitiveParams)
+	}
+	if hasFragmentQuery {
+		fragmentQuery, fragmentChanged = redactQuery(fragmentQuery, replacement, sensitiveParams)
+	}
+	if !queryChanged && !fragmentChanged {
+		return rawURL
+	}
+
+	var sb strings.Builder
+	sb.Grow(len(rawURL))
+	if hasQuery {
+		_, _ = sb.WriteString(path)
+		_ = sb.WriteByte('?')
+		_, _ = sb.WriteString(query)
+	} else {
+		_, _ = sb.WriteString(base)
+	}
+	if hasFragment {
+		_ = sb.WriteByte('#')
+		if hasFragmentQuery {
+			_, _ = sb.WriteString(fragmentPath)
+			_ = sb.WriteByte('?')
+			_, _ = sb.WriteString(fragmentQuery)
+		} else {
+			_, _ = sb.WriteString(fragment)
+		}
+	}
+	return sb.String()
+}
+
+// redactQuery replaces the values of params in a raw query, or the whole query when it holds a
+// malformed percent-encoding. It reports whether the query changed.
+func redactQuery(query, replacement string, params []string) (string, bool) {
+	if !validQueryEscapes(query) {
+		return replacement, true
+	}
+
+	var sb strings.Builder
+	copied := 0
+	for start := 0; start <= len(query); {
+		end := strings.IndexAny(query[start:], "&;")
+		if end < 0 {
+			end = len(query)
+		} else {
+			end += start
+		}
+
+		key, _, hasValue := strings.Cut(query[start:end], "=")
+		if hasValue && isSensitiveQueryKey(key, params) {
+			if copied == 0 {
+				sb.Grow(len(query))
+			}
+			valueStart := start + len(key) + 1
+			_, _ = sb.WriteString(query[copied:valueStart])
+			_, _ = sb.WriteString(replacement)
+			copied = end
+		}
+		start = end + 1
+	}
+
+	if copied == 0 {
+		return query, false
+	}
+	_, _ = sb.WriteString(query[copied:])
+	return sb.String(), true
+}
+
+func isSensitiveQueryKey(key string, params []string) bool {
+	if strings.ContainsAny(key, "%+") {
+		decoded, err := url.QueryUnescape(key)
+		if err != nil {
+			return true
+		}
+		key = decoded
+	}
+	return slices.Contains(params, key)
+}
+
+// validQueryEscapes reports whether every "%" in s starts a valid percent-encoding, the only
+// input url.QueryUnescape rejects.
+func validQueryEscapes(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] != '%' {
+			continue
+		}
+		if i+2 >= len(s) || !isHex(s[i+1]) || !isHex(s[i+2]) {
+			return false
+		}
+		i += 2
+	}
+	return true
+}
+
+func isHex(c byte) bool {
+	return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
 }
