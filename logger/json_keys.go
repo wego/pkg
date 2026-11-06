@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 
@@ -188,6 +189,18 @@ func jsonString(s string) *fastjson.Value {
 		return fastjson.MustParse(`""`)
 	}
 	return fastjson.MustParse(string(quoted))
+}
+
+// jsonStringRaw is jsonString without HTML escaping, so a value such as a URL
+// keeps its "&", "<" and ">" as is.
+func jsonStringRaw(s string) *fastjson.Value {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(s); err != nil {
+		return fastjson.MustParse(`""`)
+	}
+	return fastjson.MustParse(strings.TrimSuffix(buf.String(), "\n"))
 }
 
 // scalarText renders a JSON scalar the way masking needs to read it: a string as

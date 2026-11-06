@@ -149,3 +149,28 @@ func ExampleRedactFormURLEncoded() {
 	// Output:
 	// field1=Wego&field1=Wego&field2=field2value1&field3=Wego&field4.nested.data=Wego
 }
+
+func ExampleRedactURLQueryParams() {
+	rawURL := "https://example.com/done?id=42&name=Jane%20Doe&lang=en#/step?name=Jane"
+	fmt.Println(RedactURLQueryParams(rawURL, "~", []string{"name"}))
+
+	// Output:
+	// https://example.com/done?id=42&name=~&lang=en#/step?name=~
+}
+
+func ExampleMaskData_transform() {
+	// Redact a query param in a URL stored in a JSON field.
+	maskData := []MaskData{
+		{
+			JSONKeys: []string{"returnUrl"},
+			Transform: func(value string) string {
+				return RedactURLQueryParams(value, "~", []string{"name"})
+			},
+		},
+	}
+	input := `{"id":"42","returnUrl":"https://example.com/done?id=42&name=Jane"}`
+	fmt.Println(MaskJSON(input, "", maskData))
+
+	// Output:
+	// {"id":"42","returnUrl":"https://example.com/done?id=42&name=~"}
+}
