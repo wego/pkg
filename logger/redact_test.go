@@ -849,6 +849,7 @@ func Test_RedactURLQueryParams(t *testing.T) {
 		{name: "keeps fragment", input: "https://example.com/p?name=Jane#top", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#top"},
 		{name: "query inside fragment", input: "https://example.com/#/route?name=Jane&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/#/route?name=~&a=1"},
 		{name: "fragment holding params", input: "https://example.com/cb#token=abc&name=Jane&type=x", replacement: "~", params: []string{"token", "name"}, expected: "https://example.com/cb#token=~&name=~&type=x"},
+		{name: "fragment params with a ? in a later value", input: "https://example.com/cb#token=abc&state=/back?name=Jane", replacement: "~", params: []string{"token", "name"}, expected: "https://example.com/cb#token=~&state=/back?name=~"},
 		{name: "fragment without params is kept", input: "https://example.com/p?name=Jane#top-of-page", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#top-of-page"},
 		{name: "malformed escape in fragment params", input: "https://example.com/cb#name=Jane%zz&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/cb#~"},
 		{name: "query and fragment query", input: "https://example.com/p?name=A#/route?name=B", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#/route?name=~"},

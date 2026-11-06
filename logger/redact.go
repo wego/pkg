@@ -144,8 +144,8 @@ func RedactQueryParams(rawQueryParams, replacement string, sensitiveParams []str
 
 /*
 RedactURLQueryParams replaces the values of sensitiveParams in the query of rawURL, and in a query
-inside its fragment (e.g. "#/route?key=value", or "#key=value" when the fragment has no "?"
-but holds a "="), with replacement or defaultReplacement when replacement is empty. The
+inside its fragment (e.g. "#/route?key=value" or "#key=value"; the part of a fragment before
+its "?" is redacted as params too when it holds a "="), with replacement or defaultReplacement when replacement is empty. The
 replacement is query-escaped.
 
 Unlike RedactQueryParams, it takes a whole URL and keeps every other byte as is, including the
@@ -185,7 +185,11 @@ func RedactURLQueryParams(rawURL, replacement string, sensitiveParams []string) 
 	if hasFragmentQuery {
 		fragmentQuery, fragmentChanged = redactQuery(fragmentQuery, replacement, sensitiveParams)
 	}
-	if !queryChanged && !fragmentChanged {
+	var fragmentPathChanged bool
+	if hasFragmentQuery && !fragmentIsQuery && strings.Contains(fragmentPath, "=") {
+		fragmentPath, fragmentPathChanged = redactQuery(fragmentPath, replacement, sensitiveParams)
+	}
+	if !queryChanged && !fragmentChanged && !fragmentPathChanged {
 		return rawURL
 	}
 
