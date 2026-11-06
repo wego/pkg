@@ -798,3 +798,115 @@ func BenchmarkMaskURLQueryParamsParallel(b *testing.B) {
 		}
 	})
 }
+
+func bracket(s string) string {
+	return "[" + s + "]"
+}
+
+func Test_MaskJSON_Transform(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		toMask   logger.MaskData
+		opts     []logger.Option
+		expected string
+	}{
+		{
+			name:     "replaces value with transform output",
+			input:    `{"a":{"u":"value"},"b":"other"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"a", "u"}, Transform: bracket},
+			expected: `{"a":{"u":"[value]"},"b":"other"}`,
+		},
+		{
+			name:     "transform takes precedence over char masking settings",
+			input:    `{"u":"value"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, FirstCharsToShow: -1, RestrictionType: logger.MaskRestrictionTypeEmail, Transform: bracket},
+			expected: `{"u":"[value]"}`,
+		},
+		{
+			name:     "applies to every array item and collapses a duplicated key",
+			input:    `{"items":[{"u":"a"},{"u":"b","u":"c"}]}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"items", "[]", "u"}, Transform: bracket},
+			expected: `{"items":[{"u":"[a]"},{"u":"[c]"}]}`,
+		},
+		{
+			name:     "honours case-insensitive keys",
+			input:    `{"URL":"value"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"url"}, Transform: bracket},
+			opts:     []logger.Option{logger.CaseInsensitiveKeys()},
+			expected: `{"URL":"[value]"}`,
+		},
+		{
+			name:     "leaves value bytes untouched when transform returns it unchanged",
+			input:    `{"u":42}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return s }},
+			expected: `{"u":42}`,
+		},
+		{
+			name:     "keeps an unchanged string holding a control character valid JSON",
+			input:    `{"u":"a\u0001b"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return s }},
+			expected: `{"u":"a\u0001b"}`,
+		},
+		{
+			name:     "keeps an unchanged string holding a quote and a backslash valid JSON",
+			input:    `{"u":"a\"b\\c"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return s }},
+			expected: `{"u":"a\"b\\c"}`,
+		},
+		{
+			name:     "keeps an unchanged duplicated key holding a control character valid JSON",
+			input:    `{"u":"x","u":"https://example.com/p?a=\u0001"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return logger.RedactURLQueryParams(s, "~", []string{"name"}) }},
+			expected: `{"u":"https://example.com/p?a=\u0001"}`,
+		},
+		{
+			name:     "collapses a duplicated key when the last copy is unchanged",
+			input:    `{"u":"https://example.com/p?name=Jane","u":"https://example.com/p?a=1"}`,
+			toMask:   logger.MaskData{JSONKeys: []string{"u"}, Transform: func(s string) string { return logger.RedactURLQueryParams(s, "~", []string{"name"}) }},
+			expected: `{"u":"https://example.com/p?a=1"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := logger.MaskJSON(tt.input, "", []logger.MaskData{tt.toMask}, tt.opts...)
+			assert.Equal(t, tt.expected, output)
+			assert.True(t, json.Valid([]byte(output)))
+		})
+	}
+}
+
+func Test_MaskXML_Transform(t *testing.T) {
+	output := logger.MaskXML(`<a><u>value</u></a>`, "", []logger.MaskData{{XMLTag: "u", Transform: bracket}})
+	assert.Contains(t, output, `<a><u>[value]</u></a>`)
+}
+
+func Test_MaskFormURLEncoded_Transform(t *testing.T) {
+	output := logger.MaskFormURLEncoded("u=value", "", []logger.MaskData{{JSONKeys: []string{"u"}, Transform: bracket}})
+	assert.Equal(t, url.Values{"u": {"[value]"}}.Encode(), output)
+}
+
+func Test_MaskQueryParams_Transform(t *testing.T) {
+	output := logger.MaskQueryParams("u=value", "", []logger.MaskData{{JSONKeys: []string{"u"}, Transform: bracket}})
+	assert.Equal(t, url.Values{"u": {"[value]"}}.Encode(), output)
+}
+
+func Benchmark_MaskJSON_TransformURL(b *testing.B) {
+	toMask := []logger.MaskData{{
+		JSONKeys:  []string{"returnUrl"},
+		Transform: func(s string) string { return logger.RedactURLQueryParams(s, "~", []string{"name"}) },
+	}}
+	inputs := map[string]string{
+		"no match": `{"id":"abc","returnUrl":"https://example.com/done?a=1&b=2"}`,
+		"match":    `{"id":"abc","returnUrl":"https://example.com/done?a=1&name=Jane&b=2"}`,
+	}
+	for name, input := range inputs {
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				_ = logger.MaskJSON(input, "", toMask)
+			}
+		})
+	}
+}

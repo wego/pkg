@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 
@@ -89,7 +90,7 @@ func replaceLeaves(v *fastjson.Value, keys []string, o jsonOptions, replace func
 	// member, which is handled without collecting anything.
 	var (
 		matches   int
-		firstKey  string
+		firstKey  []byte
 		firstItem *fastjson.Value
 	)
 	obj.Visit(func(k []byte, member *fastjson.Value) {
@@ -98,10 +99,7 @@ func replaceLeaves(v *fastjson.Value, keys []string, o jsonOptions, replace func
 		}
 		matches++
 		if matches == 1 {
-			firstKey, firstItem = keys[0], member
-			if o.caseInsensitiveKeys {
-				firstKey = string(k)
-			}
+			firstKey, firstItem = k, member
 		}
 	})
 
@@ -113,8 +111,14 @@ func replaceLeaves(v *fastjson.Value, keys []string, o jsonOptions, replace func
 			replaceLeaves(firstItem, keys[1:], o, replace)
 			return
 		}
+		// The key is copied only when it is written, so a leaf left unchanged
+		// costs no allocation.
 		if newValue := replace(firstItem); newValue != nil {
-			obj.Set(firstKey, newValue)
+			key := keys[0]
+			if o.caseInsensitiveKeys {
+				key = string(firstKey)
+			}
+			obj.Set(key, newValue)
 		}
 		return
 	}
@@ -154,7 +158,12 @@ func replaceDuplicatedLeaves(obj *fastjson.Object, keys []string, o jsonOptions,
 		// last of them, so that is the copy whose value decides the replacement.
 		newValue := replace(matched[len(matched)-1])
 		if newValue == nil {
-			continue
+			if len(matched) == 1 {
+				continue
+			}
+			// The last copy needs no change, but the earlier ones still have
+			// to go: they may hold a value replace would have changed.
+			newValue = matched[len(matched)-1]
 		}
 		if len(matched) > 1 {
 			// Set replaces only the first member carrying the key, so every copy
@@ -188,6 +197,18 @@ func jsonString(s string) *fastjson.Value {
 		return fastjson.MustParse(`""`)
 	}
 	return fastjson.MustParse(string(quoted))
+}
+
+// jsonStringRaw is jsonString without HTML escaping, so a value such as a URL
+// keeps its "&", "<" and ">" as is.
+func jsonStringRaw(s string) *fastjson.Value {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(s); err != nil {
+		return fastjson.MustParse(`""`)
+	}
+	return fastjson.MustParse(strings.TrimSuffix(buf.String(), "\n"))
 }
 
 // scalarText renders a JSON scalar the way masking needs to read it: a string as

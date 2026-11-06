@@ -28,7 +28,12 @@ type MaskData struct {
 	XMLTag           string
 	JSONKeys         []string
 	KeepSameLength   bool
-	prefixesToSkip   []string
+	// Transform, when set, replaces a matched value with Transform(value)
+	// instead of masking it with the mask character, and the other masking
+	// settings are ignored. Use it for values that need a structural rewrite,
+	// such as redacting one query param in a URL (see RedactURLQueryParams).
+	Transform      func(string) string
+	prefixesToSkip []string
 }
 
 // MaskXML masks parts of the inner text of tags from the input XML with replacement
@@ -97,7 +102,17 @@ func MaskJSON(json, maskChar string, toMasks []MaskData, opts ...Option) string 
 			if !ok || value == "" {
 				return nil
 			}
-			return jsonString(getMaskedValue(maskChar, value, toMask))
+			masked := getMaskedValue(maskChar, value, toMask)
+			if toMask.Transform == nil {
+				return jsonString(masked)
+			}
+			// The leaf can be kept only when fastjson writes it back as is: reading it
+			// unescaped it in place, and fastjson re-quotes a string holding a quote,
+			// a backslash or a control character with Go escapes that are not JSON.
+			if masked == value && !hasJSONSpecialChars(value) {
+				return nil
+			}
+			return jsonStringRaw(masked)
 		})
 	}
 
@@ -113,6 +128,10 @@ func maskCharOrDefault(maskChar string) string {
 }
 
 func getMaskedValue(maskChar, valueToReplace string, toMask MaskData) string {
+	if toMask.Transform != nil {
+		return toMask.Transform(valueToReplace)
+	}
+
 	negativeCharsToShow := toMask.FirstCharsToShow < 0 || toMask.LastCharsToShow < 0
 	if negativeCharsToShow || !willMask(valueToReplace, toMask.RestrictionType) {
 		return valueToReplace
@@ -225,4 +244,14 @@ func MaskQueryParams(rawQueryParams, maskChar string, toMasks []MaskData) string
 	}
 
 	return rawQueryParams
+}
+
+// hasJSONSpecialChars reports whether s holds a byte JSON requires escaped in a string.
+func hasJSONSpecialChars(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if c := s[i]; c < 0x20 || c == '"' || c == '\\' {
+			return true
+		}
+	}
+	return false
 }

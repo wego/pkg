@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -817,4 +818,118 @@ func BenchmarkRedactQueryParamsParallel(b *testing.B) {
 			_ = logger.RedactQueryParams(queryParams, "[Filtered by Wego]", sensitiveParams)
 		}
 	})
+}
+
+func Test_RedactURLQueryParams(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		replacement string
+		params      []string
+		expected    string
+	}{
+		{name: "empty input", input: "", replacement: "~", params: []string{"name"}, expected: ""},
+		{name: "no params", input: "https://example.com/p?name=Jane", replacement: "~", params: nil, expected: "https://example.com/p?name=Jane"},
+		{name: "no query", input: "https://example.com/p", replacement: "~", params: []string{"name"}, expected: "https://example.com/p"},
+		{name: "no match", input: "https://example.com/p?a=1&b=2#top", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?a=1&b=2#top"},
+		{name: "keeps order and other params", input: "https://example.com/p?b=2&name=Jane&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?b=2&name=~&a=1"},
+		{name: "encoded value", input: "https://example.com/p?name=Jane%20Doe&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~&a=1"},
+		{name: "plus encoded value", input: "https://example.com/p?name=Jane+Doe", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~"},
+		{name: "percent encoded key", input: "https://example.com/p?na%6De=Jane", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?na%6De=~"},
+		{name: "plus encoded key", input: "https://example.com/p?full+name=Jane", replacement: "~", params: []string{"full name"}, expected: "https://example.com/p?full+name=~"},
+		{name: "keys are case-sensitive", input: "https://example.com/p?Name=Jane", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?Name=Jane"},
+		{name: "semicolon separator", input: "https://example.com/p?a=1;name=Jane&b=2", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?a=1;name=~&b=2"},
+		{name: "semicolon inside a matched value fails closed", input: "https://example.com/p?name=Jane;Doe&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~&a=1"},
+		{name: "semicolon-separated params after a match are redacted too", input: "https://example.com/p?a=1;name=Jane;b=2", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?a=1;name=~"},
+		{name: "repeated key", input: "https://example.com/p?name=A&name=B", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~&name=~"},
+		{name: "several params", input: "https://example.com/p?first=A&x=1&last=B", replacement: "~", params: []string{"first", "last"}, expected: "https://example.com/p?first=~&x=1&last=~"},
+		{name: "empty value", input: "https://example.com/p?name=&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~&a=1"},
+		{name: "key without value", input: "https://example.com/p?name&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name&a=1"},
+		{name: "empty segments", input: "https://example.com/p?&name=Jane&&", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?&name=~&&"},
+		{name: "keeps fragment", input: "https://example.com/p?name=Jane#top", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#top"},
+		{name: "query inside fragment", input: "https://example.com/#/route?name=Jane&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/#/route?name=~&a=1"},
+		{name: "fragment holding params", input: "https://example.com/cb#token=abc&name=Jane&type=x", replacement: "~", params: []string{"token", "name"}, expected: "https://example.com/cb#token=~&name=~&type=x"},
+		{name: "fragment params with a ? in a later value", input: "https://example.com/cb#token=abc&state=/back?name=Jane", replacement: "~", params: []string{"token", "name"}, expected: "https://example.com/cb#token=~&state=/back?name=~"},
+		{name: "fragment without params is kept", input: "https://example.com/p?name=Jane#top-of-page", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#top-of-page"},
+		{name: "malformed escape in fragment params", input: "https://example.com/cb#name=Jane%zz&a=1", replacement: "~", params: []string{"name"}, expected: "https://example.com/cb#~"},
+		{name: "query and fragment query", input: "https://example.com/p?name=A#/route?name=B", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?name=~#/route?name=~"},
+		{name: "relative url", input: "/p?name=Jane", replacement: "~", params: []string{"name"}, expected: "/p?name=~"},
+		{name: "malformed escape redacts whole query", input: "https://example.com/p?a=%zz&name=Jane#top", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?~#top"},
+		{name: "malformed escape without match redacts whole query", input: "https://example.com/p?a=%2", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?~"},
+		{name: "malformed escape in fragment query", input: "https://example.com/p?a=1#/r?name=Jane%", replacement: "~", params: []string{"name"}, expected: "https://example.com/p?a=1#/r?~"},
+		{name: "replacement is query escaped", input: "https://example.com/p?name=Jane", replacement: "a b&c", params: []string{"name"}, expected: "https://example.com/p?name=a+b%26c"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, logger.RedactURLQueryParams(tt.input, tt.replacement, tt.params))
+		})
+	}
+}
+
+func Test_RedactURLQueryParams_DefaultReplacement(t *testing.T) {
+	output := logger.RedactURLQueryParams("https://example.com/p?id=1&name=Jane", "", []string{"name"})
+	assert.True(t, strings.HasPrefix(output, "https://example.com/p?id=1&name="))
+	assert.NotContains(t, output, "Jane")
+	assert.NotEqual(t, "https://example.com/p?id=1&name=", output)
+}
+
+func Test_RedactURLQueryParams_NoAllocWithoutMatch(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		replacement string
+		params      []string
+	}{
+		{name: "plain keys", input: "https://example.com/p?a=1&b=%20x#/route?c=3", replacement: "~", params: []string{"name"}},
+		{name: "default replacement", input: "https://example.com/p?a=1&b=2", params: []string{"name"}},
+		{name: "replacement needing escapes", input: "https://example.com/p?a=1", replacement: "[x y]", params: []string{"name"}},
+		{name: "fragment holding other params", input: "https://example.com/cb#a=1&b=2", replacement: "~", params: []string{"name"}},
+		{name: "escaped keys", input: "https://example.com/p?na%6De2=1&first+nam=2&n%61=3", replacement: "~", params: []string{"name", "first name"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			allocs := testing.AllocsPerRun(100, func() {
+				_ = logger.RedactURLQueryParams(tt.input, tt.replacement, tt.params)
+			})
+			assert.Zero(t, allocs)
+		})
+	}
+}
+
+func Test_RedactURLQueryParams_EscapedKeys(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "plus in key", input: "https://example.com/p?first+name=Jane&a=1", expected: "https://example.com/p?first+name=~&a=1"},
+		{name: "escaped space in key", input: "https://example.com/p?first%20name=Jane", expected: "https://example.com/p?first%20name=~"},
+		{name: "upper case hex", input: "https://example.com/p?first%20N%41ME=Jane&na%4De=x", expected: "https://example.com/p?first%20N%41ME=Jane&na%4De=x"},
+		{name: "lower and upper case hex", input: "https://example.com/p?n%61%6De=Jane&%6E%41me=x", expected: "https://example.com/p?n%61%6De=~&%6E%41me=x"},
+		{name: "escaped key longer than param", input: "https://example.com/p?name%20=Jane", expected: "https://example.com/p?name%20=Jane"},
+		{name: "escaped key shorter than param", input: "https://example.com/p?n%61m=Jane", expected: "https://example.com/p?n%61m=Jane"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, logger.RedactURLQueryParams(tt.input, "~", []string{"name", "first name"}))
+		})
+	}
+}
+
+func Benchmark_RedactURLQueryParams(b *testing.B) {
+	inputs := map[string]string{
+		"no query": "https://example.com/done",
+		"no match": "https://example.com/done?site=xx&lang=en&ref=abc123",
+		"match":    "https://example.com/done?site=xx&name=Jane%20Doe&lang=en",
+	}
+	params := []string{"name"}
+	for name, input := range inputs {
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				_ = logger.RedactURLQueryParams(input, "~", params)
+			}
+		})
+	}
 }
