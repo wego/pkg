@@ -90,7 +90,7 @@ func replaceLeaves(v *fastjson.Value, keys []string, o jsonOptions, replace func
 	// member, which is handled without collecting anything.
 	var (
 		matches   int
-		firstKey  string
+		firstKey  []byte
 		firstItem *fastjson.Value
 	)
 	obj.Visit(func(k []byte, member *fastjson.Value) {
@@ -99,10 +99,7 @@ func replaceLeaves(v *fastjson.Value, keys []string, o jsonOptions, replace func
 		}
 		matches++
 		if matches == 1 {
-			firstKey, firstItem = keys[0], member
-			if o.caseInsensitiveKeys {
-				firstKey = string(k)
-			}
+			firstKey, firstItem = k, member
 		}
 	})
 
@@ -114,8 +111,14 @@ func replaceLeaves(v *fastjson.Value, keys []string, o jsonOptions, replace func
 			replaceLeaves(firstItem, keys[1:], o, replace)
 			return
 		}
+		// The key is copied only when it is written, so a leaf left unchanged
+		// costs no allocation.
 		if newValue := replace(firstItem); newValue != nil {
-			obj.Set(firstKey, newValue)
+			key := keys[0]
+			if o.caseInsensitiveKeys {
+				key = string(firstKey)
+			}
+			obj.Set(key, newValue)
 		}
 		return
 	}
