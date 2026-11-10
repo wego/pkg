@@ -46,7 +46,7 @@ func RedactJSON(json, replacement string, keys [][]string, opts ...Option) strin
 	var p fastjson.Parser
 	root, err := p.Parse(json)
 	if err != nil {
-		return err.Error()
+		return invalidJSONText
 	}
 
 	replace := func(*fastjson.Value) *fastjson.Value {
