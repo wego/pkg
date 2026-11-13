@@ -187,8 +187,8 @@ github.com/wego/pkg/common v0.2.3 h1:iAUkZiOtAI6yCg4XoXgM5D5BWUTX9ZHliZuIxv5sDaE
 github.com/wego/pkg/common v0.2.3/go.mod h1:3m2efCYRwLUkTvKCDUK+JbMUpEsew385LLf6JKa8WEs=
 github.com/wego/pkg/env v0.2.0 h1:vjbG7AwCqJZuz4i7J3VE/kfsps00iAgRvjAqk2z58jQ=
 github.com/wego/pkg/env v0.2.0/go.mod h1:+HwsSj3ci2ud8Y0PV0PXBtCWWzdMDNLqzj/q6qLQcmA=
-github.com/wego/pkg/errors v0.4.8 h1:sL0TbnpCHDukZZOh67AaOUclDNCeg8fWQxq3HV6j86c=
-github.com/wego/pkg/errors v0.4.8/go.mod h1:yGe9tOuny0ExL9BDKhhLuVzqi0AIu/SBGL/H4mChD1Q=
+github.com/wego/pkg/errors v0.4.9 h1:QEKA0Mwy7tNE4/4VzE2QLkMYKUWMr4b1qUSx/XS2sbU=
+github.com/wego/pkg/errors v0.4.9/go.mod h1:UHU37a1lXIX15U73/QhD01t5svRDnH/HMkXJXPMAfAA=
 github.com/wego/pkg/host v0.1.11 h1:WmcXSAEj6XvqNkk7RfoYGek8jXkasR7WQOjNhdVyEXc=
 github.com/wego/pkg/host v0.1.11/go.mod h1:EDBGiR1oVDYsRv6UTLpNQpx3KIyLx92oxaZcSpFNUn0=
 github.com/wego/pkg/pointer v0.2.1 h1:1NJVmyOdB1QFMBdpFl4GrUGTs4Qw7EXFAHaFNGqMcsI=

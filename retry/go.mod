@@ -6,7 +6,7 @@ toolchain go1.26.10
 
 require (
 	github.com/eapache/go-resiliency v1.7.0
-	github.com/wego/pkg/errors v0.4.8
+	github.com/wego/pkg/errors v0.4.9
 )
 
 require (
