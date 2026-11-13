@@ -35,7 +35,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/wego/pkg/collection v0.2.1 // indirect
 	github.com/wego/pkg/common v0.2.3 // indirect
-	github.com/wego/pkg/env v0.2.0 // indirect
+	github.com/wego/pkg/env v0.2.1 // indirect
 	github.com/wego/pkg/errors v0.4.9
 	github.com/wego/pkg/pointer v0.2.1 // indirect
 	golang.org/x/net v0.60.0 // indirect
