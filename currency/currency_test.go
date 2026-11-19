@@ -1,6 +1,7 @@
 package currency_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -407,6 +408,41 @@ func Test_CanonicalAmount(t *testing.T) {
 			currencyCode: "JPY",
 			amount:       272500.623,
 			want:         "272501",
+		},
+		"Tie rounds half away from zero": {
+			currencyCode: "USD",
+			amount:       0.125,
+			want:         "0.13",
+		},
+		"Zero decimal tie rounds half away from zero": {
+			currencyCode: "JPY",
+			amount:       2.5,
+			want:         "3",
+		},
+		"Negative fraction below one": {
+			currencyCode: "USD",
+			amount:       -0.5,
+			want:         "-0.5",
+		},
+		"Negative zero decimal amount that rounds to zero": {
+			currencyCode: "JPY",
+			amount:       -0.4,
+			want:         "0",
+		},
+		"NaN is not a JSON number": {
+			currencyCode: "USD",
+			amount:       math.NaN(),
+			want:         "NaN",
+		},
+		"Positive infinity is not a JSON number": {
+			currencyCode: "USD",
+			amount:       math.Inf(1),
+			want:         "+Inf",
+		},
+		"Negative infinity is not a JSON number": {
+			currencyCode: "USD",
+			amount:       math.Inf(-1),
+			want:         "-Inf",
 		},
 	} {
 		t.Run(n, func(tt *testing.T) {
