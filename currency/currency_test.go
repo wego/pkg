@@ -1,6 +1,7 @@
 package currency_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -323,6 +324,130 @@ func Test_FormatAmount(t *testing.T) {
 		t.Run(n, func(tt *testing.T) {
 			got := currency.FormatAmount(tc.amount, tc.currencyCode)
 			assert.Equal(tt, tc.want, got)
+		})
+	}
+}
+
+func Test_CanonicalAmount(t *testing.T) {
+	for n, tc := range map[string]struct {
+		currencyCode string
+		amount       float64
+		want         string
+	}{
+		"Invalid currency uses 2 decimal places": {
+			currencyCode: "SG",
+			amount:       2048.10,
+			want:         "2048.1",
+		},
+		"Zero": {
+			currencyCode: "USD",
+			amount:       0,
+			want:         "0",
+		},
+		"Negative amount that rounds to zero": {
+			currencyCode: "USD",
+			amount:       -0.001,
+			want:         "0",
+		},
+		"Negative amount": {
+			currencyCode: "USD",
+			amount:       -10.50,
+			want:         "-10.5",
+		},
+		"Whole amount": {
+			currencyCode: "USD",
+			amount:       25,
+			want:         "25",
+		},
+		"Whole amount ending in zero keeps its integer digits": {
+			currencyCode: "USD",
+			amount:       100,
+			want:         "100",
+		},
+		"One trailing zero": {
+			currencyCode: "USD",
+			amount:       31.50,
+			want:         "31.5",
+		},
+		"Fraction below one": {
+			currencyCode: "EUR",
+			amount:       0.10,
+			want:         "0.1",
+		},
+		"Full precision is kept": {
+			currencyCode: "SGD",
+			amount:       252.25,
+			want:         "252.25",
+		},
+		"Rounds to the currency minor unit first": {
+			currencyCode: "USD",
+			amount:       2048.1958,
+			want:         "2048.2",
+		},
+		"Rounding up to a whole amount": {
+			currencyCode: "USD",
+			amount:       24.999,
+			want:         "25",
+		},
+		"Three decimal currency": {
+			currencyCode: "KWD",
+			amount:       25.500,
+			want:         "25.5",
+		},
+		"Three decimal currency at full precision": {
+			currencyCode: "BHD",
+			amount:       2048.256432,
+			want:         "2048.256",
+		},
+		"Zero decimal currency": {
+			currencyCode: "JPY",
+			amount:       1000,
+			want:         "1000",
+		},
+		"Zero decimal currency rounds": {
+			currencyCode: "JPY",
+			amount:       272500.623,
+			want:         "272501",
+		},
+		"Tie rounds half away from zero": {
+			currencyCode: "USD",
+			amount:       0.125,
+			want:         "0.13",
+		},
+		"Zero decimal tie rounds half away from zero": {
+			currencyCode: "JPY",
+			amount:       2.5,
+			want:         "3",
+		},
+		"Negative fraction below one": {
+			currencyCode: "USD",
+			amount:       -0.5,
+			want:         "-0.5",
+		},
+		"Negative zero decimal amount that rounds to zero": {
+			currencyCode: "JPY",
+			amount:       -0.4,
+			want:         "0",
+		},
+		"NaN is not a JSON number": {
+			currencyCode: "USD",
+			amount:       math.NaN(),
+			want:         "NaN",
+		},
+		"Positive infinity is not a JSON number": {
+			currencyCode: "USD",
+			amount:       math.Inf(1),
+			want:         "+Inf",
+		},
+		"Negative infinity is not a JSON number": {
+			currencyCode: "USD",
+			amount:       math.Inf(-1),
+			want:         "-Inf",
+		},
+	} {
+		t.Run(n, func(tt *testing.T) {
+			got := currency.CanonicalAmount(tc.amount, tc.currencyCode)
+			assert.Equal(tt, tc.want, got, "CanonicalAmount(%v, %q)", tc.amount, tc.currencyCode)
 		})
 	}
 }
