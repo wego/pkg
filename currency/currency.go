@@ -342,11 +342,13 @@ func FormatAmount(amount float64, currencyCode string) string {
 }
 
 // CanonicalAmount returns the canonical (shortest) decimal form of a currency amount.
-// It rounds half away from zero to the currency's decimal places, like Amount, so 0.125
-// USD gives "0.13". Then it drops trailing zeros in the fraction and a trailing decimal
-// point: "25" for 25.00 USD and "31.5" for 31.50 USD. An amount that rounds to zero returns "0", never "-0". For a finite amount,
-// the result is also a canonical JSON number. NaN and the infinities come back as "NaN",
-// "+Inf" and "-Inf", which are not JSON numbers.
+// It rounds half away from zero (the tie rule Amount uses) to the currency's decimal
+// places, so 0.125 USD gives "0.13". Unlike Amount, it keeps a negative amount and
+// rounds an unknown currency code to 2 decimal places, as FormatAmount does. Then it
+// drops trailing zeros in the fraction and a trailing decimal point: "25" for 25.00 USD
+// and "31.5" for 31.50 USD. An amount that rounds to zero returns "0", never "-0".
+// For a finite amount, the result is also a canonical JSON number. NaN and the
+// infinities come back as "NaN", "+Inf" and "-Inf", which are not JSON numbers.
 func CanonicalAmount(amount float64, currencyCode string) string {
 	factor := GetCurrencyFactor(currencyCode)
 	formatted := FormatAmount(math.Round(amount*factor)/factor, currencyCode)
