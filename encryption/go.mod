@@ -6,7 +6,7 @@ toolchain go1.26.10
 
 require (
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.59.0
 )
 
 require go.yaml.in/yaml/v3 v3.0.5 // indirect
@@ -38,8 +38,8 @@ require (
 	github.com/wego/pkg/env v0.2.1 // indirect
 	github.com/wego/pkg/errors v0.4.11
 	github.com/wego/pkg/pointer v0.2.1 // indirect
-	golang.org/x/net v0.60.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	gorm.io/gorm v1.31.2 // indirect
 )
